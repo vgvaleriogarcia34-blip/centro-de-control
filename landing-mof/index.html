@@ -1,0 +1,336 @@
+<title>Ordena MOF</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: aula suspendida a pantalla ancha con el puzle de las 8 preguntas; después, secciones que venden el método (el verbo, la ruta mínima, qué incluye, preguntas). Mundo oscuro de tiza y latón, el mismo que la herramienta. */
+:root{
+  color-scheme: dark;
+  --void:#070b15; --void-2:#0e1630; --board:#12251f; --board-2:#183128;
+  --glass:rgba(22,32,58,.8); --line:rgba(150,172,225,.18); --line-2:rgba(150,172,225,.32);
+  --fg:#e9edf6; --muted:#9aa6c1; --faint:#6b7894;
+  --brass:#e9b45c; --brass-ink:#1c1406; --ok:#4fd1b5; --bad:#ff7d6e;
+  --b1:#6ec3ff; --b2:#e9b45c; --b3:#b49cff; --b4:#4fd1b5;
+  --f-display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+html,body{min-height:100%}
+body{background:var(--void); color:var(--fg); font:16px/1.6 var(--f-body); overflow-x:hidden}
+a{color:var(--brass)}
+button{font:inherit; color:inherit; cursor:pointer}
+:focus-visible{outline:2px solid var(--brass); outline-offset:3px}
+h1,h2,h3{font-family:var(--f-display); margin:0; text-wrap:balance; letter-spacing:-.015em}
+.eyebrow{font:500 11.5px/1.3 var(--f-mono); letter-spacing:.16em; text-transform:uppercase; color:var(--muted)}
+.wrap{max-width:1180px; margin:0 auto; padding-inline:clamp(16px,4vw,48px)}
+.btn{display:inline-flex; align-items:center; gap:8px; border:1px solid var(--line-2); background:rgba(255,255,255,.03); border-radius:12px; padding:12px 18px; font-weight:600; text-decoration:none; color:var(--fg); transition:transform .2s, border-color .2s, background .2s}
+.btn:hover{border-color:var(--brass); transform:translateY(-2px)}
+.btn.primary{background:var(--brass); color:var(--brass-ink); border-color:var(--brass)}
+.btn.primary:hover{filter:brightness(1.07)}
+
+/* Aula */
+.hall{position:relative; overflow:hidden; border-bottom:1px solid var(--line); padding-bottom:30px}
+#aula{position:absolute; inset:0; width:100%; height:100%; display:block}
+.hall-top{position:relative; z-index:2; padding-block:28px 0}
+.brandline{display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center}
+.brandline b{font:700 15px/1 var(--f-display); letter-spacing:.02em}
+.hero{position:relative; z-index:2; max-width:520px; margin-top:34px}
+.board-space{height:0}
+@media (max-width:980px){.board-space{height:300px} .hero{max-width:none}}
+.hero h1{font-size:clamp(32px,4.2vw,54px); font-weight:800; line-height:1}
+.hero h1 em{font-style:normal; color:var(--brass)}
+.hero h1,.hero p,.hero .eyebrow,.puzzle-head{text-shadow:0 2px 16px #070b15, 0 0 3px #070b15, 0 0 1px #070b15}
+.hero p{color:var(--muted); font-size:clamp(16px,1.6vw,19px); max-width:56ch; margin:16px 0 0}
+.puzzle{position:relative; z-index:3; margin-top:36px}
+.puzzle-head{display:flex; justify-content:space-between; gap:12px; align-items:end; flex-wrap:wrap; margin-bottom:10px}
+.puzzle-head h2{font-size:clamp(18px,2vw,22px)}
+.puzzle-head p{margin:2px 0 0; color:var(--muted); font-size:14px}
+.slots{display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:8px}
+.slot{min-height:54px; border:1.5px dashed var(--line-2); border-radius:12px; display:flex; align-items:center; gap:8px; padding:8px 10px; font:600 13px/1.2 var(--f-display); color:var(--faint); background:rgba(7,11,21,.55); backdrop-filter:blur(3px)}
+.slot .n{font:600 11px/1 var(--f-mono); color:var(--faint)}
+.slot.filled{border-style:solid; border-color:var(--ok); color:var(--fg); background:rgba(79,209,181,.12)}
+.slot.filled .n{color:var(--ok)}
+.tiles{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+.tile{border:1px solid var(--line-2); background:linear-gradient(160deg,#1b2850,#121b36); border-radius:12px; padding:10px 14px; text-align:left; box-shadow:0 14px 30px -14px rgba(0,0,0,.8); transition:transform .25s, border-color .25s; animation:hover 6s ease-in-out infinite; animation-delay:var(--dl,0s)}
+.tile:hover{border-color:var(--brass); transform:translateY(-4px) rotate(-1deg)}
+.tile b{display:block; font:700 15px/1.2 var(--f-display)}
+.tile span{display:block; font-size:12.5px; color:var(--muted); margin-top:2px}
+.tile.shake{animation:shake .4s; border-color:var(--bad)}
+@keyframes hover{0%,100%{translate:0 0}50%{translate:0 -5px}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.pz-msg{min-height:24px; margin-top:8px; font-size:14px; color:var(--muted)}
+.pz-msg b{color:var(--brass)}
+.pz-actions{display:flex; gap:8px; flex-wrap:wrap}
+.pz-actions .btn{padding:8px 12px; font-size:14px}
+.done-cta{display:none; margin-top:10px; gap:10px; flex-wrap:wrap; align-items:center}
+.done .done-cta{display:flex}
+@media (max-width:980px){.slots{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (max-width:560px){.slots{grid-template-columns:repeat(2,minmax(0,1fr))} .hero{margin-top:22px} .board-space{height:460px}}
+@media (prefers-reduced-motion: reduce){.tile{animation:none}}
+
+/* Secciones */
+section.sec{padding-block:clamp(56px,8vw,96px); border-bottom:1px solid var(--line)}
+.sec h2{font-size:clamp(28px,3.6vw,44px); font-weight:800; line-height:1.05; max-width:22ch}
+.sec .lead{color:var(--muted); max-width:62ch; margin:14px 0 0; font-size:17px}
+.split{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.1fr); gap:clamp(24px,5vw,64px); align-items:start}
+@media (max-width:880px){.split{grid-template-columns:minmax(0,1fr)}}
+.verbs{display:grid; gap:10px}
+.verb{border:1px solid var(--line); border-radius:14px; padding:14px 16px; background:linear-gradient(160deg,rgba(27,40,80,.6),rgba(14,22,48,.6)); display:grid; grid-template-columns:minmax(0,1.3fr) auto minmax(0,1fr); gap:12px; align-items:center; transition:border-color .2s, transform .2s}
+.verb:hover{border-color:var(--brass); transform:translateX(4px)}
+.verb .q{font-size:14.5px} .verb .q mark{background:rgba(233,180,92,.2); color:var(--fg); border-radius:4px; padding:0 3px}
+.verb .ar{font:600 18px/1 var(--f-mono); color:var(--brass)}
+.verb .a{font:600 14px/1.3 var(--f-display); color:var(--ok)}
+@media (max-width:560px){.verb{grid-template-columns:minmax(0,1fr)} .verb .ar{display:none}}
+.eight{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-top:28px}
+@media (max-width:880px){.eight{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:480px){.eight{grid-template-columns:minmax(0,1fr)}}
+.q8{border:1px solid var(--line); border-radius:16px; padding:16px; background:rgba(14,22,48,.6); position:relative}
+.q8 .k{font:600 12px/1 var(--f-mono); color:var(--brass)}
+.q8 h3{font-size:18px; margin-top:8px}
+.q8 p{margin:6px 0 0; font-size:14px; color:var(--muted)}
+.q8 .ph{position:absolute; top:14px; right:14px; font:500 10.5px/1 var(--f-mono); letter-spacing:.08em; text-transform:uppercase; padding:4px 7px; border-radius:6px; border:1px solid var(--line-2); color:var(--muted)}
+.route{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-top:28px; counter-reset:r}
+@media (max-width:880px){.route{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:480px){.route{grid-template-columns:minmax(0,1fr)}}
+.route li{list-style:none; border-top:3px solid var(--brass); padding-top:14px}
+.route li::before{counter-increment:r; content:"0" counter(r); font:600 13px/1 var(--f-mono); color:var(--brass)}
+.route h3{font-size:19px; margin-top:8px}
+.route p{margin:6px 0 0; color:var(--muted); font-size:14.5px}
+.route ol{padding:0; margin:0}
+.kit{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-top:28px}
+@media (max-width:880px){.kit{grid-template-columns:minmax(0,1fr)}}
+.kit div{border:1px solid var(--line); border-radius:16px; padding:18px; background:rgba(14,22,48,.6)}
+.kit b{display:block; font:800 34px/1 var(--f-display); color:var(--brass)}
+.kit h3{font-size:17px; margin-top:8px}
+.kit p{margin:6px 0 0; color:var(--muted); font-size:14.5px}
+.honest{border:1px solid var(--line-2); border-radius:18px; padding:clamp(18px,3vw,28px); background:linear-gradient(160deg,rgba(18,37,31,.7),rgba(14,22,48,.6))}
+.faq{display:grid; gap:10px; margin-top:24px}
+.faq details{border:1px solid var(--line); border-radius:14px; padding:14px 16px; background:rgba(14,22,48,.5)}
+.faq summary{cursor:pointer; font-weight:600}
+.faq p{margin:8px 0 0; color:var(--muted)}
+.final{text-align:left}
+.final .btn{margin-top:22px}
+footer{padding-block:28px 48px; color:var(--faint); font-size:13px}
+</style>
+
+<header class="hall" id="inicio">
+  <canvas id="aula" aria-hidden="true"></canvas>
+  <div class="wrap hall-top">
+    <div class="brandline"><b>ORDENA · MOF</b><span class="eyebrow">Matemática de las Operaciones Financieras · 1.º ADE</span></div>
+    <div class="hero">
+      <div class="eyebrow">Para quien quiere aprobar sin pelearse con las fórmulas</div>
+      <h1>MOF no se suspende por las fórmulas. Se suspende por <em>no saber qué te piden</em>.</h1>
+      <p>Las fórmulas son las mismas para todos. Lo que separa un aprobado de un suspenso es leer el enunciado, entender su verbo y elegir el criterio antes de calcular. Esto entrena exactamente eso: ocho preguntas, siempre en el mismo orden.</p>
+    </div>
+    <div class="board-space" id="boardSpace" aria-hidden="true"></div>
+  </div>
+  <div class="puzzle wrap" id="puzzle">
+    <div class="puzzle-head">
+      <div><h2>Pon las 8 preguntas en orden y mira qué pasa con el caos</h2><p>Pulsa las fichas en el orden en que harías un ejercicio. Cada acierto ordena una parte de la pizarra.</p></div>
+      <div class="pz-actions"><button class="btn" id="pzHelp">Pista</button><button class="btn" id="pzAuto">Ordénalo tú</button><button class="btn" id="pzReset">Volver al caos</button></div>
+    </div>
+    <div class="slots" id="slots"></div>
+    <div class="tiles" id="tiles"></div>
+    <div class="pz-msg" id="pzMsg" aria-live="polite"></div>
+    <div class="done-cta"><a class="btn primary" href="https://claude.ai/artifact/QrvpS6wvt5ky19TN3LuZVN">Entrar a la herramienta</a><span style="color:var(--muted);font-size:14px">Eso que acabas de hacer es el método. Ahora, con ejercicios de verdad.</span></div>
+  </div>
+</header>
+
+<main>
+  <section class="sec">
+    <div class="wrap split">
+      <div>
+        <div class="eyebrow">El lenguaje decide el ejercicio</div>
+        <h2>Antes de la fórmula, el verbo</h2>
+        <p class="lead">La mayoría de suspensos no vienen de la calculadora: vienen de calcular otra cosa. Un enunciado de MOF casi siempre te dice lo que pide en una o dos palabras. Si las lees bien, la fórmula sale sola. Si no, da igual lo bien que calcules.</p>
+        <p class="lead">La herramienta te enseña a leer esas palabras, a saber quién paga y quién cobra, y a elegir con qué comparar. Las fórmulas vienen después y ya no asustan.</p>
+      </div>
+      <div class="verbs" aria-label="Ejemplos de cómo el enunciado dice lo que pide">
+        <div class="verb"><div class="q">«¿Qué capital <mark>debe depositarse hoy</mark> para disponer de 20.000 € en 5 años?»</div><div class="ar">→</div><div class="a">Valor actual</div></div>
+        <div class="verb"><div class="q">«¿Qué <mark>efectivo</mark> abona el banco por la remesa?»</div><div class="ar">→</div><div class="a">Descuento comercial, efecto a efecto</div></div>
+        <div class="verb"><div class="q">«¿Qué oferta tiene <mark>menor coste efectivo</mark>?»</div><div class="ar">→</div><div class="a">Tipo que iguala lo recibido con lo pagado</div></div>
+        <div class="verb"><div class="q">«Capital <mark>pendiente al principio del sexto año</mark>»</div><div class="ar">→</div><div class="a">C₆₀: lo que falta por pagar</div></div>
+        <div class="verb"><div class="q">«Pagos <mark>por meses anticipados</mark>»</div><div class="ar">→</div><div class="a">Renta prepagable</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="ocho">
+    <div class="wrap">
+      <div class="eyebrow">El método</div>
+      <h2>Ocho preguntas. Las cinco primeras deciden la fórmula.</h2>
+      <p class="lead">No es otra forma de hacer los ejercicios de clase: usas las mismas fórmulas y la misma notación. Es lo que hace antes y después de la fórmula quien resuelve bien, aunque no lo diga en voz alta.</p>
+      <div class="eight">
+        <div class="q8"><span class="ph">Leer</span><span class="k">01</span><h3>Identificar</h3><p>¿Qué operación es y qué me piden exactamente?</p></div>
+        <div class="q8"><span class="ph">Leer</span><span class="k">02</span><h3>Situar</h3><p>¿Quién entrega el dinero, quién lo devuelve, desde dónde miro?</p></div>
+        <div class="q8"><span class="ph">Plantear</span><span class="k">03</span><h3>Dibujar</h3><p>¿Qué dinero se mueve y en qué fechas?</p></div>
+        <div class="q8"><span class="ph">Plantear</span><span class="k">04</span><h3>Interpretar</h3><p>¿Qué dice cada dato y qué falta? ¿Nominal o efectivo, 360 o 365?</p></div>
+        <div class="q8"><span class="ph">Plantear</span><span class="k">05</span><h3>Elegir</h3><p>¿Con qué criterio comparo? Fecha común, tipo efectivo, coste con gastos.</p></div>
+        <div class="q8"><span class="ph">Comprobar</span><span class="k">06</span><h3>Anticipar</h3><p>¿Qué debería salir, más o menos? Tu corrector interno.</p></div>
+        <div class="q8"><span class="ph">Comprobar</span><span class="k">07</span><h3>Calcular</h3><p>Ahora sí: el método que corresponde y el número.</p></div>
+        <div class="q8"><span class="ph">Concluir</span><span class="k">08</span><h3>Decidir</h3><p>¿Qué demuestra el resultado y qué no? Responde a lo pedido.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="wrap">
+      <div class="eyebrow">Mínimo esfuerzo</div>
+      <h2>Una ruta corta para cada prueba</h2>
+      <p class="lead">Nada de hacer cientos de ejercicios a ciegas. La herramienta mira qué sabes y solo te hace trabajar lo que te falta, empezando por lo que más sale.</p>
+      <ol class="route">
+        <li><h3>Diagnóstico exprés</h3><p>Un ejercicio de cada tipo, solo criterio, un minuto cada uno. Lo que ya sabes no se repite.</p></li>
+        <li><h3>Criterio primero</h3><p>Qué te piden, quién es quién, qué ley y qué planteamiento. Sin cuentas hasta que eso esté firme.</p></li>
+        <li><h3>Cálculo de lo que más sale</h3><p>Solo en los tipos de ejercicio en los que ya aciertas el criterio, con calculadora no financiera, como en el examen.</p></li>
+        <li><h3>Simulacro con las reglas reales</h3><p>Teoría y ejercicios con el mínimo del 40 % en cada uno. Dos aprobados seguidos y la herramienta te dice que estás listo.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="wrap">
+      <div class="eyebrow">Qué incluye</div>
+      <h2>Todo el temario, ordenado por las pruebas que vas a hacer</h2>
+      <div class="kit">
+        <div><b>935</b><h3>ejercicios con criterio</h3><p>De los cuatro bloques: leyes financieras, corto plazo, rentas y amortización. Cada uno con su planteamiento, la solución comprobada y el error típico.</p></div>
+        <div><b>3</b><h3>simulacros por prueba</h3><p>1.ª prueba intermedia, 2.ª y examen final, puntuados ejercicio a ejercicio con la regla del 40 %.</p></div>
+        <div><b>27</b><h3>preguntas de teoría y demostraciones</h3><p>Las escribes de memoria y repasas más las que no sabes. La teoría se corrige primero: no se puede dejar.</p></div>
+      </div>
+      <div class="kit" style="margin-top:14px">
+        <div><h3>Línea temporal interactiva</h3><p>Arrastra la fecha y mira cómo cada pago viaja hasta ella. Entiendes de una vez qué es «llevar a una fecha común».</p></div>
+        <div><h3>Cuaderno de errores</h3><p>Te dice dónde fallas: lectura, perspectiva, fechas, criterio o cuenta. Y qué hacer para no repetirlo.</p></div>
+        <div><h3>Tutor que pregunta</h3><p>Si te atascas, te hace la pregunta que te desbloquea, en lugar de darte la solución sin más.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="wrap">
+      <div class="honest">
+        <div class="eyebrow">Sin humo</div>
+        <h2 style="margin-top:6px">No te prometemos aprobar. Te enseñamos a no regalar puntos.</h2>
+        <p class="lead">Ninguna herramienta aprueba por ti. Lo que sí hace es atacar el fallo que más suspende en esta asignatura, plantear algo distinto de lo que te piden, y decirte con datos cuándo estás preparado para cada prueba.</p>
+      </div>
+      <div class="faq">
+        <details><summary>¿Es la herramienta oficial de la asignatura?</summary><p>No. Es una herramienta independiente, preparada con el temario y las reglas de evaluación publicadas en la guía docente. Usa la notación habitual, pero manda siempre lo que diga tu profesora.</p></details>
+        <details><summary>¿Sustituye a las clases o a los apuntes?</summary><p>No. Funciona encima de ellos: te entrena en lo que las clases dan por supuesto, que es leer el enunciado y elegir el criterio.</p></details>
+        <details><summary>¿Cuánto tiempo necesito?</summary><p>Depende de lo que ya sepas: el diagnóstico te lo dice. Si aciertas casi siempre, la ruta de una prueba son unas dos horas hasta llegar a los simulacros. Si fallas más, la herramienta te hace trabajar justo ahí, no en todo.</p></details>
+        <details><summary>¿Necesito saber muchas matemáticas?</summary><p>No más de lo que pide la asignatura. La calculadora de la herramienta te escribe la fórmula con tus números; la cuenta la haces tú, como en el examen.</p></details>
+        <details><summary>¿Se guarda mi progreso?</summary><p>Sí, en tu navegador. Si cambias de dispositivo o borras los datos del navegador, empiezas de cero.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec final">
+    <div class="wrap">
+      <div class="eyebrow">Empieza por el diagnóstico</div>
+      <h2>Quince minutos para saber qué te falta de verdad</h2>
+      <p class="lead">Sin registrarte en nada. Abres la herramienta, eliges la prueba que preparas y haces el diagnóstico exprés.</p>
+      <a class="btn primary" href="https://claude.ai/artifact/QrvpS6wvt5ky19TN3LuZVN">Entrar a la herramienta</a>
+    </div>
+  </section>
+</main>
+<footer class="wrap">Herramienta de estudio independiente, sin relación oficial con la Universidad de Murcia ni con el profesorado de la asignatura. Temario y reglas de evaluación tomados de la guía docente pública del curso 2026/27.</footer>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- Las 8 preguntas: puzle ---------- */
+const Q = [
+  ['Identificar','¿Qué me piden?'], ['Situar','¿Quién paga y quién cobra?'], ['Dibujar','¿Qué se mueve y cuándo?'], ['Interpretar','¿Qué dice cada dato?'],
+  ['Elegir','¿Con qué comparo?'], ['Anticipar','¿Qué debería salir?'], ['Calcular','¿Qué método y cuánto da?'], ['Decidir','¿Qué demuestra?']
+];
+const WHY = ['No puedes situar a nadie sin saber qué operación es.', 'Para dibujar flujos necesitas saber desde qué parte miras.', 'Interpretas los datos sobre el dibujo de los flujos.', 'El criterio se elige con los datos ya limpios.', 'Solo puedes predecir cuando sabes qué vas a comparar.', 'Primero la predicción, luego la cuenta: así detectas errores.', 'La conclusión necesita el número.'];
+let placed = 0, order = [];
+function shuffle(a){ a = a.slice(); for (let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; }
+function renderPuzzle(){
+  $('#slots').innerHTML = Q.map((q,i) => `<div class="slot ${i < placed ? 'filled' : ''}"><span class="n">${String(i+1).padStart(2,'0')}</span>${i < placed ? q[0] : ''}</div>`).join('');
+  $('#tiles').innerHTML = order.filter(i => i >= placed).map((i,k) => `<button class="tile" data-i="${i}" style="--dl:-${(k*0.7).toFixed(1)}s"><b>${Q[i][0]}</b><span>${Q[i][1]}</span></button>`).join('');
+  $('#puzzle').classList.toggle('done', placed === 8);
+}
+function resetPuzzle(){ placed = 0; order = shuffle([...Q.keys()]); $('#pzMsg').innerHTML = ''; renderPuzzle(); setOrder(0); }
+$('#tiles').addEventListener('click', e => {
+  const t = e.target.closest('.tile'); if (!t) return; const i = +t.dataset.i;
+  if (i === placed){ placed++; setOrder(placed/8); renderPuzzle();
+    $('#pzMsg').innerHTML = placed === 8 ? '<b>Ordenado.</b> Las mismas fórmulas, ahora cada una en su sitio. Eso es lo que cambia cuando lees el ejercicio en orden.' : `<b>${Q[i][0]}</b> en su sitio. ${placed < 8 ? 'Siguiente: ¿qué harías ahora?' : ''}`;
+  } else {
+    t.classList.remove('shake'); void t.offsetWidth; t.classList.add('shake');
+    $('#pzMsg').innerHTML = `Todavía no. ${placed > 0 ? WHY[placed-1] : 'Lo primero es saber qué operación tienes delante y qué te piden.'}`;
+  }
+});
+$('#pzHelp').addEventListener('click', () => { if (placed < 8) $('#pzMsg').innerHTML = `Pista: la siguiente pregunta es <b>${Q[placed][1]}</b>`; });
+$('#pzAuto').addEventListener('click', () => { let k = placed; const step = () => { if (k >= 8) return; placed = ++k; setOrder(placed/8); renderPuzzle(); if (k === 8) $('#pzMsg').innerHTML = '<b>Ordenado.</b> Ahora pruébalo tú en el orden correcto: «Volver al caos».'; else setTimeout(step, reduce ? 0 : 260); }; step(); });
+$('#pzReset').addEventListener('click', resetPuzzle);
+
+/* ---------- Aula suspendida con fórmulas ---------- */
+const F = [
+  ['Cₙ = C₀ · (1 + i·t)',1], ['Cₙ = C₀ · (1 + i)ⁿ',1], ['V₀ = Cₙ · (1 + i)⁻ⁿ',1], ['i = (1 + j/m)ᵐ − 1',1], ['E = N · (1 − d·t)',1], ['i_m = i / m',1], ['t = Σ Cₛ·tₛ / Σ Cₛ',1], ['N₂(1 − d·t₂) = N(1 − d·t₁)',1],
+  ['TAE = (N / E)^(365/t) − 1',2], ['números = saldo × días',2], ['I = Σ números · i / 365',2], ['Nᵣ(1 − d·t − c) = cargo',2], ['E = n·N − N·d·p·Σk / 360',2],
+  ['V₀ = c · aₙ¬ᵢ',3], ['ä = (1 + i) · aₙ¬ᵢ',3], ['sₙ¬ᵢ = ((1 + i)ⁿ − 1) / i',3], ['V₀ = c / i',3], ['V₀ = c·aₙ¬ᵢ·(1 + i)⁻ʰ',3], ['V₀ = (c + h/i + n·h)·aₙ¬ᵢ − n·h/i',3], ['V₀ = c / (1 + i − q)',3],
+  ['a = C·i / (1 − (1 + i)⁻ⁿ)',4], ['Aₖ₊₁ = Aₖ · (1 + i)',4], ['Cₖ = a · aₙ₋ₖ¬ᵢ',4], ['mₖ = A₁ · sₖ¬ᵢ',4], ['Cₖ = Cₖ₋₁(1 + i) − aₖ',4], ['i₁₂ = j / 12',4], ['C − g = a · aₙ¬ᵣ',4], ['a = C(1 + i)ʰ / aₙ₋ₕ¬ᵢ',4]
+];
+const COLS = {1:'#6ec3ff', 2:'#e9b45c', 3:'#b49cff', 4:'#4fd1b5'};
+const BNAME = {1:'Leyes y capitales', 2:'Corto plazo', 3:'Rentas', 4:'Amortización'};
+const cv = $('#aula'), ctx = cv.getContext('2d'); let W, H, dpr, items = [], ord = 0, ordT = 0, mx = 0, my = 0, tmx = 0, tmy = 0;
+function size(){ dpr = Math.min(2, devicePixelRatio || 1); W = cv.clientWidth; H = cv.clientHeight; cv.width = W*dpr; cv.height = H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); layoutTargets(); }
+function board(){ const hall = cv.getBoundingClientRect();
+  if (W > 980){ const h = $('.hero').getBoundingClientRect(); const x = h.right - hall.left + 40; const w = Math.min(W - x - Math.max(24, W*0.04), 820); return {x, y: h.top - hall.top, w, h: Math.max(300, h.height)}; }
+  const sp = $('#boardSpace').getBoundingClientRect(); return {x: 16, y: sp.top - hall.top + 10, w: W - 32, h: sp.height - 20}; }
+function layoutTargets(){ const b = board(); const per = {}; F.forEach(f => per[f[1]] = (per[f[1]]||0) + 1);
+  const g = grid(b); const seen = {}; items.forEach(it => { const blk = it.b, k = (seen[blk] = (seen[blk]||0) + 1) - 1; const c = cell(g, blk);
+    it.tx = c.x + 10; it.ty = c.y + 44 + k*((c.h - 54)/Math.max(per[blk],1)); it.fit = 0; }); }
+function grid(b){ const cols = W < 600 ? 2 : 4, rows = 4/cols; return {b, cols, rows, cw:b.w/cols, ch:b.h/rows}; }
+function cell(g, blk){ const i = blk-1; return {x: g.b.x + (i % g.cols)*g.cw, y: g.b.y + Math.floor(i / g.cols)*g.ch, w: g.cw, h: g.ch}; }
+function init(){ items = F.map((f,i) => ({t:f[0], b:f[1], x:Math.random(), y:Math.random(), z:Math.random()*0.8+0.2, vx:(Math.random()-.5)*0.0006, vy:(Math.random()-.5)*0.0005, r:(Math.random()-.5)*0.6, vr:(Math.random()-.5)*0.004, o:i/F.length, k:0})); size(); }
+function setOrder(v){ ordT = v; }
+addEventListener('resize', size); new ResizeObserver(size).observe(document.querySelector('.hall'));
+addEventListener('pointermove', e => { tmx = e.clientX/innerWidth - .5; tmy = e.clientY/innerHeight - .5; }, {passive:true});
+function drawHall(t){
+  const vx = W*0.5 + mx*-40, vy = H*0.32 + my*-24;
+  const g = ctx.createRadialGradient(W*0.6, H*0.25, 40, W*0.5, H*0.4, Math.max(W,H)); g.addColorStop(0,'#16224a'); g.addColorStop(1,'#070b15'); ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  // gradas en arco (filas de pupitres) suspendidas
+  for (let r=0; r<9; r++){ const p = r/8; const y = vy + 90 + Math.pow(p,1.4)*(H - vy - 40) + (reduce ? 0 : Math.sin(t/1600 + r)*3); const w = W*(0.35 + p*0.9);
+    ctx.strokeStyle = `rgba(150,172,225,${0.06 + p*0.12})`; ctx.lineWidth = 1 + p*2; ctx.beginPath(); ctx.ellipse(vx, y, w/2, 26 + p*60, 0, Math.PI*0.08, Math.PI*0.92); ctx.stroke();
+    ctx.strokeStyle = `rgba(233,180,92,${0.03 + p*0.05})`; ctx.beginPath(); ctx.ellipse(vx, y + 8 + p*6, w/2, 26 + p*60, 0, Math.PI*0.1, Math.PI*0.9); ctx.stroke(); }
+  // pilares de luz
+  for (let k=0;k<6;k++){ const x = (k+0.5)/6*W + mx*-20; const gr = ctx.createLinearGradient(x,0,x,H); gr.addColorStop(0,'rgba(233,180,92,0.05)'); gr.addColorStop(1,'rgba(233,180,92,0)'); ctx.fillStyle = gr; ctx.fillRect(x-30,0,60,H); }
+  // pizarra flotante
+  const b = board(); const bob = reduce ? 0 : Math.sin(t/2200)*4;
+  ctx.save(); ctx.translate(mx*-14, my*-10 + bob);
+  ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 24;
+  ctx.fillStyle = '#12251f'; roundRect(b.x, b.y, b.w, b.h, 14); ctx.fill(); ctx.shadowColor = 'transparent';
+  ctx.strokeStyle = 'rgba(233,180,92,.55)'; ctx.lineWidth = 3; roundRect(b.x, b.y, b.w, b.h, 14); ctx.stroke();
+  ctx.globalAlpha = Math.min(1, ord*1.6);
+  const gd = grid(b);
+  for (let c=1;c<=4;c++){ const ce = cell(gd, c); ctx.fillStyle = COLS[c]; ctx.font = `600 ${gd.cw < 170 ? 10.5 : 12}px "IBM Plex Mono", monospace`; ctx.fillText(BNAME[c].toUpperCase(), ce.x + 12, ce.y + 24);
+    ctx.strokeStyle = 'rgba(233,237,246,.12)'; ctx.lineWidth = 1;
+    if (ce.x > b.x + 1){ ctx.beginPath(); ctx.moveTo(ce.x, ce.y+12); ctx.lineTo(ce.x, ce.y+ce.h-12); ctx.stroke(); }
+    if (ce.y > b.y + 1){ ctx.beginPath(); ctx.moveTo(ce.x+12, ce.y); ctx.lineTo(ce.x+ce.w-12, ce.y); ctx.stroke(); } }
+  ctx.globalAlpha = 1; ctx.restore();
+}
+function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+let lastB = '';
+function frame(t){
+  const bb = board(); const key = [bb.x,bb.y,bb.w,bb.h].map(Math.round).join(','); if (key !== lastB){ lastB = key; layoutTargets(); }
+  mx += (tmx - mx)*0.05; my += (tmy - my)*0.05; ord += (ordT - ord)*0.04;
+  drawHall(t);
+  const b = board(); const colW = grid(b).cw - 18;
+  items.sort((a,c) => a.z - c.z).forEach(it => {
+    if (!reduce){ it.x += it.vx; it.y += it.vy; it.r += it.vr; if (it.x < -0.05 || it.x > 1.05) it.vx *= -1; if (it.y < 0.02 || it.y > 1.0) it.vy *= -1; }
+    const on = ord*8 > it.o*8 + 0.2 ? 1 : 0; it.k += ((ordT*8 > it.o*8 ? 1 : 0) - it.k) * 0.06;
+    const fx = it.x*W + mx*-90*it.z, fy = it.y*H + my*-60*it.z + (reduce ? 0 : Math.sin(t/1400 + it.o*20)*6*it.z);
+    const x = fx + (it.tx + mx*-14 - fx)*it.k, y = fy + (it.ty + my*-10 - fy)*it.k;
+    if (!it.fit || it.fitW !== colW){ ctx.font = '500 13px "IBM Plex Mono", monospace'; const w13 = ctx.measureText(it.t).width; it.fit = Math.max(7, Math.min(13, 13*colW/w13)); it.fitW = colW; }
+    const size = (12 + it.z*16)*(1 - it.k) + it.fit*it.k; const rot = it.r*(1 - it.k);
+    ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
+    ctx.font = `${it.k > 0.5 ? 500 : 600} ${size.toFixed(1)}px "IBM Plex Mono", monospace`;
+    const a = (0.25 + it.z*0.55)*(1 - it.k) + 0.95*it.k; ctx.globalAlpha = a;
+    ctx.fillStyle = it.k > 0.5 ? '#e9edf6' : COLS[it.b];
+    if (it.k < 0.5 && it.z < 0.45){ ctx.filter = 'blur(1.2px)'; }
+    ctx.fillText(it.t, 0, 0); ctx.restore(); ctx.filter = 'none';
+  });
+  requestAnimationFrame(frame);
+}
+init(); resetPuzzle(); requestAnimationFrame(frame);
+</script>
