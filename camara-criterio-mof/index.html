@@ -407,6 +407,12 @@ body.dropping::after{content:'Suelta aquí tus archivos de ejercicios'; position
 .mine-cmp .rb{grid-template-columns:minmax(0,1fr); gap:2px; padding:8px 0; border-bottom:1px solid var(--line)}
 .mine-cmp .rb span:first-child{font:500 10.5px/1.3 var(--f-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--muted)}
 .cfg-up{float:right; padding:3px 9px; font-size:12px; margin-top:-3px}
+.calc-how{font-size:12.5px; color:var(--muted); margin:10px 0 0; line-height:1.45} .calc-how b{color:var(--fg)}
+.calc-lbl{font:500 10.5px/1.3 var(--f-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-top:6px}
+.calc-lbl:first-child{margin-top:0}
+.calc-note{color:var(--warn)!important}
+#calcFields.flash input,#calcFields.flash select{animation:fieldflash 1.4s ease 2}
+@keyframes fieldflash{50%{border-color:var(--brass); box-shadow:0 0 0 3px rgba(233,180,92,.35)}}
 .model{margin-top:12px; padding:12px 14px; border-radius:12px; border-left:3px solid var(--cobro); background:rgba(5,10,22,.55); font-size:14px}
 .nofin{display:flex; gap:8px; align-items:flex-start; margin-top:10px; font-size:12.5px; color:var(--muted)}
 .nofin input{margin-top:3px; accent-color:var(--brass)}
@@ -507,6 +513,7 @@ footer{margin-top:34px; color:var(--faint); font-size:12.5px; max-width:90ch}
           <button data-c="efec" aria-pressed="false">Nominal → efectivo</button>
           <button data-c="irr" aria-pressed="false">Coste con comisión</button>
         </div>
+        <p class="calc-how"><b>Cómo se usa:</b> 1) elige la pestaña de la fórmula que pide tu ejercicio; 2) escribe en las casillas los números del enunciado (sirve coma o punto); 3) debajo verás la fórmula con tus números. Como en el examen, el resultado lo calculas tú.</p>
         <div class="fields" id="calcFields"></div>
         <div class="calc-out" id="calcOut"></div>
         <div class="btn-row"><button class="btn" id="calcPreset">Cargar datos del ejercicio</button></div>
@@ -1239,26 +1246,32 @@ function renderCalc(){
   calcOut();
 }
 function calcOut(){
-  const v = CV[calcMode]; let big='—', formula='', meaning='';
+  const v = CV[calcMode]; let big='—', formula='', meaning='', extra='';
   const ok = x => Number.isFinite(x);
   if (calcMode === 'cap'){ const i = v.i/100; if (ok(v.C)&&ok(i)&&ok(v.t)){
       if (v.dir === 'cap'){ const r = v.C*Math.pow(1+i, v.t); big = fmt(r)+' €'; formula = `Cₜ = ${fmt(v.C)} · (1 + ${fmt(i,4)})^${fmt(v.t,2)} = ${fmt(r)}`; meaning = 'Cuánto vale en el futuro un capital de hoy, con interés sobre interés.'; }
       else { const r = v.C*Math.pow(1+i, -v.t); big = fmt(r)+' €'; formula = `V₀ = ${fmt(v.C)} · (1 + ${fmt(i,4)})^−${fmt(v.t,2)} = ${fmt(r)}`; meaning = 'Cuánto vale hoy un capital futuro: lo que tendrías que invertir hoy al tipo dado para obtenerlo.'; } } }
-  if (calcMode === 'cuota'){ const i = v.i/100; if (ok(v.C)&&ok(i)&&v.n>0){ const a = cuota(v.C,i,v.n); big = fmt(a)+' €'; formula = `a = ${fmt(v.C)} · ${fmt(i,4)} / (1 − (1 + ${fmt(i,4)})^−${v.n}) = ${fmt(a)}`; meaning = `Cuota constante cuyo valor actual iguala el capital. Total pagado: ${fmt(a*v.n)} €; intereses: ${fmt(a*v.n - v.C)} €.`; } }
-  if (calcMode === 'efec'){ const j = v.j/100; if (ok(j)&&v.m>0){ const r = Math.pow(1+j/v.m, v.m)-1; big = fmt(r*100,4)+' %'; formula = `i = (1 + ${fmt(j,4)}/${v.m})^${v.m} − 1 = ${fmt(r,6)}`; meaning = `Tipo periódico: ${fmt(j/v.m*100,4)} %. El efectivo anual mide lo que rinde o cuesta de verdad un año.`; } }
-  if (calcMode === 'irr'){ const i = v.i/100, f = v.f/100; if (ok(v.C)&&ok(i)&&ok(f)&&v.n>0){ const a = cuota(v.C,i,v.n), neto = v.C*(1-f), r = costeEf(neto, a, v.n); big = fmt(r*100,4)+' %'; formula = `${fmt(neto)} = ${fmt(a)} · (1 − (1 + r)^−${v.n}) / r  →  r = ${fmt(r*100,4)} %`; meaning = `Cuota: ${fmt(a)} €. Recibes neto ${fmt(neto)} € y devuelves cuotas calculadas sobre ${fmt(v.C)} €: r es el coste efectivo para el deudor.`; } }
-  if (calcLocked()) big = '— <span style="font-size:13px;color:var(--muted)">(haz la cuenta tú; se muestra al comprobar tu resultado)</span>';
-  $('#calcOut').innerHTML = `<div class="big">${big}</div><div class="formula">${esc(formula)}</div><div class="meaning">${esc(meaning)}</div>`;
+  if (calcMode === 'cuota'){ const i = v.i/100; if (ok(v.C)&&ok(i)&&v.n>0){ const a = cuota(v.C,i,v.n); big = fmt(a)+' €'; formula = `a = ${fmt(v.C)} · ${fmt(i,4)} / (1 − (1 + ${fmt(i,4)})^−${v.n}) = ${fmt(a)}`; meaning = 'Cuota constante cuyo valor actual iguala el capital.'; extra = ` Total pagado: ${fmt(a*v.n)} €; intereses: ${fmt(a*v.n - v.C)} €.`; } }
+  if (calcMode === 'efec'){ const j = v.j/100; if (ok(j)&&v.m>0){ const r = Math.pow(1+j/v.m, v.m)-1; big = fmt(r*100,4)+' %'; formula = `i = (1 + ${fmt(j,4)}/${v.m})^${v.m} − 1 = ${fmt(r,6)}`; meaning = 'El efectivo anual mide lo que rinde o cuesta de verdad un año.'; extra = ` Tipo periódico: ${fmt(j/v.m*100,4)} %.`; } }
+  if (calcMode === 'irr'){ const i = v.i/100, f = v.f/100; if (ok(v.C)&&ok(i)&&ok(f)&&v.n>0){ const a = cuota(v.C,i,v.n), neto = v.C*(1-f), r = costeEf(neto, a, v.n); big = fmt(r*100,4)+' %'; formula = `${fmt(neto)} = ${fmt(a)} · (1 − (1 + r)^−${v.n}) / r  →  r = ${fmt(r*100,4)} %`; meaning = `Recibes neto ${fmt(neto)} € y devuelves cuotas calculadas sobre ${fmt(v.C)} €: r es el coste efectivo para el deudor.`; extra = ` Cuota: ${fmt(a)} €.`; } }
+  const lk = calcLocked();
+  if (lk){ formula = formula.replace(/\s*(?:→\s*r\s*)?=\s*[−-]?[\d.,]+\s*%?$/, ' = ?'); extra = '';
+    big = '? <span style="display:block;font-size:13px;line-height:1.45;color:var(--muted);font-weight:400;margin-top:4px">El resultado lo calculas tú: escríbelo en la estación 7 y aquí aparecerá para comprobarlo.</span>'; }
+  $('#calcOut').innerHTML = `<div class="calc-lbl">Tu fórmula con los datos que has escrito</div><div class="formula">${esc(formula) || '—'}</div><div class="calc-lbl">Resultado</div><div class="big">${big}</div><div class="meaning">${esc(meaning + extra)}</div>${calcNote ? `<div class="meaning calc-note">${calcNote}</div>` : ''}`;
 }
 $('#calcTabs').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; calcMode = b.dataset.c; renderCalc(); });
-$('#calcFields').addEventListener('input', e => { const k = e.target.dataset.k; if (!k) return; CV[calcMode][k] = e.target.tagName === 'SELECT' ? e.target.value : parseNum(e.target.value); calcOut();
+$('#calcFields').addEventListener('input', e => { const k = e.target.dataset.k; if (!k) return; calcNote = ''; CV[calcMode][k] = e.target.tagName === 'SELECT' ? e.target.value : parseNum(e.target.value); calcOut();
   if (calcMode === 'cap' && k === 'i' && Number.isFinite(CV.cap.i) && CV.cap.i >= 0 && CV.cap.i <= 50){ tl.i = CV.cap.i/100; drawTimelines(); } });
 $('#calcFields').addEventListener('change', e => { const k = e.target.dataset.k; if (!k) return; CV[calcMode][k] = e.target.tagName === 'SELECT' ? e.target.value : parseNum(e.target.value); calcOut(); });
 function setCalcPreset(show){ const p = run.ex.preset; Object.assign(CV[p.c], p.v); if (show){ calcMode = p.c; } renderCalc(); }
+let calcNote = '';
+function calcPresetLabel(){ const b = $('#calcPreset'); if (b) b.textContent = mode === 'train' ? 'Cargar los datos del ejercicio (cuenta como pista)' : '¿Dónde escribo los datos?'; }
 $('#calcPreset').addEventListener('click', () => {
-  if (!run) return;
-  if (mode === 'sim'){ $('#calcOut').insertAdjacentHTML('beforeend','<div class="meaning" style="color:var(--warn)">En simulacro introduce tú los datos.</div>'); return; }
-  if (!run.done && STEPS[run.step].k === 'calcular') rec(run.phase).hints++;
+  if (mode !== 'train' || !run){
+    calcNote = mode === 'sim' ? 'En el simulacro, como en el examen, no se cargan los datos: escríbelos tú en las casillas de arriba. Empieza por la primera, que ya tiene el cursor.'
+      : 'Aquí no hay datos precargados: escribe en las casillas de arriba los números del enunciado. Empieza por la primera, que ya tiene el cursor.';
+    calcOut(); const f = $('#calcFields input, #calcFields select'); const box = $('#calcFields'); box.classList.remove('flash'); void box.offsetWidth; box.classList.add('flash'); if (f){ f.focus(); f.select && f.select(); } return; }
+  calcNote = ''; if (!run.done && STEPS[run.step].k === 'calcular') rec(run.phase).hints++;
   setCalcPreset(true);
 });
 
@@ -1919,7 +1932,7 @@ $('#center').addEventListener('change', e => { if (e.target.id === 'xmSel') xmSe
 
 /* ============ Modos ============ */
 function setMode(m){
-  mode = m; $$('nav.modes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === m));
+  mode = m; calcNote = ''; setTimeout(() => { calcPresetLabel(); calcOut(); }, 0); $$('nav.modes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === m));
   if (m === 'abc' && exIdx !== 4){ newRun(4); return; }
   if (m === 'sim' || m === 'train'){ if (run && (run.done || Object.keys(run.rec).length)) { newRun(exIdx); return; } }
   if (m === 'diag') diag = null;
@@ -2363,5 +2376,5 @@ $('#gate').addEventListener('keydown', e => { if (e.key === 'Enter'){ const b = 
 $('#pillTrial').addEventListener('click', () => { if (accState().k === 'trial') showGate('code'); });
 setInterval(() => { const s0 = accState(); renderTrialPill(); if (s0.k === 'expired' && $('#gate').hidden) showGate('expired'); }, 60000);
 
-renderCalc(); loadCfg(); renderPatterns(); newRun(0); renderBook(false); checkAccess();
+renderCalc(); calcPresetLabel(); loadCfg(); renderPatterns(); newRun(0); renderBook(false); checkAccess();
 </script>
