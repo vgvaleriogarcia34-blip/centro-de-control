@@ -1,0 +1,102 @@
+<title>Biblioteca MOF Murcia</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: cabecera con el estado de las fuentes, barra de filtros fija y una columna de fichas de ejercicio que se despliegan. Mundo oscuro, mismo sistema que la Cámara de Criterio. */
+:root{color-scheme:dark;--void:#060a14;--void-2:#0c1427;--card:#121b33;--card-2:#17223f;--line:rgba(150,172,225,.18);--line-2:rgba(150,172,225,.32);--fg:#e8ecf6;--muted:#97a3bf;--faint:#6a7795;--brass:#e9b45c;--brass-ink:#1c1406;--ok:#4fd1b5;--bad:#ff7d6e;--warn:#f2c94c;
+--f-display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;--f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;--f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+body{background:radial-gradient(120% 70% at 50% 0%,var(--void-2),var(--void) 70%);color:var(--fg);font:15px/1.55 var(--f-body)}
+.wrap{max-width:1100px;margin:0 auto;padding-inline:clamp(16px,3vw,40px);padding-block:28px 80px}
+button,input,select{font:inherit;color:inherit}button{cursor:pointer}:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.eyebrow{font:500 11px/1.2 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+h1{font:800 clamp(30px,4.6vw,52px)/1 var(--f-display);margin:8px 0 10px;text-wrap:balance}h1 em{font-style:normal;color:var(--brass)}
+.lead{color:var(--muted);max-width:68ch;margin:0}
+.warn{margin-top:16px;padding:12px 14px;border:1px dashed rgba(242,201,76,.5);border-radius:12px;color:var(--fg);font-size:14px;max-width:80ch}
+.warn b{color:var(--warn)}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.stat{border:1px solid var(--line);border-radius:12px;padding:8px 12px;background:rgba(18,27,51,.6)}
+.stat b{display:block;font:600 20px/1.1 var(--f-mono);color:var(--brass);font-variant-numeric:tabular-nums}.stat span{font-size:12px;color:var(--muted)}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;margin-top:22px;padding:12px;border:1px solid var(--line);border-radius:14px;background:rgba(10,16,32,.92);backdrop-filter:blur(8px);display:grid;grid-template-columns:minmax(0,2fr) repeat(3,minmax(0,1fr)) auto;gap:8px}
+@media(max-width:760px){.bar{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.bar input[type=search]{grid-column:1/-1}}
+.bar input,.bar select{width:100%;box-sizing:border-box;background:rgba(5,10,22,.7);border:1px solid var(--line-2);border-radius:9px;padding:8px 10px;min-width:0}
+.btn{border:1px solid var(--line-2);background:rgba(255,255,255,.03);border-radius:10px;padding:8px 13px;font-weight:500}.btn:hover{border-color:var(--brass)}
+.btn.primary{background:var(--brass);color:var(--brass-ink);border-color:var(--brass)}
+.count{margin:14px 2px 10px;color:var(--muted);font-size:13px}
+.list{display:grid;gap:12px}
+.ex{border:1px solid var(--line);border-radius:14px;background:linear-gradient(160deg,var(--card-2),var(--card));padding:16px 18px;transition:border-color .2s,transform .2s}
+.ex:hover{border-color:var(--line-2);transform:translateY(-2px)}
+.ex-head{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tag{font:500 11px/1 var(--f-mono);padding:5px 8px;border-radius:7px;border:1px solid var(--line-2);color:var(--muted)}
+.tag.id{color:var(--brass);border-color:rgba(233,180,92,.45)}.tag.crit{color:var(--ok);border-color:rgba(79,209,181,.45)}.tag.amp{color:var(--warn);border-color:rgba(242,201,76,.45)}
+.ex h3{font:600 17px/1.3 var(--f-display);margin:10px 0 6px}
+.ex p{margin:0 0 6px;max-width:80ch}.ex .q{color:var(--brass);font-weight:500}
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.tools input{width:160px;background:rgba(5,10,22,.7);border:1px solid var(--line-2);border-radius:9px;padding:7px 10px;font-family:var(--f-mono)}
+.res{font-size:13px}.res.ok{color:var(--ok)}.res.bad{color:var(--bad)}
+.detail{margin-top:12px;padding:12px 14px;border-radius:12px;background:rgba(5,10,22,.55);border:1px solid var(--line);font-size:14px}
+.detail ol{margin:6px 0;padding-left:20px;font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums}
+.detail .k{font:500 10.5px/1.4 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:8px;display:block}
+.more{display:flex;justify-content:center;margin-top:18px}
+footer{margin-top:40px;color:var(--faint);font-size:12.5px;max-width:90ch}
+</style>
+<div class="wrap">
+  <div class="eyebrow">Matemática de las Operaciones Financieras · 1.º ADE · Universidad de Murcia (temario inferido)</div>
+  <h1>Biblioteca de <em>ejercicios</em> MOF</h1>
+  <p class="lead">Ejercicios originales, ordenados por los temas que aparecen en los materiales públicos de la asignatura. Cada uno tiene su solución comprobada por dos vías de cálculo, la ley y la base declaradas en el enunciado, quién es acreedor y deudor, el patrón que entrena y el error típico.</p>
+  <div class="warn"><b>Provisional.</b> El temario se ha reconstruido con fuentes públicas (guía docente 2022/23 y títulos de apuntes de alumnos). No reproduce exámenes ni ejercicios de la profesora. Las convenciones (base 360/365, redondeos, ajuste de rentas) deben confirmarse con la guía vigente y los ejercicios resueltos de clase.</div>
+  <div class="stats" id="stats"></div>
+  <div class="bar" role="search">
+    <input type="search" id="q" placeholder="Buscar: descuento, prepagable, remesa, hamburgués…">
+    <select id="fTema" aria-label="Tema"></select>
+    <select id="fNivel" aria-label="Nivel"><option value="">Todos los niveles</option><option value="1">Nivel 1 · directo</option><option value="2">Nivel 2 · despejar o combinar</option><option value="3">Nivel 3 · criterio y comparación</option></select>
+    <select id="fTipo" aria-label="Tipo"><option value="">Cálculo y criterio</option><option value="calculo">Solo cálculo</option><option value="criterio">Solo criterio</option></select>
+    <button class="btn primary" id="rand">Simulacro de 6</button>
+  </div>
+  <div class="count" id="count" aria-live="polite"></div>
+  <div class="list" id="list"></div>
+  <div class="more"><button class="btn" id="more" hidden>Mostrar 30 más</button></div>
+  <footer>Generado por un script reproducible (semilla fija). Las soluciones se calculan sin redondeos intermedios y se presentan con dos decimales. El progreso no se guarda.</footer>
+</div>
+<script>
+const DATA = __DATA__;
+const E = DATA.ejercicios, $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt = (x,d=2) => { const n = x<0; let [i,f] = Math.abs(x).toFixed(d).split('.'); i = i.replace(/\B(?=(\d{3})+(?!\d))/g,'.'); return (n?'−':'')+i+(d?','+f:''); };
+const parseNum = s => { s = String(s).trim().replace(/[€%\s]/g,'').replace('−','-'); if (!s) return NaN; if (s.includes(',')) s = s.replace(/\./g,'').replace(',','.'); else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g,''); return Number(s); };
+const temas = [...new Set(E.map(e => e.tema))].sort();
+$('#fTema').innerHTML = '<option value="">Todos los temas</option>' + temas.map(t => `<option>${esc(t)}</option>`).join('');
+$('#stats').innerHTML = `<div class="stat"><b>${E.length}</b><span>ejercicios</span></div>` + temas.map(t => `<div class="stat"><b>${E.filter(e=>e.tema===t).length}</b><span>${esc(t)}</span></div>`).join('');
+let shown = 30, current = E;
+function card(e){
+  const amp = e.tema.startsWith('Ampliación');
+  return `<article class="ex" data-id="${e.id}"><div class="ex-head"><span class="tag id">${e.id}</span><span class="tag ${amp?'amp':''}">${esc(e.tema)}</span><span class="tag">Nivel ${e.nivel}</span>${e.tipo==='criterio'?'<span class="tag crit">Criterio</span>':''}</div>
+  <h3>${esc(e.familia)}</h3><p>${esc(e.enunciado)}</p><p class="q">${esc(e.pregunta)}</p>
+  <div class="tools">${e.solucion!=null ? `<label class="sr" for="in_${e.id}" hidden>Tu resultado</label><input id="in_${e.id}" inputmode="decimal" placeholder="Tu resultado (${esc(e.unidad.split(' ')[0])})"><button class="btn" data-check="${e.id}">Comprobar</button>` : ''}<button class="btn" data-show="${e.id}">Ver planteamiento y solución</button><span class="res" id="r_${e.id}"></span></div>
+  <div class="detail" id="d_${e.id}" hidden><span class="k">Planteamiento</span>${esc(e.planteamiento)}<span class="k">Pasos</span><ol>${e.pasos.map(p=>`<li>${esc(p)}</li>`).join('')}</ol>${e.solucion!=null?`<span class="k">Solución</span><b>${fmt(e.solucion, e.unidad.startsWith('%')||e.unidad.startsWith('años')||e.unidad.startsWith('térm')?4:2)} ${esc(e.unidad)}</b>`:''}
+  <span class="k">Partes</span>${Object.entries(e.partes||{}).map(([k,v])=>`${esc(k.replace(/_/g,' '))}: ${esc(v)}`).join(' · ')||'—'}<span class="k">Patrón</span>${esc(e.patron)}<span class="k">Error típico</span>${esc(e.error_tipico)}</div></article>`;
+}
+function apply(){
+  const q = $('#q').value.trim().toLowerCase(), t = $('#fTema').value, n = $('#fNivel').value, ty = $('#fTipo').value;
+  current = E.filter(e => (!t||e.tema===t) && (!n||String(e.nivel)===n) && (!ty||e.tipo===ty) && (!q || (e.id+' '+e.familia+' '+e.enunciado+' '+e.pregunta).toLowerCase().includes(q)));
+  shown = 30; render();
+}
+function render(list){
+  const L = list || current.slice(0, shown);
+  $('#list').innerHTML = L.map(card).join('');
+  $('#count').textContent = list ? `Simulacro: ${list.length} ejercicios al azar, uno por tema distinto cuando es posible.` : `${current.length} ejercicios · mostrando ${Math.min(shown,current.length)}`;
+  $('#more').hidden = !!list || shown >= current.length;
+}
+['#q','#fTema','#fNivel','#fTipo'].forEach(s => $(s).addEventListener('input', apply));
+$('#more').addEventListener('click', () => { shown += 30; render(); });
+$('#rand').addEventListener('click', () => { const pool = E.filter(e => e.tipo==='calculo' && !e.tema.startsWith('Ampliación')); const by = {}; pool.forEach(e => (by[e.tema] = by[e.tema]||[]).push(e));
+  const ts = Object.keys(by).sort(() => Math.random()-.5); const pick = ts.slice(0,6).map(t => by[t][Math.floor(Math.random()*by[t].length)]); render(pick); window.scrollTo({top:$('#list').offsetTop-90}); });
+$('#list').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.show){ const d = $('#d_'+b.dataset.show); d.hidden = !d.hidden; b.textContent = d.hidden ? 'Ver planteamiento y solución' : 'Ocultar solución'; }
+  if (b.dataset.check){ const ex = E.find(x => x.id === b.dataset.check), v = parseNum($('#in_'+ex.id).value), r = $('#r_'+ex.id);
+    if (!Number.isFinite(v)){ r.className='res bad'; r.textContent='Escribe un número.'; return; }
+    const tol = Math.max(0.01, Math.abs(ex.solucion)*0.0005); const ok = Math.abs(v-ex.solucion) <= tol;
+    r.className = 'res '+(ok?'ok':'bad'); r.textContent = ok ? 'Correcto.' : (Math.abs(v/ex.solucion-1) > .2 ? 'Lejos: revisa la ley, la base o el número de periodos.' : 'Cerca: revisa redondeos intermedios o la unidad del tipo.'); }
+});
+$('#list').addEventListener('keydown', e => { if (e.key==='Enter' && e.target.id && e.target.id.startsWith('in_')){ e.preventDefault(); e.target.nextElementSibling.click(); } });
+apply();
+</script>
