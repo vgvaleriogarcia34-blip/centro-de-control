@@ -1477,17 +1477,47 @@ function roleQ(ex){ const P = ex.partes || {};
   if (P.acreedor) return {q:'¿Quién tiene derecho a cobrar (acreedor)?', ok:P.acreedor, alt:['la otra parte de la operación', 'Nadie: no hay deuda']};
   if (P.deudor) return {q:'¿Quién tiene que pagar (deudor)?', ok:P.deudor, alt:['la entidad que presta', 'Nadie: no hay deuda']};
   return null; }
+const CORE = new Set([
+ 'Capitalización simple: montante','Capitalización compuesta: montante','Descuento compuesto: valor actual','Descuento comercial frente a racional','Tantos equivalentes: nominal y efectivo',
+ 'Capital único equivalente','Vencimiento común','Vencimiento medio (descuento comercial)',
+ 'Negociación de un efecto y coste efectivo','Remesa de efectos','Liquidación de cuenta corriente (método hamburgués)','Cuenta de crédito: coste del periodo y TAE',
+ 'Renta constante pospagable: valor actual','Renta constante prepagable: valor actual','Renta diferida','Renta perpetua','Despejar el término de una renta','Renta fraccionada con tipo efectivo anual','Renta en progresión aritmética temporal','Renta en progresión geométrica temporal',
+ 'Préstamo francés anual: cuota y primera fila','Préstamo francés mensual: cuota, descomposición, pendiente y amortizado','Préstamo con cuotas de amortización constantes','Amortización con carencia total','Amortización anticipada parcial y compensación','Tantos efectivos: prestatario y prestamista']);
+const critOk = h => h.q && h.l && h.p && h.r !== false;
+function famCritMastered(f){ const F = S.prac.fam[f]; if (!F) return false; const h = F.hist; if (F.diagOk && h.length >= 2 && critOk(h[h.length-1])) return true; const l = h.slice(-2); return l.length === 2 && l.every(critOk); }
 function famStats(f){ return (S.prac.fam[f] = S.prac.fam[f] || {n:0, hist:[]}); }
-function famMastered(f){ const h = (S.prac.fam[f] || {hist:[]}).hist.slice(-3); return h.length === 3 && h.every(x => x.q && x.l && x.p && x.c !== false); }
+function famMastered(f){ const F = S.prac.fam[f]; if (!F) return false; const withC = F.hist.filter(x => x.c !== undefined); return famCritMastered(f) && withC.length >= 1 && withC.slice(-2).every(x => x.c && critOk(x)); }
 function famErrRate(f){ const h = (S.prac.fam[f] || {hist:[]}).hist.slice(-5); if (!h.length) return null; return h.filter(x => !(x.q && x.l && x.p && x.c !== false)).length / h.length; }
 function libFams(blocks){ return [...new Set(LIB.filter(e => e.mag && blocks.includes(BLOQ(e.tema))).map(e => e.familia))]; }
 function readiness(blocks){ const fs = libFams(blocks); return fs.length ? fs.filter(famMastered).length / fs.length : 0; }
+function readinessCrit(blocks){ const fs = libFams(blocks); return fs.length ? fs.filter(famCritMastered).length / fs.length : 0; }
+function routeState(k){
+  const blocks = PRUEBAS[k].b, fams = libFams(blocks); const core = fams.filter(f => CORE.has(f));
+  const diagDone = !!(S.prac.diag && S.prac.diag[k]); const critPend = fams.filter(f => !famCritMastered(f)); const corePend = core.filter(f => !famCritMastered(f));
+  const calcPend = core.filter(f => famCritMastered(f) && !famMastered(f)); const sims = (S.pruebas || []).filter(x => x.k === k).slice(-2);
+  const simOk = sims.length === 2 && sims.every(x => x.ap);
+  const step = !diagDone ? 1 : corePend.length ? 2 : calcPend.length ? 3 : !simOk ? 4 : 5;
+  return {fams, core, diagDone, critPend, corePend, calcPend, simOk, step};
+}
 function critAcc(){ const all = Object.values(S.prac.fam).flatMap(f => f.hist).slice(-60); const st = {}; PST.forEach(p => { const v = all.filter(h => h[p.k] !== undefined); st[p.k] = v.length ? v.filter(h => h[p.k]).length / v.length : null; }); return {st, n: all.length}; }
 let pr = null, prFilter = 'pi1';
+let prQuick = true, prSession = null;
 function nextPrac(){
-  const blocks = PRUEBAS[prFilter].b; const fams = libFams(blocks); const r = rng(Date.now());
-  const last = S.prac.lastFam; const w = fams.map(f => { if (f === last) return 0; const er = famErrRate(f); return er === null ? 3 : famMastered(f) ? 0.4 : 1 + 4*er; });
-  let tot = w.reduce((a,b) => a+b, 0), x = r()*tot, fam = fams[0]; for (let i=0;i<fams.length;i++){ x -= w[i]; if (x <= 0){ fam = fams[i]; break; } }
+  const k = prFilter === 'all' ? 'pi1' : prFilter; const blocks = PRUEBAS[prFilter].b; const fams = libFams(blocks); const r = Math.random;
+  const rs = routeState(prFilter === 'all' ? 'pi1' : prFilter); let fam = null, diag = false;
+  if (prFilter !== 'all' && !rs.diagDone){
+    const order = fams.slice().sort((a,b) => (CORE.has(b) - CORE.has(a)));
+    fam = order.find(f => !(S.prac.fam[f] && S.prac.fam[f].diagSeen)); diag = true;
+    if (!fam){ S.prac.diag = S.prac.diag || {}; S.prac.diag[prFilter] = true; save(); diag = false; }
+  }
+  if (!fam){
+    const last = S.prac.lastFam; const stage = prFilter === 'all' ? 2 : routeState(prFilter).step;
+    const w = fams.map(f => { if (f === last && fams.length > 1) return 0; const core = CORE.has(f);
+      if (stage <= 2) return famCritMastered(f) ? 0.15 : (core ? 6 : 2) * (1 + 3*(famErrRate(f) || 0.5));
+      if (stage === 3) return core && famCritMastered(f) && !famMastered(f) ? 6 : famCritMastered(f) ? 0.3 : 2;
+      return famMastered(f) ? 0.5 : 2; });
+    let tot = w.reduce((a,b) => a+b, 0), x = r()*tot; fam = fams[0]; for (let i=0;i<fams.length;i++){ x -= w[i]; if (x <= 0){ fam = fams[i]; break; } }
+  }
   const pool = LIB.filter(e => e.familia === fam && e.mag); const seen = new Set((S.prac.seen || []).slice(-300));
   const cand = pool.filter(e => !seen.has(e.id)); const ex = (cand.length ? cand : pool)[Math.floor(r()*(cand.length ? cand.length : pool.length))];
   S.prac.lastFam = fam; S.prac.seen = (S.prac.seen || []).concat(ex.id).slice(-400);
@@ -1498,16 +1528,36 @@ function nextPrac(){
   const plans = pickN(others, 2, rr); const role = roleQ(ex);
   const opts = { q: pickN([[ex.mag,1], ...mags.map(m => [m,0])], 3, rr), l: pickN([[ex.ley,1], ...leyes.map(m => [m,0])], 3, rr), p: pickN([[ex.planteamiento,1], ...plans.map(m => [m,0])], 3, rr) };
   if (role) opts.r = pickN([[role.ok,1], ...role.alt.map(a => [a,0])], 3, rr);
-  const stations = PST.map(p => p.k).filter(k => k !== 'r' || role).filter(k => k !== 'c' || typeof ex.solucion === 'number');
-  pr = {ex, role, opts, stations, i:0, rec:{}, fb:null, hints:0, done:false};
+  const stage = prFilter === 'all' ? 2 : routeState(prFilter).step; const quick = diag || (prQuick && stage <= 2);
+  const stations = PST.map(p => p.k).filter(k => k !== 'r' || role).filter(k => k !== 'c' || (!quick && typeof ex.solucion === 'number'));
+  pr = {ex, role, opts, stations, i:0, rec:{}, fb:null, hints:0, done:false, diag, quick};
+  if (!prSession || prSession.k !== prFilter) prSession = {k:prFilter, n:0, start:Date.now()};
 }
 function prOptHtml(k){ const o = pr.opts[k]; const r = pr.rec[k] || {}; return `<div class="opts">${o.map((x,n) => { const tried = (r.tried||[]).includes(n); const cls = tried ? (x[1] ? 'ok' : 'bad') : '';
   return `<button class="opt ${cls}" data-pk="${k}" data-pn="${n}" ${r.ok || tried ? 'disabled' : ''}><span class="k">${'ABC'[n]}</span>${esc(x[0])}</button>`; }).join('')}</div>`; }
 function readyHtml(){
   const c = critAcc();
-  return `<div class="ready">${['pi1','pi2','fin'].map(k => { const v = readiness(PRUEBAS[k].b); return `<div><span>${PRUEBAS[k].n} (${PRUEBAS[k].peso})</span><b>${Math.round(v*100)} %</b><span>familias dominadas</span><div class="meter"><i style="width:${v*100}%"></i></div></div>`; }).join('')}</div>
+  return `<div class="ready">${['pi1','pi2','fin'].map(k => { const v = readiness(PRUEBAS[k].b), vc = readinessCrit(PRUEBAS[k].b); return `<div><span>${PRUEBAS[k].n} (${PRUEBAS[k].peso})</span><b>${Math.round(vc*100)} % · ${Math.round(v*100)} %</b><span>criterio · completo (con cálculo)</span><div class="meter"><i style="width:${vc*100}%;background:var(--brass)"></i></div><div class="meter"><i style="width:${v*100}%"></i></div></div>`; }).join('')}</div>
   <div class="statrow">${PST.map(p => { const v = c.st[p.k]; return `<div><b style="color:${v == null ? 'var(--muted)' : v >= .8 ? 'var(--cobro)' : v >= .5 ? 'var(--warn)' : 'var(--pago)'}">${v == null ? '—' : Math.round(v*100) + ' %'}</b><span>${p.n}</span></div>`; }).join('')}</div>
-  <p class="howto">Aciertos a la primera en los últimos ${c.n} ejercicios. «Qué te piden», «Ley o criterio» y «Planteamiento» miden el criterio. Una familia cuenta como dominada cuando aciertas las tres, más el cálculo, en tres ejercicios seguidos de esa familia.</p>`;
+  <p class="howto">Aciertos a la primera en los últimos ${c.n} ejercicios. «Qué te piden», «Ley o criterio» y «Planteamiento» miden el criterio. Un tipo tiene el criterio dominado tras dos aciertos seguidos en qué piden, ley y planteamiento (uno más si ya lo acertaste en el diagnóstico). Está dominado del todo cuando además aciertas la cuenta dos veces seguidas.</p>`;
+}
+function routeHtml(){
+  if (prFilter === 'all') return '';
+  const rs = routeState(prFilter); const P = PRUEBAS[prFilter];
+  const minCrit = rs.critPend.length * 2 * (rs.diagDone ? 2 : 1), minCalc = rs.calcPend.length * 2 * 5;
+  const steps = [
+    ['Diagnóstico exprés', `Un ejercicio de cada tipo, solo criterio (${rs.fams.length} tipos, ≈ ${Math.round(rs.fams.length*1.5)} min). Lo que ya sabes no lo repetirás.`],
+    ['Criterio del núcleo', rs.corePend.length ? `Te faltan ${rs.corePend.length} tipos de los que más salen (≈ ${rs.corePend.length*4} min en modo rápido).` : 'Hecho: dominas el criterio de los tipos que más salen.'],
+    ['Cálculo del núcleo', rs.calcPend.length ? `${rs.calcPend.length} tipos con el criterio dominado necesitan hacer la cuenta bien (≈ ${minCalc} min).` : 'Sin pendientes.'],
+    ['Dos simulacros aprobados', rs.simOk ? 'Hecho.' : 'Cuando acabes lo anterior: dos simulacros seguidos aprobados con la regla del 40 %.'],
+  ];
+  return `<div class="model" style="border-left-color:var(--brass);margin-bottom:12px">
+    <div class="eyebrow" style="margin-bottom:6px">Tu ruta mínima para la ${esc(P.n.toLowerCase())}</div>
+    <ol style="margin:0;padding-left:20px;display:grid;gap:4px">${steps.map((st,i) => `<li style="${i+1 === rs.step ? 'color:var(--fg)' : 'color:var(--muted)'}"><b style="color:${i+1 < rs.step ? 'var(--cobro)' : i+1 === rs.step ? 'var(--brass)' : 'var(--muted)'}">${i+1 < rs.step ? '✓ ' : ''}${st[0]}.</b> ${esc(st[1])}</li>`).join('')}</ol>
+    ${rs.step === 4 ? `<div class="btn-row"><button class="btn primary" data-pa="toexam">Hacer un simulacro de la ${esc(P.n.toLowerCase())}</button></div>` : ''}
+    ${rs.step === 5 ? `<p style="margin:8px 0 0;color:var(--cobro)"><b>Estás listo para esta prueba</b> según lo que mide la herramienta. Repasa 10 minutos al día para no perderlo.</p>` : ''}
+    <p class="howto" style="margin-top:8px">Esfuerzo estimado que te queda: ≈ ${Math.max(0, Math.round((rs.step <= 2 ? minCrit : 0) + (rs.step <= 3 ? minCalc : 0) + (rs.simOk ? 0 : 60)))} min. ${prSession && prSession.k === prFilter ? `Esta sesión: ${prSession.n} ejercicios.` : ''} Sesiones cortas (15–20 min) rinden más que una larga.</p>
+  </div>`;
 }
 function renderPrac(c){
   if (!LIB){ c.innerHTML = `<section class="float card"><p class="sub">Cargando la biblioteca…</p></section>`; loadLib().then(() => renderCenter()); return; }
@@ -1530,9 +1580,11 @@ function renderPrac(c){
     body = prOptHtml(k);
   }
   c.innerHTML = `<section class="float card" style="--d:.55">
-    <div class="card-head"><div class="eyebrow">Práctica de criterio · ${esc(PRUEBAS[prFilter].n)} · bloque ${BLOQ(ex.tema)} · ${esc(ex.id)}</div></div>
+    <div class="card-head"><div class="eyebrow">Práctica de criterio · ${esc(PRUEBAS[prFilter].n)} · bloque ${BLOQ(ex.tema)} · ${esc(ex.id)}${CORE.has(ex.familia) ? ' · tipo que más sale' : ''}</div></div>
     <div class="selrow"><label for="prSel" class="eyebrow">Preparar</label><select id="prSel">${Object.entries(PRUEBAS).map(([v,o]) => `<option value="${v}" ${v===prFilter?'selected':''}>${o.n}${o.peso ? ' · ' + o.peso : ''}</option>`).join('')}</select></div>
-    ${readyHtml()}
+    ${routeHtml()}
+    <details ${prFilter === 'all' ? 'open' : ''}><summary class="eyebrow" style="cursor:pointer">Ver mi preparación por prueba y por pregunta</summary>${readyHtml()}</details>
+    <label class="nofin" for="prQuick"><input type="checkbox" id="prQuick" ${prQuick ? 'checked' : ''}> <span><b style="color:var(--fg)">Modo rápido: solo criterio.</b> Mientras el criterio no esté dominado, te ahorras la cuenta: cada ejercicio lleva un minuto. ${pr.diag ? '<b style="color:var(--brass)">Diagnóstico exprés en curso.</b>' : ''}</span></label>
     <div class="chips" style="margin-top:14px">${chips}</div>
     <div class="exbox"><div>${esc(ex.enunciado)}</div><div class="q">${esc(ex.pregunta)}</div></div>
     ${pr.done ? '' : `<h2 style="font-size:20px">${esc(q)}</h2><p class="sub" style="margin:4px 0 12px">${k === 'c' ? 'Calcula con tu calculadora no financiera; la del panel 3 te enseña la fórmula con tus números.' : 'Elige antes de calcular nada: aquí se decide el ejercicio.'}</p>`}
@@ -1551,6 +1603,7 @@ function prChoose(k, n){
 function prFinish(){ pr.done = true; pr.fb = null;
   const h = {t:Date.now()}; pr.stations.forEach(s => { h[s] = !!(pr.rec[s] && pr.rec[s].first); }); if (pr.stations.includes('c') && pr.rec.c && pr.rec.c.skip) h.c = false;
   const f = famStats(pr.ex.familia); f.n++; f.hist.push(h); f.hist = f.hist.slice(-12);
+  if (pr.diag){ f.diagSeen = true; f.diagOk = critOk(h); } if (prSession) prSession.n++;
   pr.stations.filter(s => !h[s]).forEach(s => S.errs.push({ex:pr.ex.id, k:'prac-'+s, err:{q:'comprension', r:'perspectiva', l:'criterio', p:'planteamiento', c:'calculo'}[s], at:Date.now()}));
   save(); calcOut(); renderCenter(); }
 $('#center').addEventListener('click', e => {
@@ -1559,6 +1612,7 @@ $('#center').addEventListener('click', e => {
   const a = b.dataset.pa; if (!a) return;
   if (a === 'adv'){ pr.fb = null; pr.i++; if (pr.i >= pr.stations.length) prFinish(); else renderCenter(); }
   else if (a === 'next'){ nextPrac(); calcOut(); renderCenter(); }
+  else if (a === 'toexam'){ xmSel = prFilter; xm = null; setMode('exam'); }
   else if (a === 'hint'){ pr.hints++; pr.fb = {kind:'hint', tag:'Paso ' + pr.hints, html: pr.ex.pasos.slice(0, pr.hints).map(esc).join('<br>')}; renderCenter(); }
   else if (a === 'skip'){ const r = pr.rec.c = pr.rec.c || {tries:0}; r.first = false; r.skip = true; prFinish(); }
   else if (a === 'num'){ const v = parseNum($('#prNum').value); const ex = pr.ex; if (!Number.isFinite(v)){ pr.fb = {kind:'hint', tag:'Formato', html:'Escribe un número.'}; renderCenter(); return; }
@@ -1566,7 +1620,7 @@ $('#center').addEventListener('click', e => {
     if (r.tries === 1) r.first = ok && pr.hints === 0;
     if (ok){ r.ok = true; prFinish(); } else { pr.fb = {kind:'bad', tag:'Cálculo', html: Math.abs(v/ex.solucion - 1) > .2 ? 'Lejos del resultado: revisa la base (360/365), el número de periodos o si el tipo está en la unidad correcta.' : 'Cerca: revisa redondeos intermedios; calcula con todos los decimales y redondea al final.'}; renderCenter(); } }
 });
-$('#center').addEventListener('change', e => { if (e.target.id === 'prSel'){ prFilter = e.target.value; pr = null; renderCenter(); } });
+$('#center').addEventListener('change', e => { if (e.target.id === 'prSel'){ prFilter = e.target.value; pr = null; renderCenter(); } if (e.target.id === 'prQuick'){ prQuick = e.target.checked; if (pr && !pr.done && pr.i === 0){ pr = null; } renderCenter(); } });
 $('#center').addEventListener('keydown', e => { if (mode === 'prac' && e.key === 'Enter' && e.target.id === 'prNum'){ e.preventDefault(); $('[data-pa="num"]').click(); } });
 
 /* Teoría activa: recuerdo escrito y repaso por cajas */
@@ -1595,7 +1649,7 @@ $('#center').addEventListener('click', e => { if (mode !== 'teo' || !tq) return;
 
 /* Examen por prueba: regla del 40 % por ejercicio */
 let xm = null, xmSel = 'pi1';
-function buildExam(k){ const P = PRUEBAS[k]; const r = rng(Date.now()); const n = k === 'fin' ? 4 : 3;
+function buildExam(k){ const P = PRUEBAS[k]; const r = Math.random; const n = k === 'fin' ? 4 : 3;
   const fams = pickN(libFams(P.b), n, r); const items = fams.map(f => { const pool = LIB.filter(e => e.familia === f && e.mag && typeof e.solucion === 'number'); return pool[Math.floor(r()*pool.length)]; });
   const teo = LIB.filter(e => e.tipo === 'teoria' && P.b.includes(BLOQ(e.tema))); const t = teo[Math.floor(r()*teo.length)];
   xm = {k, t, items, i:-1, ans:[], teoTxt:'', teoScore:null, done:false, start:Date.now()};
