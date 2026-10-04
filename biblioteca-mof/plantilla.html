@@ -39,16 +39,16 @@ h1{font:800 clamp(30px,4.6vw,52px)/1 var(--f-display);margin:8px 0 10px;text-wra
 footer{margin-top:40px;color:var(--faint);font-size:12.5px;max-width:90ch}
 </style>
 <div class="wrap">
-  <div class="eyebrow">Matemática de las Operaciones Financieras · 1.º ADE · Universidad de Murcia · temario de la guía docente 2022/23</div>
+  <div class="eyebrow">Matemática de las Operaciones Financieras · 1.º ADE · Universidad de Murcia · temario de la guía docente 2026/27</div>
   <h1>Biblioteca de <em>ejercicios</em> MOF</h1>
   <p class="lead">Ejercicios originales ordenados por los 12 temas y 4 bloques de la guía docente de la asignatura (código 2346). Cada uno tiene su solución comprobada por dos vías de cálculo, la ley y la base declaradas en el enunciado, quién es acreedor y deudor, el patrón que entrena y el error típico.</p>
-  <div class="warn"><b>Cómo se examina, según la guía 2022/23:</b> examen final teórico-práctico (70 %) y dos pruebas intermedias obligatorias (15 % cada una). Para aprobar hay que sacar al menos un 40 % en teoría y en práctica y en cada uno de los cuatro bloques; la teoría se corrige primero. Calculadora no financiera. <b>Pendiente de confirmar:</b> la guía del curso actual y las convenciones del Aula Virtual. No se reproducen ejercicios ni exámenes de la asignatura.</div>
+  <div class="warn"><b>Cómo se examina en 2026/27 (guía oficial):</b> 1.ª prueba intermedia de los bloques 1 y 2 (30 %; con un 50 % se elimina esa materia, si no se recupera junto al final); 2.ª prueba intermedia del bloque 3 (15 %); examen final de los bloques 3 y 4 (55 %). En todas hace falta un 40 % en teoría y un 40 % en <b>cada</b> ejercicio práctico, y la práctica no se corrige si no se supera la teoría. Calculadora no financiera. No se reproducen ejercicios ni exámenes de la asignatura.</div>
   <div class="stats" id="stats"></div>
   <div class="bar" role="search">
     <input type="search" id="q" placeholder="Buscar: descuento, prepagable, remesa, hamburgués…">
     <select id="fTema" aria-label="Tema"></select>
     <select id="fNivel" aria-label="Nivel"><option value="">Todos los niveles</option><option value="1">Nivel 1 · directo</option><option value="2">Nivel 2 · despejar o combinar</option><option value="3">Nivel 3 · criterio y comparación</option></select>
-    <select id="fTipo" aria-label="Tipo"><option value="">Cálculo y criterio</option><option value="calculo">Solo cálculo</option><option value="criterio">Solo criterio</option></select>
+    <select id="fTipo" aria-label="Tipo"><option value="">Todos los tipos</option><option value="calculo">Solo cálculo</option><option value="criterio">Solo criterio</option><option value="teoria">Teoría y demostraciones</option></select>
     <button class="btn primary" id="rand">Simulacro de 6</button>
   </div>
   <div class="count" id="count" aria-live="polite"></div>
@@ -68,7 +68,7 @@ $('#stats').innerHTML = `<div class="stat"><b>${E.length}</b><span>ejercicios</s
 let shown = 30, current = E;
 function card(e){
   const amp = e.tema.startsWith('Ampliación');
-  return `<article class="ex" data-id="${e.id}"><div class="ex-head"><span class="tag id">${e.id}</span><span class="tag ${amp?'amp':''}">${esc(e.tema)}</span><span class="tag">Nivel ${e.nivel}</span>${e.tipo==='criterio'?'<span class="tag crit">Criterio</span>':''}</div>
+  return `<article class="ex" data-id="${e.id}"><div class="ex-head"><span class="tag id">${e.id}</span><span class="tag ${amp?'amp':''}">${esc(e.tema)}</span><span class="tag">Nivel ${e.nivel}</span>${e.tipo==='criterio'?'<span class="tag crit">Criterio</span>':''}${e.tipo==='teoria'?'<span class="tag amp">Teoría</span>':''}</div>
   <h3>${esc(e.familia)}</h3><p>${esc(e.enunciado)}</p><p class="q">${esc(e.pregunta)}</p>
   <div class="tools">${e.solucion!=null ? `<label class="sr" for="in_${e.id}" hidden>Tu resultado</label><input id="in_${e.id}" inputmode="decimal" placeholder="Tu resultado (${esc(e.unidad.split(' ')[0])})"><button class="btn" data-check="${e.id}">Comprobar</button>` : ''}<button class="btn" data-show="${e.id}">Ver planteamiento y solución</button><span class="res" id="r_${e.id}"></span></div>
   <div class="detail" id="d_${e.id}" hidden><span class="k">Planteamiento</span>${esc(e.planteamiento)}<span class="k">Pasos</span><ol>${e.pasos.map(p=>`<li>${esc(p)}</li>`).join('')}</ol>${e.solucion!=null?`<span class="k">Solución</span><b>${fmt(e.solucion, e.unidad.startsWith('%')||e.unidad.startsWith('años')||e.unidad.startsWith('térm')?4:2)} ${esc(e.unidad)}</b>`:''}

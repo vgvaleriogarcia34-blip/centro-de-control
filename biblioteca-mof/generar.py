@@ -646,8 +646,44 @@ def tantos_efectivos_prest():
 CRIT_EXTRA = [
  ("¿Ley de capitalización o de descuento?", "Te piden 'el capital que hay que entregar hoy para disponer de X dentro de un año'.", "Es una operación de descuento (valor actual), aunque se resuelva con la ley de capitalización inversa si el enunciado lo indica.", "Identificar el sentido de la operación antes de la fórmula."),
  ("¿Comparación de capitales?", "Dos capitales (5.000 €, año 1) y (5.200 €, año 2) y una ley de capitalización compuesta al 3 %.", "Al 3 % el segundo vale más en cualquier fecha común: 5.200/1,03 = 5.048,54 > 5.000.", "Preferencia financiera = comparar en la misma fecha con una ley."),
- ("¿Qué parte del examen?", "La guía exige al menos un 40 % en teoría y práctica y en cada uno de los cuatro bloques.", "Un bloque débil puede suspender la asignatura aunque la media sea alta: hay que entrenar todos los bloques.", "Repartir el entrenamiento por bloques, no por gusto."),
+ ("¿Qué parte del examen?", "Guía 2026/27: hay que sacar un 40 % en teoría y un 40 % en cada ejercicio práctico; la teoría se corrige primero.", "Un ejercicio práctico flojo o una teoría por debajo del 40 % suspende aunque la media sea alta: hay que entrenar teoría y todos los tipos de ejercicio.", "Repartir el entrenamiento por partes del examen, no por gusto."),
 ]
+
+
+# ======== Teoría y demostraciones (la guía corrige primero la teoría: mínimo 40 %) ========
+TEORIA = [
+ (T1,"Define capital financiero y explica por qué (C₁, t₁) y (C₂, t₂) no se comparan solo por la cuantía.","Un capital financiero es un par (C, t): cuantía y momento de disponibilidad. Dos capitales se comparan con una ley financiera que los lleva a una misma fecha; a igual cuantía se prefiere el más próximo (principio de subestimación de capitales futuros).","Cuantía y tiempo son inseparables."),
+ (T1,"¿Qué es una ley financiera y qué propiedades debe cumplir una ley de capitalización?","Una función que asigna a cada capital su equivalente en otra fecha. Una ley de capitalización L(t, p) debe ser positiva, valer 1 cuando t = p y ser creciente con el tiempo de capitalización.","Conocer las propiedades sirve para reconocer leyes válidas."),
+ (T1,"Elementos de una operación financiera: prestación, contraprestación y equilibrio financiero.","Prestación: capitales que entrega una parte; contraprestación: los que entrega la otra. La operación está en equilibrio cuando ambas tienen el mismo valor en cualquier fecha con la ley pactada.","Toda operación se plantea como igualdad prestación = contraprestación."),
+ (T2,"Demuestra que en capitalización simple los tantos equivalentes son proporcionales: i_m = i/m.","Equivalencia: C(1 + i·1) = C(1 + i_m·m) ⇒ i = m·i_m ⇒ i_m = i/m.","Equivalencia = mismo montante en el mismo plazo."),
+ (T2,"Demuestra la relación entre tantos equivalentes en capitalización compuesta.","C(1 + i) = C(1 + i_m)^m ⇒ i_m = (1 + i)^(1/m) − 1; con nominal j(m) = m·i_m.","En compuesta los tantos equivalentes no son proporcionales."),
+ (T2,"Compara gráficamente la capitalización simple y la compuesta. ¿Cuándo da más montante cada una?","Para 0 < t < 1, (1 + i·t) > (1 + i)^t; en t = 1 coinciden; para t > 1 la compuesta es mayor. La simple es lineal; la compuesta, exponencial.","El plazo decide qué ley favorece al acreedor."),
+ (T2,"Deduce el descuento comercial y explica el tanto de interés equivalente al tanto de descuento.","D = N·d·t; E = N(1 − d·t). Equivalente: N(1 − d·t)(1 + i·t) = N ⇒ i = d/(1 − d·t), mayor que d.","El descuento comercial se calcula sobre el nominal."),
+ (T3,"Demuestra que en descuento comercial el vencimiento medio no depende del tanto.","Σ N_s(1 − d·t_s) = (Σ N_s)(1 − d·t) ⇒ Σ N_s·t_s = t·Σ N_s ⇒ t = Σ N_s t_s / Σ N_s, sin d.","Vencimiento medio = media ponderada por nominales."),
+ (T3,"Diferencia entre vencimiento común, vencimiento medio y sustitución de capitales.","Común: se busca la fecha de un capital dado que sustituye a varios. Medio: caso particular en que el capital único es la suma de nominales. Sustitución: se fija la fecha y se busca la cuantía.","Saber qué incógnita pide cada caso."),
+ (T4,"¿Qué es el tanto efectivo (TAE) de una operación de descuento y qué gastos incluye?","Es el tanto anual compuesto que iguala el efectivo líquido recibido con el nominal pagado al vencimiento: E(1 + TAE)^(t/365) = N. Incluye descuento, comisiones y gastos que cobra el banco; según la normativa, excluye los pagados a terceros.","El coste real no es el tanto de descuento."),
+ (T4,"Explica qué es una letra de resaca y por qué su nominal es mayor que el del efecto impagado.","Es la letra que gira el librador al deudor para recuperar el impagado y todos los gastos. Su nominal debe cubrir el cargo y los costes de descontarla: Nᵣ(1 − d·t − c) = cargo.","Se calcula hacia atrás desde el efectivo necesario."),
+ (T5,"Describe el método hamburgués de liquidación de cuentas corrientes.","Se ordenan los movimientos por fecha valor, se calcula el saldo tras cada uno y los días que se mantiene; números = saldo × días; intereses = Σ números · i / base, separando acreedores y deudores.","Cada saldo genera intereses solo mientras se mantiene."),
+ (T5,"Clasifica las cuentas corrientes según el tipo de interés.","Interés recíproco (mismo tipo para saldos acreedores y deudores), no recíproco (tipos distintos) y variable (el tipo cambia en el periodo).","El signo del saldo decide qué tipo aplicar si no hay reciprocidad."),
+ (T6I,"Define renta y valor capital; clasifica las rentas.","Renta: sucesión de capitales con vencimientos periódicos. Valor capital en t: suma de todos los términos valorados en t. Clasificación: constantes/variables, temporales/perpetuas, pospagables/prepagables, inmediatas/diferidas/anticipadas, enteras/fraccionadas.","Clasificar la renta elige la fórmula."),
+ (T7,"Demuestra el valor actual de una renta constante, temporal, pospagable e inmediata.","V₀ = c[(1+i)^−1 + … + (1+i)^−n], progresión geométrica de razón (1+i)^−1: V₀ = c · (1 − (1+i)^−n)/i = c · a_n¬i.","Suma de una progresión geométrica."),
+ (T7,"Demuestra que ä_n¬i = (1 + i) · a_n¬i y que s_n¬i = a_n¬i · (1 + i)^n.","Cada término prepagable vence un periodo antes que el pospagable: se valora (1+i) veces más. El valor final es el actual capitalizado n periodos.","Relaciones entre valores, no fórmulas nuevas."),
+ (T7,"Deduce el valor de una renta perpetua pospagable.","V₀ = lim n→∞ c·(1 − (1+i)^−n)/i = c/i, porque (1+i)^−n → 0 si i > 0.","Límite de la temporal."),
+ (T7,"Diferencia entre renta diferida y renta anticipada.","Diferida h periodos: empieza tras h periodos; se valora h·a_n¬i·(1+i)^−h. Anticipada p periodos: se valora p periodos después de su final: s_n¬i·(1+i)^p.","Diferir mueve el inicio; anticipar mueve el punto de valoración."),
+ (T8,"Deduce el valor actual de una renta en progresión aritmética pospagable.","Con términos c, c+d, …: V₀ = (c + d/i + n·d) · a_n¬i − n·d/i.","Descomponer en renta constante más rentas escalonadas."),
+ (T9,"Deduce el valor actual de una renta en progresión geométrica pospagable y su condición en perpetuidad.","V₀ = c[1 − qⁿ(1+i)^−n]/(1 + i − q) si q ≠ 1 + i; si q = 1 + i, V₀ = n·c/(1+i). Perpetua: c/(1 + i − q), solo si q < 1 + i.","El cociente q/(1+i) gobierna la convergencia."),
+ (T11,"Planteamiento general de una operación de amortización: relación de recurrencia.","C_k = C_{k−1}(1 + i) − a_k; a_k = I_k + A_k; I_k = C_{k−1}·i; Σ A_k = C₀; C₀ = Σ a_k (1+i)^−k.","Cuatro igualdades que valen para cualquier método."),
+ (T11,"Capital pendiente por el método prospectivo y retrospectivo.","Prospectivo: C_k = valor en k de los términos que faltan. Retrospectivo: C_k = C₀(1+i)^k − valor en k de los términos pagados. Ambos coinciden por el equilibrio financiero.","Dos caminos, mismo resultado: sirve para comprobar."),
+ (T11,"Método lineal: demuestra que los términos amortizativos decrecen en progresión aritmética de razón −A·i.","A_k = C₀/n constante; I_k = C_{k−1}i y C_k = C_{k−1} − A ⇒ a_{k+1} − a_k = (C_k − C_{k−1})i = −A·i.","Amortización fija, intereses decrecientes."),
+ (T11,"Método francés: demuestra que las cuotas de amortización crecen en progresión geométrica de razón (1 + i).","a constante: A_{k+1} + C_k i = A_k + C_{k−1} i ⇒ A_{k+1} = A_k + A_k i = A_k(1 + i). Por tanto m_k = A₁·s_k¬i.","De aquí sale el total amortizado."),
+ (T12,"Carencia parcial frente a total: efecto sobre el capital y los términos.","Parcial: se pagan intereses y el capital no cambia; total: no se paga nada y C₀ se capitaliza (1+i)^h. Después se amortiza con n − h términos.","La carencia mueve pagos, no los elimina."),
+ (T12,"Amortización anticipada: opciones y compensación.","Tras pagar el término k, se entrega X: el pendiente pasa a C_k − X. Se puede mantener el plazo (baja el término) o el término (baja el plazo). La compensación es un porcentaje de X que cobra el prestamista.","Elegir según liquidez o ahorro de intereses."),
+ (T12,"Tantos efectivos de un préstamo: prestatario, prestamista y TAE.","Prestatario: iguala lo recibido neto de todos sus gastos con los términos. Prestamista: lo entregado menos lo que cobra (comisiones) con los términos. TAE: según normativa, incluye los gastos que percibe la entidad.","Cada parte tiene su propio tanto efectivo."),
+]
+def teoria_items():
+    for tema, q, a, pat in TEORIA:
+        add(tema, "Teoría y demostraciones", 2, q, "Responde y, si procede, demuestra.", None, "", "Respuesta teórica", [a], pat,
+            "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.", {}, tipo="teoria")
 
 # ---------------- Criterio sin cálculo ----------------
 CRIT = [
@@ -676,6 +712,7 @@ for fn, k in FAMS:
     while len(OUT) - start < k and tries < k*4:
         fn(); tries += 1
 criterio_items()
+teoria_items()
 
 # deduplicar por enunciado y numerar
 seen=set(); final=[]
@@ -684,8 +721,8 @@ for o in OUT:
     if h in seen: continue
     seen.add(h); final.append(o)
 for n,o in enumerate(final,1): o["id"] = f"MOF-{n:03d}"
-meta = {"titulo":"Biblioteca de ejercicios MOF — temario de la guía docente UM 2022/23 (asignatura 2346, 1.º ADE)",
-        "estado":"Ejercicios originales verificados, organizados por los 12 temas de la guía 2022/23. Convenciones pendientes de confirmar con la guía vigente y los materiales del Aula Virtual.",
+meta = {"titulo":"Biblioteca de ejercicios MOF — temario de la guía docente UM 2026/27 (asignatura 2346, 1.º ADE)",
+        "estado":"Ejercicios originales verificados, organizados por los 12 temas de la guía 2026/27. Convenciones pendientes de confirmar con la guía vigente y los materiales del Aula Virtual.",
         "convenciones":"Cada enunciado declara su base (360 o 365) y su ley. Redondeo a 2 decimales al presentar; cálculo interno sin redondear.",
         "total":len(final)}
 json.dump({"meta":meta,"ejercicios":final}, open("ejercicios.json","w"), ensure_ascii=False, indent=1)

@@ -271,7 +271,7 @@ footer{margin-top:34px; color:var(--faint); font-size:12.5px; max-width:90ch}
       <p>Cada ejercicio pasa por ocho preguntas: qué operación es, quién paga y quién cobra, qué se mueve y cuándo, qué falta, con qué se compara, qué esperas, cómo se calcula y qué demuestra. Calcular es solo una de ellas.</p>
     </div>
     <div class="status">
-      <span class="pill" id="pillProv"><span class="dot"></span><span id="provTxt">Temario: guía UM 2022/23</span></span>
+      <span class="pill" id="pillProv"><span class="dot"></span><span id="provTxt">Temario: guía UM 2026/27</span></span>
       <span class="pill" id="pillAI"><span class="dot"></span><span id="aiTxt">Tutor: comprobando…</span></span>
     </div>
     <nav class="modes" aria-label="Modo de trabajo">
@@ -1226,7 +1226,7 @@ $('#patterns').addEventListener('click', e => { const b = e.target.closest('.pca
 
 /* ============ Configuración ============ */
 function loadCfg(){ $('#cfgProg').value = S.cfg.prog; $('#cfgEj').value = S.cfg.ej; $('#cfgConv').value = S.cfg.conv; provPill(); }
-function provPill(){ const has = S.cfg.prog.trim() || S.cfg.ej.trim() || S.cfg.conv.trim(); $('#pillProv').classList.toggle('ok', !!has); $('#provTxt').textContent = has ? 'Materiales del alumno cargados · tutor adaptado' : 'Temario: guía UM 2022/23'; }
+function provPill(){ const has = S.cfg.prog.trim() || S.cfg.ej.trim() || S.cfg.conv.trim(); $('#pillProv').classList.toggle('ok', !!has); $('#provTxt').textContent = has ? 'Materiales del alumno cargados · tutor adaptado' : 'Temario: guía UM 2026/27'; }
 $('#cfgSave').addEventListener('click', () => { S.cfg = {prog:$('#cfgProg').value, ej:$('#cfgEj').value, conv:$('#cfgConv').value}; save(); provPill(); $('#cfgMsg').textContent = 'Guardado en este navegador. El tutor los usará como referencia.'; });
 $('#cfgClear').addEventListener('click', () => { S.cfg = {prog:'',ej:'',conv:''}; save(); loadCfg(); $('#cfgMsg').textContent = 'Materiales borrados.'; });
 
@@ -1248,7 +1248,7 @@ Reglas:
 - Si no puedes verificar un resultado numérico, dilo. No inventes precisión. No afirmes que recordarás nada fuera de esta conversación.
 - Español claro de primero de ADE. Mensajes cortos, una pregunta cada vez, sin exigir muchas respuestas simultáneas. Tablas solo si aclaran flujos o alternativas.
 - Al terminar un ejercicio resuelto, cierra con «El patrón que debes reconocer en otro problema es…» y «Esta conclusión dejaría de ser válida si…».`;
-const GUIA = `GUÍA DOCENTE UM 2022/23 (asignatura 2346, 1.º ADE): Bloque 1 Conceptos y leyes (T1 conceptos básicos; T2 capitalización simple, compuesta, descuento comercial, tantos de distinta frecuencia; T3 vencimiento común y medio, sustitución, prórroga). Bloque 2 Corto plazo (T4 descuento bancario, remesas, TAE, letras persiana, impagados y resaca; T5 cuentas corrientes, hamburgués, remuneradas, crédito y TAE). Bloque 3 Rentas (T6 introducción; T7 constantes pos/prepagables, perpetuas, diferidas, anticipadas, tanto variable; T8 aritméticas; T9 geométricas, con cuantía fraccionada). Bloque 4 Amortización (T10-11 cuotas constantes y francés; T12 carencia, interés variable, indiciados, anticipada, compensación, tantos efectivos). Evaluación: final teórico-práctico 70 %, dos pruebas intermedias de 15 %; mínimo 40 % en teoría, práctica y cada bloque; calculadora no financiera. Convención observada: nominal anual con pagos mensuales → i12 = j/12; notación a_n¬i, S_n¬i, Ck, Ak, Ik, mk.`;
+const GUIA = `GUÍA DOCENTE UM 2026/27 (asignatura 2346, 1.º ADE): Bloque 1 Conceptos y leyes (T1 conceptos básicos; T2 capitalización simple, compuesta, descuento comercial, tantos de distinta frecuencia; T3 vencimiento común y medio, sustitución, prórroga). Bloque 2 Corto plazo (T4 descuento bancario, remesas, TAE, letras persiana, impagados y resaca; T5 cuentas corrientes, hamburgués, remuneradas, crédito y TAE). Bloque 3 Rentas (T6 introducción; T7 constantes pos/prepagables, perpetuas, diferidas, anticipadas, tanto variable; T8 aritméticas; T9 geométricas, con cuantía fraccionada). Bloque 4 Amortización (T10-11 lineal y francés; T12 carencia, interés variable, indiciados, anticipada, compensación, tantos efectivos). Evaluación: 1.ª prueba intermedia bloques 1-2 (30 %, elimina con 50 %), 2.ª prueba intermedia bloque 3 (15 %), final bloques 3-4 (55 %); mínimo 40 % en teoría y 40 % en cada ejercicio práctico; la práctica no se corrige si no se supera la teoría; la teoría incluye demostraciones; calculadora no financiera. Convención observada: nominal anual con pagos mensuales → i12 = j/12; notación a_n¬i, S_n¬i, Ck, Ak, Ik, mk.`;
 function ctxText(){
   const ex = run.ex; const st = STEPS[run.step];
   const errs = []; for (const k in run.rec) run.rec[k].errs.forEach(e => errs.push(`${k}: ${ERR[e].n}`));

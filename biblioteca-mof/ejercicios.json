@@ -1,9 +1,9 @@
 {
  "meta": {
-  "titulo": "Biblioteca de ejercicios MOF — temario de la guía docente UM 2022/23 (asignatura 2346, 1.º ADE)",
-  "estado": "Ejercicios originales verificados, organizados por los 12 temas de la guía 2022/23. Convenciones pendientes de confirmar con la guía vigente y los materiales del Aula Virtual.",
+  "titulo": "Biblioteca de ejercicios MOF — temario de la guía docente UM 2026/27 (asignatura 2346, 1.º ADE)",
+  "estado": "Ejercicios originales verificados, organizados por los 12 temas de la guía 2026/27. Convenciones pendientes de confirmar con la guía vigente y los materiales del Aula Virtual.",
   "convenciones": "Cada enunciado declara su base (360 o 365) y su ley. Redondeo a 2 decimales al presentar; cálculo interno sin redondear.",
-  "total": 948
+  "total": 975
  },
  "ejercicios": [
   {
@@ -22613,19 +22613,532 @@
    "familia": "Criterio: leer el enunciado sin calcular",
    "nivel": 1,
    "tipo": "criterio",
-   "enunciado": "La guía exige al menos un 40 % en teoría y práctica y en cada uno de los cuatro bloques.",
+   "enunciado": "Guía 2026/27: hay que sacar un 40 % en teoría y un 40 % en cada ejercicio práctico; la teoría se corrige primero.",
    "pregunta": "¿Qué parte del examen?",
    "solucion": null,
    "unidad": "",
    "planteamiento": "Sin cálculo",
    "pasos": [
-    "Un bloque débil puede suspender la asignatura aunque la media sea alta: hay que entrenar todos los bloques."
+    "Un ejercicio práctico flojo o una teoría por debajo del 40 % suspende aunque la media sea alta: hay que entrenar teoría y todos los tipos de ejercicio."
    ],
-   "patron": "Repartir el entrenamiento por bloques, no por gusto.",
+   "patron": "Repartir el entrenamiento por partes del examen, no por gusto.",
    "error_tipico": "Responder calculando sin haber situado la pregunta.",
    "partes": {},
-   "criterio": "Repartir el entrenamiento por bloques, no por gusto.",
+   "criterio": "Repartir el entrenamiento por partes del examen, no por gusto.",
    "id": "MOF-948"
+  },
+  {
+   "tema": "T01 Conceptos básicos",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Define capital financiero y explica por qué (C₁, t₁) y (C₂, t₂) no se comparan solo por la cuantía.",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "Un capital financiero es un par (C, t): cuantía y momento de disponibilidad. Dos capitales se comparan con una ley financiera que los lleva a una misma fecha; a igual cuantía se prefiere el más próximo (principio de subestimación de capitales futuros)."
+   ],
+   "patron": "Cuantía y tiempo son inseparables.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-949"
+  },
+  {
+   "tema": "T01 Conceptos básicos",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "¿Qué es una ley financiera y qué propiedades debe cumplir una ley de capitalización?",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "Una función que asigna a cada capital su equivalente en otra fecha. Una ley de capitalización L(t, p) debe ser positiva, valer 1 cuando t = p y ser creciente con el tiempo de capitalización."
+   ],
+   "patron": "Conocer las propiedades sirve para reconocer leyes válidas.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-950"
+  },
+  {
+   "tema": "T01 Conceptos básicos",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Elementos de una operación financiera: prestación, contraprestación y equilibrio financiero.",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "Prestación: capitales que entrega una parte; contraprestación: los que entrega la otra. La operación está en equilibrio cuando ambas tienen el mismo valor en cualquier fecha con la ley pactada."
+   ],
+   "patron": "Toda operación se plantea como igualdad prestación = contraprestación.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-951"
+  },
+  {
+   "tema": "T02 Leyes financieras",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Demuestra que en capitalización simple los tantos equivalentes son proporcionales: i_m = i/m.",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "Equivalencia: C(1 + i·1) = C(1 + i_m·m) ⇒ i = m·i_m ⇒ i_m = i/m."
+   ],
+   "patron": "Equivalencia = mismo montante en el mismo plazo.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-952"
+  },
+  {
+   "tema": "T02 Leyes financieras",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Demuestra la relación entre tantos equivalentes en capitalización compuesta.",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "C(1 + i) = C(1 + i_m)^m ⇒ i_m = (1 + i)^(1/m) − 1; con nominal j(m) = m·i_m."
+   ],
+   "patron": "En compuesta los tantos equivalentes no son proporcionales.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-953"
+  },
+  {
+   "tema": "T02 Leyes financieras",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Compara gráficamente la capitalización simple y la compuesta. ¿Cuándo da más montante cada una?",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "Para 0 < t < 1, (1 + i·t) > (1 + i)^t; en t = 1 coinciden; para t > 1 la compuesta es mayor. La simple es lineal; la compuesta, exponencial."
+   ],
+   "patron": "El plazo decide qué ley favorece al acreedor.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-954"
+  },
+  {
+   "tema": "T02 Leyes financieras",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Deduce el descuento comercial y explica el tanto de interés equivalente al tanto de descuento.",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "D = N·d·t; E = N(1 − d·t). Equivalente: N(1 − d·t)(1 + i·t) = N ⇒ i = d/(1 − d·t), mayor que d."
+   ],
+   "patron": "El descuento comercial se calcula sobre el nominal.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-955"
+  },
+  {
+   "tema": "T03 Unificación de capitales",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Demuestra que en descuento comercial el vencimiento medio no depende del tanto.",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "Σ N_s(1 − d·t_s) = (Σ N_s)(1 − d·t) ⇒ Σ N_s·t_s = t·Σ N_s ⇒ t = Σ N_s t_s / Σ N_s, sin d."
+   ],
+   "patron": "Vencimiento medio = media ponderada por nominales.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-956"
+  },
+  {
+   "tema": "T03 Unificación de capitales",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Diferencia entre vencimiento común, vencimiento medio y sustitución de capitales.",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "Común: se busca la fecha de un capital dado que sustituye a varios. Medio: caso particular en que el capital único es la suma de nominales. Sustitución: se fija la fecha y se busca la cuantía."
+   ],
+   "patron": "Saber qué incógnita pide cada caso.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-957"
+  },
+  {
+   "tema": "T04 Operaciones activas a corto plazo",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "¿Qué es el tanto efectivo (TAE) de una operación de descuento y qué gastos incluye?",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "Es el tanto anual compuesto que iguala el efectivo líquido recibido con el nominal pagado al vencimiento: E(1 + TAE)^(t/365) = N. Incluye descuento, comisiones y gastos que cobra el banco; según la normativa, excluye los pagados a terceros."
+   ],
+   "patron": "El coste real no es el tanto de descuento.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-958"
+  },
+  {
+   "tema": "T04 Operaciones activas a corto plazo",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Explica qué es una letra de resaca y por qué su nominal es mayor que el del efecto impagado.",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "Es la letra que gira el librador al deudor para recuperar el impagado y todos los gastos. Su nominal debe cubrir el cargo y los costes de descontarla: Nᵣ(1 − d·t − c) = cargo."
+   ],
+   "patron": "Se calcula hacia atrás desde el efectivo necesario.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-959"
+  },
+  {
+   "tema": "T05 Operaciones pasivas a corto plazo",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Describe el método hamburgués de liquidación de cuentas corrientes.",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "Se ordenan los movimientos por fecha valor, se calcula el saldo tras cada uno y los días que se mantiene; números = saldo × días; intereses = Σ números · i / base, separando acreedores y deudores."
+   ],
+   "patron": "Cada saldo genera intereses solo mientras se mantiene.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-960"
+  },
+  {
+   "tema": "T05 Operaciones pasivas a corto plazo",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Clasifica las cuentas corrientes según el tipo de interés.",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "Interés recíproco (mismo tipo para saldos acreedores y deudores), no recíproco (tipos distintos) y variable (el tipo cambia en el periodo)."
+   ],
+   "patron": "El signo del saldo decide qué tipo aplicar si no hay reciprocidad.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-961"
+  },
+  {
+   "tema": "T06 Introducción a las rentas",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Define renta y valor capital; clasifica las rentas.",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "Renta: sucesión de capitales con vencimientos periódicos. Valor capital en t: suma de todos los términos valorados en t. Clasificación: constantes/variables, temporales/perpetuas, pospagables/prepagables, inmediatas/diferidas/anticipadas, enteras/fraccionadas."
+   ],
+   "patron": "Clasificar la renta elige la fórmula.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-962"
+  },
+  {
+   "tema": "T07 Rentas discretas constantes",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Demuestra el valor actual de una renta constante, temporal, pospagable e inmediata.",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "V₀ = c[(1+i)^−1 + … + (1+i)^−n], progresión geométrica de razón (1+i)^−1: V₀ = c · (1 − (1+i)^−n)/i = c · a_n¬i."
+   ],
+   "patron": "Suma de una progresión geométrica.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-963"
+  },
+  {
+   "tema": "T07 Rentas discretas constantes",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Demuestra que ä_n¬i = (1 + i) · a_n¬i y que s_n¬i = a_n¬i · (1 + i)^n.",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "Cada término prepagable vence un periodo antes que el pospagable: se valora (1+i) veces más. El valor final es el actual capitalizado n periodos."
+   ],
+   "patron": "Relaciones entre valores, no fórmulas nuevas.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-964"
+  },
+  {
+   "tema": "T07 Rentas discretas constantes",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Deduce el valor de una renta perpetua pospagable.",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "V₀ = lim n→∞ c·(1 − (1+i)^−n)/i = c/i, porque (1+i)^−n → 0 si i > 0."
+   ],
+   "patron": "Límite de la temporal.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-965"
+  },
+  {
+   "tema": "T07 Rentas discretas constantes",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Diferencia entre renta diferida y renta anticipada.",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "Diferida h periodos: empieza tras h periodos; se valora h·a_n¬i·(1+i)^−h. Anticipada p periodos: se valora p periodos después de su final: s_n¬i·(1+i)^p."
+   ],
+   "patron": "Diferir mueve el inicio; anticipar mueve el punto de valoración.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-966"
+  },
+  {
+   "tema": "T08 Rentas en progresión aritmética",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Deduce el valor actual de una renta en progresión aritmética pospagable.",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "Con términos c, c+d, …: V₀ = (c + d/i + n·d) · a_n¬i − n·d/i."
+   ],
+   "patron": "Descomponer en renta constante más rentas escalonadas.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-967"
+  },
+  {
+   "tema": "T09 Rentas en progresión geométrica",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Deduce el valor actual de una renta en progresión geométrica pospagable y su condición en perpetuidad.",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "V₀ = c[1 − qⁿ(1+i)^−n]/(1 + i − q) si q ≠ 1 + i; si q = 1 + i, V₀ = n·c/(1+i). Perpetua: c/(1 + i − q), solo si q < 1 + i."
+   ],
+   "patron": "El cociente q/(1+i) gobierna la convergencia.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-968"
+  },
+  {
+   "tema": "T10-11 Amortización: cuotas constantes y francés",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Planteamiento general de una operación de amortización: relación de recurrencia.",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "C_k = C_{k−1}(1 + i) − a_k; a_k = I_k + A_k; I_k = C_{k−1}·i; Σ A_k = C₀; C₀ = Σ a_k (1+i)^−k."
+   ],
+   "patron": "Cuatro igualdades que valen para cualquier método.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-969"
+  },
+  {
+   "tema": "T10-11 Amortización: cuotas constantes y francés",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Capital pendiente por el método prospectivo y retrospectivo.",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "Prospectivo: C_k = valor en k de los términos que faltan. Retrospectivo: C_k = C₀(1+i)^k − valor en k de los términos pagados. Ambos coinciden por el equilibrio financiero."
+   ],
+   "patron": "Dos caminos, mismo resultado: sirve para comprobar.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-970"
+  },
+  {
+   "tema": "T10-11 Amortización: cuotas constantes y francés",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Método lineal: demuestra que los términos amortizativos decrecen en progresión aritmética de razón −A·i.",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "A_k = C₀/n constante; I_k = C_{k−1}i y C_k = C_{k−1} − A ⇒ a_{k+1} − a_k = (C_k − C_{k−1})i = −A·i."
+   ],
+   "patron": "Amortización fija, intereses decrecientes.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-971"
+  },
+  {
+   "tema": "T10-11 Amortización: cuotas constantes y francés",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Método francés: demuestra que las cuotas de amortización crecen en progresión geométrica de razón (1 + i).",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "a constante: A_{k+1} + C_k i = A_k + C_{k−1} i ⇒ A_{k+1} = A_k + A_k i = A_k(1 + i). Por tanto m_k = A₁·s_k¬i."
+   ],
+   "patron": "De aquí sale el total amortizado.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-972"
+  },
+  {
+   "tema": "T12 Amortización: carencia, variable, anticipada, tantos efectivos",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Carencia parcial frente a total: efecto sobre el capital y los términos.",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "Parcial: se pagan intereses y el capital no cambia; total: no se paga nada y C₀ se capitaliza (1+i)^h. Después se amortiza con n − h términos."
+   ],
+   "patron": "La carencia mueve pagos, no los elimina.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-973"
+  },
+  {
+   "tema": "T12 Amortización: carencia, variable, anticipada, tantos efectivos",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Amortización anticipada: opciones y compensación.",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "Tras pagar el término k, se entrega X: el pendiente pasa a C_k − X. Se puede mantener el plazo (baja el término) o el término (baja el plazo). La compensación es un porcentaje de X que cobra el prestamista."
+   ],
+   "patron": "Elegir según liquidez o ahorro de intereses.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-974"
+  },
+  {
+   "tema": "T12 Amortización: carencia, variable, anticipada, tantos efectivos",
+   "familia": "Teoría y demostraciones",
+   "nivel": 2,
+   "tipo": "teoria",
+   "enunciado": "Tantos efectivos de un préstamo: prestatario, prestamista y TAE.",
+   "pregunta": "Responde y, si procede, demuestra.",
+   "solucion": null,
+   "unidad": "",
+   "planteamiento": "Respuesta teórica",
+   "pasos": [
+    "Prestatario: iguala lo recibido neto de todos sus gastos con los términos. Prestamista: lo entregado menos lo que cobra (comisiones) con los términos. TAE: según normativa, incluye los gastos que percibe la entidad."
+   ],
+   "patron": "Cada parte tiene su propio tanto efectivo.",
+   "error_tipico": "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.",
+   "partes": {},
+   "criterio": null,
+   "id": "MOF-975"
   }
  ]
 }
