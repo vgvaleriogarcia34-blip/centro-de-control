@@ -1,0 +1,1307 @@
+<title>Cámara de Criterio MOF</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&display=swap">
+<style>
+/* Layout: paneles de cristal suspendidos en un vacío profundo; tres columnas (mesa de operación · recorrido de criterio · cuaderno) que se mueven con el cursor por capas de profundidad. Diseño deliberadamente oscuro: un solo mundo visual. */
+:root{
+  color-scheme: dark;
+  --void:#060a14; --void-2:#0c1427; --glass:rgba(22,32,58,.78); --glass-2:rgba(30,43,76,.86);
+  --line:rgba(150,172,225,.18); --line-2:rgba(150,172,225,.32);
+  --fg:#e8ecf6; --muted:#97a3bf; --faint:#6a7795;
+  --brass:#e9b45c; --brass-ink:#1c1406;
+  --cobro:#4fd1b5; --pago:#ff7d6e; --warn:#f2c94c;
+  --oa:#e9b45c; --ob:#b49cff; --oc:#6ec3ff;
+  --paper:#efe7d4; --paper-2:#e4dac2; --ink:#2b2620; --ink-soft:#6b6254; --ink-red:#a3372a; --ink-green:#1f6e5c;
+  --f-display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --f-book:"Newsreader", Georgia, "Times New Roman", serif;
+  --px:0px; --py:0px; --grx:0deg; --gry:0deg;
+}
+html,body{height:100%}
+body{background:radial-gradient(120% 80% at 50% 0%, var(--void-2), var(--void) 70%); color:var(--fg); font:15px/1.55 var(--f-body); overflow-x:hidden}
+#voidbg{position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none}
+.stage{position:relative; z-index:1; padding-inline:clamp(16px,3vw,44px); padding-block:28px 80px; max-width:1560px; margin:0 auto}
+button,input,textarea,select{font:inherit; color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--brass); outline-offset:2px}
+h1,h2,h3{font-family:var(--f-display); text-wrap:balance; margin:0; letter-spacing:-.01em}
+.eyebrow{font:500 11px/1.2 var(--f-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--muted)}
+.mono{font-family:var(--f-mono); font-variant-numeric:tabular-nums}
+
+/* Paneles flotantes */
+.float{position:relative; background:linear-gradient(160deg,var(--glass-2),var(--glass)); border:1px solid var(--line); border-radius:18px; padding:18px 20px;
+  box-shadow:0 40px 70px -30px rgba(0,0,0,.75), 0 0 0 1px rgba(255,255,255,.02) inset, 0 1px 0 rgba(255,255,255,.06) inset;
+  transform:perspective(1300px) translate3d(calc(var(--px) * var(--d,1)), calc(var(--py) * var(--d,1)), 0) rotateX(calc(var(--grx) + var(--lx,0deg))) rotateY(calc(var(--gry) + var(--ly,0deg))) translateZ(var(--lift,0px));
+  transition:box-shadow .4s, border-color .4s, --lift .4s; will-change:transform; min-width:0;
+  animation:bob 9s ease-in-out infinite; animation-delay:var(--bd,0s)}
+.float:hover{--lift:22px; border-color:var(--line-2); box-shadow:0 60px 90px -30px rgba(0,0,0,.85), 0 0 0 1px rgba(233,180,92,.08) inset, 0 1px 0 rgba(255,255,255,.08) inset}
+@property --lift{syntax:"<length>"; inherits:false; initial-value:0px}
+@keyframes bob{0%,100%{translate:0 0}50%{translate:0 -5px}}
+@media (prefers-reduced-motion: reduce){.float{animation:none; transition:none} .book-page.turn{animation:none}}
+
+/* Cabecera */
+header.top{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:20px 32px; align-items:end; margin-bottom:26px}
+.brand h1{font-size:clamp(30px,4.2vw,56px); font-weight:800; line-height:.98}
+.brand h1 em{font-style:normal; color:var(--brass)}
+.brand p{color:var(--muted); max-width:62ch; margin:10px 0 0}
+.status{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end}
+.pill{display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:99px; border:1px solid var(--line-2); font:500 12px/1 var(--f-mono); color:var(--muted); white-space:nowrap}
+.pill .dot{width:7px; height:7px; border-radius:50%; background:var(--warn)}
+.pill.ok .dot{background:var(--cobro)}
+nav.modes{grid-column:1/-1; display:flex; gap:6px; flex-wrap:wrap; padding:6px; border-radius:14px; background:rgba(10,16,32,.6); border:1px solid var(--line); width:max-content; max-width:100%}
+nav.modes button{border:0; background:transparent; padding:9px 14px; border-radius:10px; color:var(--muted); font-weight:500}
+nav.modes button[aria-pressed="true"]{background:var(--brass); color:var(--brass-ink)}
+nav.modes button:hover:not([aria-pressed="true"]){color:var(--fg); background:rgba(255,255,255,.05)}
+
+/* Rejilla principal */
+.layout{display:grid; grid-template-columns:minmax(0,340px) minmax(0,1fr) minmax(0,390px); gap:22px; align-items:start}
+.col{display:flex; flex-direction:column; gap:22px; min-width:0}
+.lower{display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:22px; margin-top:26px}
+.lower .wide{grid-column:1/-1}
+@media (max-width:1180px){.layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} .col.book-col{grid-column:1/-1}}
+@media (max-width:820px){.layout,.lower{grid-template-columns:minmax(0,1fr)} header.top{grid-template-columns:minmax(0,1fr)} .status{justify-content:flex-start}
+  .float{transform:none; animation:none} .col-center{order:-1}}
+
+/* Enunciado */
+.ex-picker{display:flex; gap:6px; flex-wrap:wrap; margin:10px 0 14px}
+.ex-picker button{border:1px solid var(--line-2); background:transparent; border-radius:10px; padding:6px 10px; font:500 12px/1.2 var(--f-mono); color:var(--muted); text-align:left}
+.ex-picker button[aria-pressed="true"]{border-color:var(--brass); color:var(--fg); background:rgba(233,180,92,.12)}
+.ex-picker button small{display:block; font:400 11px/1.2 var(--f-body); color:var(--faint); margin-top:2px}
+.enun{font-size:15px; line-height:1.6}
+.enun mark{background:rgba(233,180,92,.16); color:var(--fg); border-radius:4px; padding:0 3px}
+.parties{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px}
+.party{font:500 12px/1 var(--f-mono); padding:6px 9px; border-radius:8px; border:1px dashed var(--line-2); color:var(--muted)}
+.party b{color:var(--fg); font-weight:500}
+.party.acreedor{border-style:solid; border-color:var(--cobro)} .party.deudor{border-style:solid; border-color:var(--pago)}
+
+/* Línea temporal 3D */
+.tl-wrap{position:relative; height:250px; border-radius:12px; overflow:hidden; background:radial-gradient(80% 90% at 50% 40%, rgba(80,110,190,.16), transparent 70%); margin-top:10px; cursor:grab}
+.tl-wrap canvas{display:block; width:100%; height:100%}
+.tl-legend{display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; font:12px/1.3 var(--f-mono); color:var(--muted)}
+.sw{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; vertical-align:-1px}
+.tl-fallback{position:absolute; inset:0; display:grid; place-items:center; color:var(--muted); font-size:13px; padding:16px; text-align:center}
+
+/* Calculadora */
+.calc-tabs{display:flex; gap:4px; flex-wrap:wrap; margin:10px 0 12px}
+.calc-tabs button{border:1px solid var(--line); background:transparent; border-radius:8px; padding:5px 9px; font-size:12px; color:var(--muted)}
+.calc-tabs button[aria-pressed="true"]{color:var(--fg); border-color:var(--brass)}
+.fields{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px}
+.field label{display:block; font:500 11px/1.2 var(--f-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:4px}
+.field input,.field select{width:100%; background:rgba(5,10,22,.6); border:1px solid var(--line-2); border-radius:9px; padding:8px 10px; font-family:var(--f-mono); font-variant-numeric:tabular-nums; box-sizing:border-box}
+.calc-out{margin-top:14px; padding:12px 14px; border-radius:12px; background:rgba(5,10,22,.55); border:1px solid var(--line)}
+.calc-out .big{font:600 26px/1.1 var(--f-mono); color:var(--brass); font-variant-numeric:tabular-nums; overflow-wrap:anywhere}
+.calc-out .formula{font:13px/1.5 var(--f-mono); color:var(--fg); margin-top:6px; overflow-wrap:anywhere}
+.calc-out .meaning{font-size:13px; color:var(--muted); margin-top:6px}
+.btn-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px}
+.btn{border:1px solid var(--line-2); background:rgba(255,255,255,.03); border-radius:10px; padding:8px 13px; font-weight:500; font-size:14px}
+.btn:hover{border-color:var(--brass)}
+.btn.primary{background:var(--brass); color:var(--brass-ink); border-color:var(--brass)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn:disabled{opacity:.45; cursor:not-allowed}
+.btn.ghost{border-color:transparent; color:var(--muted)}
+
+/* Recorrido (raíl + mazo) */
+.rail{display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:4px; margin-bottom:18px; position:relative}
+.rail button{border:0; background:transparent; padding:0; display:flex; flex-direction:column; align-items:center; gap:6px; color:var(--faint); font:500 10.5px/1.15 var(--f-mono); letter-spacing:.03em; text-align:center}
+.rail .node{width:30px; height:30px; border-radius:50%; display:grid; place-items:center; border:1px solid var(--line-2); background:rgba(6,10,20,.8); font:600 12px/1 var(--f-mono); color:var(--muted); transition:all .3s}
+.rail button.done .node{background:rgba(79,209,181,.16); border-color:var(--cobro); color:var(--cobro)}
+.rail button.err .node{border-color:var(--pago); color:var(--pago)}
+.rail button.active .node{background:var(--brass); border-color:var(--brass); color:var(--brass-ink); box-shadow:0 0 0 6px rgba(233,180,92,.15)}
+.rail button.active{color:var(--fg)}
+.rail button:disabled{cursor:default}
+@media (max-width:560px){.rail span.lbl{display:none}}
+.deck{position:relative; padding-top:18px}
+.ghost-card{position:absolute; left:6%; right:6%; top:4px; height:60px; border-radius:16px; border:1px solid var(--line); background:rgba(22,32,58,.45); transform:scale(.94); padding:10px 18px; color:var(--faint); font:500 12px/1 var(--f-mono)}
+.ghost-card.g2{left:11%; right:11%; top:-14px; transform:scale(.88); opacity:.55}
+.card{z-index:2}
+.card-head{display:flex; justify-content:space-between; gap:12px; align-items:baseline; flex-wrap:wrap}
+.card h2{font-size:clamp(22px,2.3vw,30px); font-weight:700; margin-top:4px}
+.card .sub{color:var(--muted); margin:6px 0 16px; max-width:65ch}
+.opts{display:grid; gap:9px}
+.opt{display:block; width:100%; text-align:left; border:1px solid var(--line-2); background:rgba(5,10,22,.45); border-radius:12px; padding:12px 14px; line-height:1.45; transition:border-color .2s, background .2s, transform .2s}
+.opt:hover:not(:disabled){border-color:var(--brass); transform:translateX(3px)}
+.opt.ok{border-color:var(--cobro); background:rgba(79,209,181,.1)}
+.opt.bad{border-color:var(--pago); background:rgba(255,125,110,.08); opacity:.8}
+.opt:disabled{cursor:default}
+.opt .k{font:600 12px/1 var(--f-mono); color:var(--brass); margin-right:8px}
+.fb{margin-top:14px; padding:12px 14px; border-radius:12px; border-left:3px solid var(--line-2); background:rgba(5,10,22,.5); font-size:14px}
+.fb.ok{border-left-color:var(--cobro)} .fb.bad{border-left-color:var(--pago)} .fb.hint{border-left-color:var(--warn)}
+.fb .tag{display:inline-block; font:600 10.5px/1 var(--f-mono); letter-spacing:.08em; text-transform:uppercase; padding:4px 7px; border-radius:6px; margin-right:6px; background:rgba(255,255,255,.07); color:var(--muted); vertical-align:1px}
+.fb.bad .tag{background:rgba(255,125,110,.16); color:var(--pago)}
+.fb.ok .tag{background:rgba(79,209,181,.16); color:var(--cobro)}
+.card-foot{display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center; margin-top:16px; padding-top:14px; border-top:1px solid var(--line)}
+.help-meter{font:500 11px/1 var(--f-mono); color:var(--faint)}
+
+.flows{display:grid; gap:8px}
+.flow{display:grid; grid-template-columns:70px minmax(0,1fr) auto; gap:12px; align-items:center; padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:rgba(5,10,22,.45)}
+.flow .t{font:600 13px/1 var(--f-mono); color:var(--brass)}
+.flow .amt{font:600 15px/1.2 var(--f-mono); font-variant-numeric:tabular-nums}
+.flow .c{font-size:13px; color:var(--muted)}
+.sign{display:flex; gap:4px}
+.sign button{width:38px; height:34px; border-radius:9px; border:1px solid var(--line-2); background:transparent; font:600 16px/1 var(--f-mono); color:var(--muted)}
+.sign button.plus[aria-pressed="true"]{background:rgba(79,209,181,.2); border-color:var(--cobro); color:var(--cobro)}
+.sign button.minus[aria-pressed="true"]{background:rgba(255,125,110,.18); border-color:var(--pago); color:var(--pago)}
+.flow.wrong{border-color:var(--pago)} .flow.right{border-color:var(--cobro)}
+.flow.fixed .sign{font:12px/1.2 var(--f-mono); color:var(--faint)}
+.roles{display:grid; gap:10px}
+.role{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:rgba(5,10,22,.45)}
+.role b{font-family:var(--f-display); font-size:17px}
+.seg{display:flex; gap:4px; flex-wrap:wrap}
+.seg button{border:1px solid var(--line-2); background:transparent; border-radius:9px; padding:6px 11px; font-size:13px; color:var(--muted)}
+.seg button[aria-pressed="true"]{color:var(--fg); border-color:var(--brass); background:rgba(233,180,92,.14)}
+.role.wrong{border-color:var(--pago)} .role.right{border-color:var(--cobro)}
+.numin{display:flex; gap:8px; align-items:stretch; flex-wrap:wrap}
+.numin input{flex:1 1 180px; min-width:0; background:rgba(5,10,22,.6); border:1px solid var(--line-2); border-radius:10px; padding:11px 13px; font:600 18px/1 var(--f-mono)}
+.numin .unit{display:grid; place-items:center; padding:0 12px; border:1px solid var(--line); border-radius:10px; font-family:var(--f-mono); color:var(--muted)}
+
+.lecturas{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-top:16px}
+@media (max-width:640px){.lecturas{grid-template-columns:minmax(0,1fr)}}
+.lectura{padding:14px; border-radius:12px; border:1px solid var(--line); background:rgba(5,10,22,.45)}
+.lectura h3{font-size:15px; margin-bottom:6px}
+.lectura.acad h3{color:var(--brass)} .lectura.econ h3{color:var(--ob)}
+.lectura p{margin:0; font-size:14px}
+.closing{margin-top:14px; font-size:14px; display:grid; gap:8px}
+.closing p{margin:0} .closing b{color:var(--brass); font-weight:600}
+
+.rubric{display:grid; gap:7px; margin-top:8px}
+.rb{display:grid; grid-template-columns:minmax(0,1fr) 110px 52px; gap:10px; align-items:center; font-size:13px}
+.rb .bar{height:7px; border-radius:4px; background:rgba(255,255,255,.08); overflow:hidden}
+.rb .bar i{display:block; height:100%; background:var(--cobro); border-radius:4px}
+.rb .v{font-family:var(--f-mono); text-align:right; color:var(--muted)}
+
+/* Laboratorio A/B/C */
+.offers{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px}
+@media (max-width:640px){.offers{grid-template-columns:minmax(0,1fr)}}
+.offer{border:1px solid var(--line); border-radius:14px; padding:12px; background:rgba(5,10,22,.45); position:relative}
+.offer h3{font-size:18px; display:flex; align-items:center; gap:8px}
+.offer h3 .sw{width:12px; height:12px; border-radius:50%}
+.offer.best{border-color:var(--cobro)}
+.offer .rng{margin-top:10px}
+.offer .rng label{display:flex; justify-content:space-between; gap:6px; white-space:nowrap; font:12px/1.2 var(--f-mono); color:var(--muted)}
+.offer input[type=range]{width:100%; accent-color:var(--brass)}
+.offer dl{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 8px; margin:12px 0 0; font-size:12.5px}
+.offer dt{color:var(--muted)} .offer dd{margin:0; white-space:nowrap; font-family:var(--f-mono); text-align:right; font-variant-numeric:tabular-nums}
+.crit-row{display:flex; gap:6px; flex-wrap:wrap; margin:16px 0 10px}
+.metric-bars{display:grid; gap:12px; margin-top:12px}
+.mbar h4{margin:0 0 6px; font:500 12px/1.2 var(--f-mono); color:var(--muted); letter-spacing:.04em}
+.mbar .track{position:relative; height:24px; border-radius:6px; background:rgba(255,255,255,.04); border:1px solid var(--line)}
+.mbar .mk{position:absolute; top:3px; bottom:3px; width:4px; border-radius:2px; transform:translateX(-2px); transition:left .35s}
+.mbar .mk span{position:absolute; top:-1px; left:8px; font:600 11px/1 var(--f-mono); white-space:nowrap}
+.verdict{margin-top:16px; padding:14px; border-radius:12px; background:rgba(5,10,22,.55); border:1px solid var(--line-2); font-size:14px}
+.verdict b{color:var(--brass)}
+
+/* Patrones */
+.patterns{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; margin-top:14px}
+.pcard{perspective:900px; min-height:250px; border:0; background:transparent; padding:0; text-align:left}
+.pcard .inner{position:relative; height:100%; min-height:250px; transform-style:preserve-3d; transition:transform .6s cubic-bezier(.2,.7,.2,1)}
+.pcard.flipped .inner{transform:rotateY(180deg)}
+.pface{position:absolute; inset:0; backface-visibility:hidden; border:1px solid var(--line); border-radius:14px; padding:14px; background:rgba(5,10,22,.55); display:flex; flex-direction:column; gap:6px; overflow:auto}
+.pface.back{transform:rotateY(180deg); background:rgba(28,22,10,.75); border-color:rgba(233,180,92,.35)}
+.pface h3{font-size:17px}
+.pface .who{font:500 11px/1.3 var(--f-mono); color:var(--brass); letter-spacing:.05em; text-transform:uppercase}
+.pface p{margin:0; font-size:13px; line-height:1.45}
+.pface .lbl{font:500 10.5px/1.2 var(--f-mono); color:var(--muted); letter-spacing:.08em; text-transform:uppercase; margin-top:4px}
+.pstate{margin-top:auto; font:500 11px/1.2 var(--f-mono); color:var(--faint)}
+.pstate.s1{color:var(--warn)} .pstate.s2{color:var(--cobro)}
+
+/* Tutor */
+.chat{display:flex; flex-direction:column; gap:10px; max-height:420px; overflow:auto; padding-right:4px; margin-top:12px}
+.msg{padding:10px 13px; border-radius:12px; font-size:14px; max-width:92%; overflow-wrap:anywhere}
+.msg.u{align-self:flex-end; background:rgba(233,180,92,.14); border:1px solid rgba(233,180,92,.3)}
+.msg.a{align-self:flex-start; background:rgba(5,10,22,.55); border:1px solid var(--line)}
+.msg p{margin:0 0 6px} .msg p:last-child{margin:0}
+.msg ul,.msg ol{margin:4px 0 6px; padding-left:20px}
+.md-table{overflow-x:auto} .md-table table{border-collapse:collapse; font-size:13px; margin:6px 0}
+.md-table td,.md-table th{border:1px solid var(--line-2); padding:4px 8px; text-align:left; vertical-align:top}
+.chat-in{display:flex; gap:8px; margin-top:12px}
+.chat-in textarea{flex:1; min-width:0; resize:vertical; min-height:46px; background:rgba(5,10,22,.6); border:1px solid var(--line-2); border-radius:10px; padding:10px 12px}
+.quick{display:flex; gap:6px; flex-wrap:wrap; margin-top:10px}
+.quick button{border:1px solid var(--line); background:transparent; border-radius:99px; padding:5px 11px; font-size:12.5px; color:var(--muted)}
+.quick button:hover{color:var(--fg); border-color:var(--brass)}
+.notice{font-size:13px; color:var(--muted); padding:10px 12px; border:1px dashed var(--line-2); border-radius:10px; margin-top:12px}
+textarea.big{width:100%; box-sizing:border-box; min-height:150px; background:rgba(5,10,22,.6); border:1px solid var(--line-2); border-radius:10px; padding:10px 12px; resize:vertical}
+.cfg{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:12px}
+@media (max-width:820px){.cfg{grid-template-columns:minmax(0,1fr)}}
+.cfg textarea{min-height:110px}
+
+/* Cuaderno */
+.book{perspective:1600px; --d:.6}
+.book-shell{position:relative; padding:0 0 0 22px}
+.rings{position:absolute; left:0; top:24px; bottom:24px; width:22px; display:flex; flex-direction:column; justify-content:space-between; z-index:3}
+.rings i{display:block; width:24px; height:10px; border-radius:6px; border:2px solid #9aa3b8; border-left-color:transparent; background:transparent}
+.book-page{position:relative; background:repeating-linear-gradient(to bottom, transparent 0 27px, rgba(43,38,32,.09) 27px 28px), linear-gradient(100deg,var(--paper-2),var(--paper) 9%); color:var(--ink); border-radius:4px 14px 14px 4px; padding:22px 22px 26px 26px; min-height:560px;
+  box-shadow:0 50px 80px -30px rgba(0,0,0,.8), -6px 0 0 -2px #cfc5ad, -10px 2px 0 -4px #bfb59d; font-family:var(--f-book); font-size:16px; line-height:28px; transform-origin:left center}
+.book-page.turn{animation:turn .7s cubic-bezier(.3,.7,.2,1)}
+@keyframes turn{0%{transform:rotateY(-70deg); opacity:.2} 100%{transform:rotateY(0); opacity:1}}
+.book-tabs{display:flex; gap:4px; margin:0 0 -1px 22px; position:relative; z-index:2}
+.book-tabs button{border:0; border-radius:10px 10px 0 0; padding:7px 13px; background:#b9ae95; color:var(--ink); font:500 12px/1 var(--f-mono)}
+.book-tabs button[aria-pressed="true"]{background:var(--paper)}
+.book-page h2{font-family:var(--f-book); font-weight:600; font-size:24px; line-height:30px; letter-spacing:0}
+.book-page h3{font-family:var(--f-mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-soft); font-weight:500; margin-top:14px; line-height:28px}
+.book-page p{margin:0}
+.book-page .meta{font:12px/28px var(--f-mono); color:var(--ink-soft)}
+.book-page .hand{font-style:italic}
+.book-page .stamp{display:inline-block; font:600 10.5px/1 var(--f-mono); letter-spacing:.1em; text-transform:uppercase; border:1.5px solid var(--ink-red); color:var(--ink-red); padding:4px 7px; border-radius:4px; transform:rotate(-3deg)}
+.book-page .stamp.g{border-color:var(--ink-green); color:var(--ink-green)}
+.book-page ul{margin:0; padding-left:18px}
+.book-page .err{border-left:2px solid var(--ink-red); padding-left:10px; margin:4px 0}
+.book-page .err b{color:var(--ink-red); font-weight:600}
+.book-page .rb .bar{background:rgba(43,38,32,.12)} .book-page .rb .bar i{background:var(--ink-green)} .book-page .rb .v{color:var(--ink-soft)} .book-page .rb{font:13px/1.4 var(--f-body)}
+.book-page .total{font:600 34px/1 var(--f-display); color:var(--ink)}
+.book-page .btn{border-color:rgba(43,38,32,.35); color:var(--ink); background:rgba(255,255,255,.3)}
+.book-page .btn:hover{border-color:var(--ink)}
+.book-nav{display:flex; justify-content:space-between; align-items:center; margin-top:14px; font:12px/1 var(--f-mono); color:var(--ink-soft)}
+.book-page pre{white-space:pre-wrap; font:13px/1.5 var(--f-mono); background:rgba(255,255,255,.35); padding:10px; border-radius:8px; margin:6px 0; color:var(--ink)}
+.idx a,.idx button{all:unset; cursor:pointer; display:flex; justify-content:space-between; gap:10px; border-bottom:1px dotted rgba(43,38,32,.3)}
+.idx button:hover{color:var(--ink-red)}
+.idx button:focus-visible{outline:2px solid var(--ink-red)}
+
+.diag-profile{display:grid; gap:10px; margin-top:12px}
+.sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
+footer{margin-top:34px; color:var(--faint); font-size:12.5px; max-width:90ch}
+</style>
+
+<canvas id="voidbg" aria-hidden="true"></canvas>
+<div class="stage">
+  <header class="top">
+    <div class="brand">
+      <div class="eyebrow">Matemáticas de las Operaciones Financieras · 1.º ADE</div>
+      <h1>Del enunciado al <em>criterio</em>,<br>del resultado a la <em>decisión</em></h1>
+      <p>Cada ejercicio pasa por ocho preguntas: qué operación es, quién paga y quién cobra, qué se mueve y cuándo, qué falta, con qué se compara, qué esperas, cómo se calcula y qué demuestra. Calcular es solo una de ellas.</p>
+    </div>
+    <div class="status">
+      <span class="pill" id="pillProv"><span class="dot"></span><span id="provTxt">Contenido provisional · MOF habitual</span></span>
+      <span class="pill" id="pillAI"><span class="dot"></span><span id="aiTxt">Tutor: comprobando…</span></span>
+    </div>
+    <nav class="modes" aria-label="Modo de trabajo">
+      <button data-mode="train" aria-pressed="true">Entrenamiento guiado</button>
+      <button data-mode="diag" aria-pressed="false">Diagnóstico</button>
+      <button data-mode="abc" aria-pressed="false">Comparación A/B/C</button>
+      <button data-mode="corr" aria-pressed="false">Corrección de mi solución</button>
+      <button data-mode="sim" aria-pressed="false">Simulacro</button>
+    </nav>
+  </header>
+
+  <div class="layout">
+    <div class="col">
+      <section class="float" style="--d:1.25;--bd:-1s" aria-labelledby="hEnun">
+        <div class="eyebrow">Mesa de operación</div>
+        <h2 id="hEnun" style="font-size:20px;margin-top:4px">Enunciado</h2>
+        <div class="ex-picker" id="exPicker"></div>
+        <div class="enun" id="enun"></div>
+        <div class="parties" id="parties"></div>
+      </section>
+      <section class="float" style="--d:1.6;--bd:-4s" aria-labelledby="hTl">
+        <div class="eyebrow">Dibujar</div>
+        <h2 id="hTl" style="font-size:20px;margin-top:4px">Línea temporal de flujos</h2>
+        <div class="tl-wrap" id="tlWrap"><canvas id="tlCanvas" aria-label="Línea temporal tridimensional de cobros y pagos"></canvas></div>
+        <div class="tl-legend"><span><i class="sw" style="background:var(--cobro)"></i>Cobro (+)</span><span><i class="sw" style="background:var(--pago)"></i>Pago (−)</span><span><i class="sw" style="background:#8f9bb8;opacity:.6"></i>Sin signo</span></div>
+        <div class="tl-legend" id="tlPersp" style="margin-top:4px"></div>
+      </section>
+      <section class="float" style="--d:1.1;--bd:-6s" aria-labelledby="hCalc">
+        <div class="eyebrow">Calcular</div>
+        <h2 id="hCalc" style="font-size:20px;margin-top:4px">Calculadora financiera</h2>
+        <div class="calc-tabs" id="calcTabs">
+          <button data-c="cap" aria-pressed="true">Capitalizar · descontar</button>
+          <button data-c="cuota" aria-pressed="false">Cuota francés</button>
+          <button data-c="efec" aria-pressed="false">Nominal → efectivo</button>
+          <button data-c="irr" aria-pressed="false">Coste con comisión</button>
+        </div>
+        <div class="fields" id="calcFields"></div>
+        <div class="calc-out" id="calcOut"></div>
+        <div class="btn-row"><button class="btn" id="calcPreset">Cargar datos del ejercicio</button></div>
+      </section>
+    </div>
+
+    <div class="col col-center" id="center"></div>
+
+    <div class="col book-col">
+      <section class="book" aria-labelledby="hBook">
+        <div class="eyebrow" style="margin:0 0 8px 22px">Libro paralelo</div>
+        <h2 id="hBook" class="sr">Cuaderno de criterio</h2>
+        <div class="book-tabs" id="bookTabs">
+          <button data-b="entry" aria-pressed="true">Entrada</button>
+          <button data-b="index" aria-pressed="false">Índice</button>
+          <button data-b="ficha" aria-pressed="false">Ficha de sesión</button>
+        </div>
+        <div class="book-shell">
+          <div class="rings" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="book-page" id="bookPage"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="lower">
+    <section class="float" style="--d:.8;--bd:-2s" aria-labelledby="hTutor">
+      <div class="eyebrow">Tutor conversacional</div>
+      <h2 id="hTutor" style="font-size:22px;margin-top:4px">Pregunta sobre el paso en el que estás</h2>
+      <p style="color:var(--muted);margin:6px 0 0;font-size:14px">El tutor ve el enunciado, tu paso actual y tus errores. Avanza contigo una pregunta cada vez y no te da la solución completa salvo que la pidas.</p>
+      <div class="chat" id="chat" aria-live="polite"></div>
+      <div class="quick" id="quick">
+        <button data-q="No entiendo qué me preguntan en este ejercicio.">No entiendo qué me preguntan</button>
+        <button data-q="Explícame este paso desde la otra parte de la operación.">Míralo desde la otra parte</button>
+        <button data-q="Dame la siguiente pista, sin resolverlo.">Siguiente pista</button>
+        <button data-q="Propón una variación breve de este ejercicio que cambie una sola variable.">Variación de una variable</button>
+        <button data-q="Quiero la solución completa con explicación y después una comprobación breve.">Solución completa</button>
+      </div>
+      <div class="chat-in">
+        <label for="chatBox" class="sr">Mensaje para el tutor</label>
+        <textarea id="chatBox" placeholder="Escribe con tus palabras qué crees que te preguntan…"></textarea>
+        <div style="display:flex;flex-direction:column;gap:6px"><button class="btn primary" id="chatSend">Enviar</button><button class="btn ghost" id="chatStop" hidden>Parar</button></div>
+      </div>
+      <div class="notice" id="aiNotice" hidden></div>
+    </section>
+
+    <section class="float" style="--d:.9;--bd:-5s" aria-labelledby="hCfg">
+      <div class="eyebrow">Configuración académica</div>
+      <h2 id="hCfg" style="font-size:22px;margin-top:4px">Adapta el entrenador a tu asignatura</h2>
+      <p style="color:var(--muted);margin:6px 0 0;font-size:14px">Pega aquí el programa, un ejercicio resuelto y las convenciones de tu profesor. Mientras no lo hagas, los ejercicios son de MOF habitual, marcados como provisionales y sin atribuirlos a ninguna universidad. Lo que pegues se guarda solo en este navegador y se envía al tutor como contexto.</p>
+      <div class="cfg">
+        <div class="field"><label for="cfgProg">1 · Programa o temas</label><textarea id="cfgProg" class="big" placeholder="Tema 1. Leyes financieras…"></textarea></div>
+        <div class="field"><label for="cfgEj">2 · Ejercicio representativo</label><textarea id="cfgEj" class="big" placeholder="Enunciado y, si la tienes, la solución o corrección"></textarea></div>
+        <div class="field"><label for="cfgConv">3 · Convenciones y examen</label><textarea id="cfgConv" class="big" placeholder="Base 360 o 365, redondeo a 2 decimales, cuotas pospagables salvo indicación…"></textarea></div>
+      </div>
+      <div class="btn-row"><button class="btn primary" id="cfgSave">Guardar materiales</button><button class="btn ghost" id="cfgClear">Borrar</button><span id="cfgMsg" style="align-self:center;color:var(--muted);font-size:13px"></span></div>
+    </section>
+
+    <section class="float wide" style="--d:.7;--bd:-3s" aria-labelledby="hPat">
+      <div class="eyebrow">Biblioteca de patrones condicionados</div>
+      <h2 id="hPat" style="font-size:22px;margin-top:4px">Ningún patrón vale siempre: cada ficha dice cuándo se rompe</h2>
+      <p style="color:var(--muted);margin:6px 0 0;font-size:14px">Pulsa una ficha para darle la vuelta: señal → mecanismo → efecto para cada parte → condición → excepción → ejercicio de contraste. Un patrón cuenta como transferido cuando lo aplicas bien en dos problemas distintos; un único acierto no basta.</p>
+      <div class="patterns" id="patterns"></div>
+    </section>
+  </div>
+  <footer>Ejercicios de muestra con resultados verificados por cálculo. Son contenidos habituales de MOF, provisionales hasta que se alineen con el programa y las convenciones de tu profesor. El cuaderno se guarda en este navegador; si borras los datos del sitio, se pierde.</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+/* ============ Utilidades ============ */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function fmt(n, d=2){ const neg = n < 0; let [i,f] = Math.abs(n).toFixed(d).split('.'); i = i.replace(/\B(?=(\d{3})+(?!\d))/g,'.'); return (neg?'−':'') + i + (d ? ','+f : ''); }
+function parseNum(s){
+  s = String(s).trim().replace(/[€%\s]/g,'').replace('−','-');
+  if (!s) return NaN;
+  if (s.includes(',')) s = s.replace(/\./g,'').replace(',','.');
+  else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g,'');
+  return Number(s);
+}
+const cuota = (C,i,n) => i === 0 ? C/n : C*i/(1-Math.pow(1+i,-n));
+const anu = (i,n) => i === 0 ? n : (1-Math.pow(1+i,-n))/i;
+function costeEf(neto, a, n){ let lo=1e-7, hi=2; for (let k=0;k<200;k++){ const m=(lo+hi)/2; if (a*anu(m,n) > neto) lo=m; else hi=m; } return (lo+hi)/2; }
+function shuffle(a, seed){ a = a.slice(); let s = seed; for (let i=a.length-1;i>0;i--){ s = (s*9301+49297)%233280; const j = Math.floor(s/233280*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+const store = {
+  get(){ try { return JSON.parse(localStorage.getItem('mof-criterio-v1')) || {}; } catch(e){ return {}; } },
+  set(v){ try { localStorage.setItem('mof-criterio-v1', JSON.stringify(v)); } catch(e){} }
+};
+
+/* ============ Catálogo de errores ============ */
+const ERR = {
+  comprension:{n:'Comprensión del objetivo', causa:'Comprensión', why:'Se busca qué calcular antes de fijar qué se pregunta, y se termina respondiendo a otra pregunta.', fix:'Antes de tocar números, escribe una línea: «Me piden … para poder decir …».', reenc:'Cambia «¿qué fórmula uso?» por «¿qué tendría que poder afirmar al terminar?».', rep:'E1'},
+  perspectiva:{n:'Participantes y perspectiva', causa:'Comprensión', why:'Se asume un papel fijo (empresa siempre deudora, banco siempre acreedor) en lugar de mirar quién entrega y quién recibe.', fix:'Marca en cada flujo quién lo entrega y quién lo recibe. Después elige desde qué parte responde la pregunta.', reenc:'Narra la operación dos veces: una como quien entrega el dinero y otra como quien lo recibe. Fechas y cuantías no cambian; los signos sí.', rep:'E2'},
+  fechas:{n:'Fechas y flujos', causa:'Criterio', why:'Se comparan o suman cuantías de momentos distintos como si estuvieran en la misma fecha.', fix:'Dibuja la línea temporal y lleva todo a una fecha común antes de comparar.', reenc:'Cambia «¿cuál es mayor?» por «¿cuál vale más en la misma fecha?».', rep:'E3'},
+  nominal:{n:'Nominal frente a efectivo', causa:'Criterio', why:'Se toma un tipo nominal como si fuera efectivo, o se comparan tipos de distinta periodicidad.', fix:'Pasa todos los tipos a efectivo anual antes de compararlos: i = (1 + j/m)^m − 1.', reenc:'Ante cualquier tipo, pregunta: «¿cada cuánto se capitaliza y qué gastos incluye?».', rep:'E2'},
+  criterio:{n:'Criterio de comparación', causa:'Criterio', why:'Se elige una medida que no responde a la pregunta, o que mezcla fechas y gastos.', fix:'Pregúntate qué medida hace comparables las alternativas: tipo efectivo, valor en fecha común o coste con gastos incluidos.', reenc:'Antes de comparar, nombra el criterio en voz alta y comprueba que contesta exactamente lo que se pide.', rep:'E5'},
+  cuota_coste:{n:'Cuota frente a coste', causa:'Visión económica', why:'Se identifica una cuota menor con una financiación más barata.', fix:'Separa dos preguntas: cuánto pago cada vez (liquidez) y a qué precio uso el dinero (coste efectivo).', reenc:'«¿Cuánto pago al mes?» y «¿cuánto me cuesta el dinero?» son preguntas distintas con respuestas distintas.', rep:'E1'},
+  vision:{n:'Visión económica', causa:'Visión económica', why:'Falta una imagen de qué gana, pierde o arriesga cada parte; el número queda sin significado.', fix:'Antes de calcular, describe en una frase qué quiere cada parte y qué le preocupa.', reenc:'Pregunta: «¿quién usa el dinero de quién, durante cuánto tiempo y a qué precio?».', rep:'E4'},
+  supuesto:{n:'Hipótesis no autorizada', causa:'Comprensión', why:'Se añade un dato o un supuesto que el enunciado no da y que cambia la solución.', fix:'Separa: dato explícito, consecuencia matemática e hipótesis añadida. Si la hipótesis cambia el resultado, pide el dato o presenta casos.', reenc:'Ante cada afirmación, pregunta: «¿lo dice el enunciado, se deduce de él o lo estoy poniendo yo?».', rep:'E3'},
+  planteamiento:{n:'Planteamiento del método', causa:'Cálculo', why:'Se reconoce la situación pero se usa una fórmula que mide otra cosa.', fix:'Antes de usar una fórmula, di en palabras qué mide cada término.', reenc:'Lee la fórmula como una frase: «cuánto vale hoy una serie de pagos iguales…».', rep:'E4'},
+  calculo:{n:'Cálculo', causa:'Cálculo', why:'Planteamiento correcto con error operativo: exponentes, unidad del tipo o redondeo prematuro.', fix:'Repite el cálculo conservando decimales internos y comprueba el orden de magnitud con una estimación previa.', reenc:'Estima el resultado antes de calcularlo; si el cálculo se aleja mucho, revisa.', rep:'E2'},
+  interpretacion:{n:'Interpretación', causa:'Criterio', why:'Se concluye más de lo que el cálculo demuestra, o se mezcla la lectura académica con la económica.', fix:'Separa: qué demuestra el cálculo y qué depende de objetivos o hipótesis que el enunciado no da.', reenc:'Termina siempre con «esto deja de valer si…».', rep:'E1'}
+};
+
+/* ============ Patrones ============ */
+const PAT = [
+  {id:'cobrar-antes', n:'Cobrar antes', who:'Puede beneficiar a quien cobra', senal:'Dos fechas de cobro posibles con cuantías distintas.', mec:'Un cobro anticipado puede reinvertirse; uno posterior incorpora un recargo implícito.', ef:'Acreedor: liquidez y menos riesgo. Deudor: pierde el aplazamiento.', cond:'Comparar cuantía y fecha llevando ambos cobros a una fecha común con el tipo de valoración.', exc:'Si el recargo del cobro posterior supera tu tipo de valoración, esperar vale más (E3 al 4 %).', conf:'Preferir automáticamente el cobro mayor posterior, o el anterior por reflejo.', con:'E3'},
+  {id:'pagar-despues', n:'Pagar después', who:'Puede beneficiar a quien paga', senal:'Aplazamientos, carencias o cuotas más largas.', mec:'Quien paga conserva caja más tiempo; el aplazamiento suele llevar intereses o recargos.', ef:'Deudor: liquidez. Acreedor: cobra más tarde y asume más tiempo de riesgo.', cond:'Considerar intereses, recargos y el valor de conservar caja.', exc:'Si el recargo del aplazamiento supera tu coste de financiación alternativo, sale caro.', conf:'Confundir aplazamiento con ahorro.', con:'E4'},
+  {id:'reducir-cuota', n:'Reducir cuota', who:'Deudor con tensión de caja', senal:'Ofertas con distinto plazo, comisión o tipo y cuotas diferentes.', mec:'La cuota baja si se alarga el plazo o baja el tipo; el coste total puede subir.', ef:'Deudor: alivio de caja periódico. Acreedor: más tiempo cobrando intereses.', cond:'Revisar plazo, coste efectivo, total de intereses y saldo pendiente.', exc:'Si la cuota baja por más plazo, el tipo efectivo no cambia; si baja con comisión mayor, el coste sube (B en E5).', conf:'Menor cuota = financiación más barata.', con:'E1 · E5'},
+  {id:'amortizar-antes', n:'Amortizar antes', who:'Deudor que reduce costes futuros', senal:'Excedente de caja y préstamo vivo.', mec:'Reducir saldo vivo elimina intereses futuros sobre esa parte.', ef:'Deudor: menos intereses, menos liquidez. Acreedor: deja de cobrar intereses; puede cobrar comisión.', cond:'Comparar comisión de cancelación, ahorro de intereses y liquidez sacrificada.', exc:'Si la caja tiene un uso que rinde más que el coste del préstamo, o la comisión supera el ahorro.', conf:'Suponer que siempre conviene usar toda la caja.', con:'Pendiente: ejercicio por crear'},
+  {id:'carencia', n:'Introducir carencia', who:'Deudor que necesita tiempo', senal:'«Carencia», «periodo de gracia», «primer año sin amortizar».', mec:'Se aplaza la devolución del principal; los intereses se pagan (parcial) o se acumulan (total).', ef:'Deudor: alivio inicial. Acreedor: más exposición si los intereses se capitalizan.', cond:'Saber si los intereses se pagan o se capitalizan, y si el tipo cambia.', exc:'Si la carencia lleva tipo o comisión propios, sí cambia el coste efectivo.', conf:'Interpretar la carencia como periodo gratuito.', con:'E4'},
+  {id:'aumentar-tipo', n:'Aumentar el tipo', who:'Acreedor, en ingresos contractuales', senal:'Subidas de tipo, diferenciales o comisiones.', mec:'Más interés pactado por el mismo capital.', ef:'Acreedor: más ingreso contractual. Deudor: más coste y más tensión de pago.', cond:'Considerar riesgo de impago y costes propios del acreedor.', exc:'Un tipo mayor puede atraer deudores más arriesgados y reducir lo que realmente se cobra.', conf:'Confundir ingreso con beneficio.', con:'E5'},
+  {id:'garantias', n:'Aportar garantías', who:'Acreedor, por recuperación potencial', senal:'Avales, hipotecas, prendas.', mec:'Si el deudor no paga, el acreedor tiene un activo o un tercero al que reclamar.', ef:'Acreedor: menos pérdida esperada. Deudor: puede obtener mejores condiciones; compromete activos.', cond:'Revisar alcance de la garantía y su efecto sobre tipo y comisiones.', exc:'La garantía no genera caja: si el deudor no puede pagar, el acreedor recupera tarde y con costes.', conf:'Confundir garantía con solvencia.', con:'Pendiente: ejercicio por crear'},
+  {id:'fijo-variable', n:'Tipo fijo o variable', who:'Depende del escenario y del objetivo', senal:'Ofertas con índice de referencia más diferencial frente a tipo fijo.', mec:'El variable traslada el riesgo de tipo al deudor; el fijo, al acreedor.', ef:'Deudor: certeza (fijo) o posible ahorro con riesgo (variable). Acreedor: lo contrario.', cond:'Comparar coste y exposición a cambios del índice en escenarios explícitos.', exc:'Un variable inicial más bajo puede acabar más caro si el índice sube.', conf:'Decidir solo por el tipo inicial.', con:'Pendiente: ejercicio por crear'},
+  {id:'comparar-efectivo', n:'Convertir antes de comparar', who:'Ambas partes (patrón añadido)', senal:'Tipos nominales con capitalización, comisiones, periodicidades distintas.', mec:'Solo los tipos efectivos en la misma unidad de tiempo y con los mismos flujos son comparables.', ef:'Deudor: ve el coste real. Acreedor: ve el rendimiento real.', cond:'Incluir todos los flujos que soporta la parte desde la que se mira.', exc:'Si las alternativas difieren en riesgo o liquidez, igualar el tipo no basta para la decisión económica.', conf:'Comparar los tipos tal como aparecen.', con:'E2 · E5'}
+];
+
+/* ============ Pasos del motor ============ */
+const STEPS = [
+  {k:'identificar', n:'Identificar', q:'¿Qué operación es y qué se pide?'},
+  {k:'situar', n:'Situar', q:'¿Desde qué parte estoy mirando?'},
+  {k:'dibujar', n:'Dibujar', q:'¿Qué dinero se mueve y en qué fechas?'},
+  {k:'interpretar', n:'Interpretar', q:'¿Qué significa cada dato y qué condición falta?'},
+  {k:'elegir', n:'Elegir', q:'¿Qué criterio hace comparables las alternativas?'},
+  {k:'anticipar', n:'Anticipar', q:'¿Qué debería pasar si cambia una variable?'},
+  {k:'calcular', n:'Calcular', q:'¿Qué método corresponde?'},
+  {k:'decidir', n:'Decidir', q:'¿Qué demuestra el resultado y qué no?'}
+];
+const COMP = {obj:{n:'Objetivo y participantes',max:1}, flujos:{n:'Flujos y fechas',max:2}, criterio:{n:'Criterio',max:2}, plan:{n:'Planteamiento',max:2}, calc:{n:'Cálculo y comprobación',max:2}, interp:{n:'Interpretación',max:1}};
+const KEYW = {identificar:['obj',.5], situar:['obj',.5], dibujar:['flujos',1.4], interpretar:['flujos',.6], elegir:['criterio',1.4], anticipar:['criterio',.6], plan:['plan',2], num:['calc',2], decidir:['interp',1]};
+const GH = {
+  identificar:['¿Qué verbo usa el enunciado: calcular, comparar, elegir? Eso fija qué tienes que entregar.', 'Mira quién recibe el dinero al principio: eso dice si la operación es financiación o colocación para la empresa.', 'Separa lo que se pide de lo que te gustaría saber. Si el enunciado no da un objetivo, no lo inventes.'],
+  situar:['Pregunta por cada parte: ¿entrega dinero ahora para recibirlo después, o al revés?', 'Acreedor es quien tiene derecho a cobrar; deudor, quien tiene obligación de pagar. No depende de si es banco o empresa.', 'Recorre la operación en el tiempo: quién da el primer flujo y quién da los siguientes.'],
+  dibujar:['Fíjate en la perspectiva indicada arriba: lo que entra a esa parte es +, lo que sale es −.', 'Las fechas y las cuantías son las mismas desde cualquier parte; solo cambian los signos.', 'Revisa la primera fecha: ¿esa parte recibe o entrega dinero en t = 0?'],
+  interpretar:['Clasifica cada dato: explícito, consecuencia matemática o hipótesis que tú añades.', '¿Hay algún tipo nominal, comisión o fecha que deba transformarse antes de usarse?', 'Pregunta: si este dato cambiara, ¿cambiaría la solución? Si no lo da el enunciado y la cambia, falta.'],
+  elegir:['¿La medida que eliges compara cantidades en la misma fecha?', '¿Incluye todos los flujos que soporta la parte: comisiones, gastos?', 'Un buen criterio responde exactamente a la pregunta del enunciado, no a otra parecida.'],
+  anticipar:['Cambia solo una variable en tu cabeza y deja quietas las demás.', 'Separa tres efectos: sobre la cuota, sobre el total de euros y sobre el coste anual.', 'Pregunta qué parte usa el dinero de la otra y durante cuánto tiempo.'],
+  plan:['Di en palabras qué tiene que medir la fórmula antes de mirar las opciones.', '¿Pagos iguales, uno solo, o un tipo que hay que convertir?', 'Comprueba que los exponentes están en la misma unidad de tiempo que el tipo.'],
+  decidir:['¿Tu conclusión responde exactamente a lo que se pide?', '¿Estás afirmando algo que depende de un objetivo o de un dato que el enunciado no da?', 'Separa la lectura académica (lo pedido) de la económica (qué significa para cada parte).']
+};
+
+/* ============ Ejercicios (resultados verificados) ============ */
+const EX = [
+ {id:'E1', fam:'Préstamo · plazo', title:'Alargar el plazo',
+  enun:'Una empresa de distribución necesita <mark>60.000 €</mark> para renovar su flota. Su banco le ofrece un préstamo al <mark>5 % efectivo anual</mark>, amortizable por el <mark>sistema francés</mark> con cuotas anuales constantes y vencidas. Puede elegir un plazo de <mark>5 años</mark> o de <mark>8 años</mark>. Se pide: (a) la cuota anual de cada plazo; (b) el total de intereses de cada opción; (c) indicar si alguna de las dos es más cara en coste anual.',
+  parties:[{n:'Empresa', a:'Deudor'}, {n:'Banco', a:'Acreedor'}],
+  persp:'la empresa (opción a 5 años)',
+  flows:[{t:0, tl:'t = 0', amt:60000, c:'Recibe el préstamo', s:1}, {t:1, tl:'t = 1…5', amt:13858.49, c:'Cuota anual (× 5)', s:-1, rep:[1,2,3,4,5]}],
+  identificar:[['Un préstamo francés: me piden cuotas, intereses totales y si un plazo es más caro en coste anual.',1,'Exacto. Son tres entregas concretas; ninguna pide elegir el plazo.'],
+    ['Una inversión de la empresa: cuánto rinden 60.000 € durante 5 u 8 años.','comprension','La empresa recibe el dinero al inicio y lo devuelve después: se está financiando, no invirtiendo.'],
+    ['Elegir el plazo que más conviene a la empresa.','comprension','El enunciado no pide elegir. Decidir el plazo exigiría un objetivo que no se da (liquidez, coste total…).']],
+  interpretar:{q:'¿Qué dato o supuesto necesitas y no está en el enunciado?', o:[
+    ['Ninguno: tipo, plazo, sistema y periodicidad están dados, y el 5 % ya es efectivo anual, igual que la periodicidad de las cuotas.',1,'Bien. Comprobar que no falta nada también es interpretar.'],
+    ['La TAE con comisiones: sin ella no puedo calcular la cuota.','supuesto','El enunciado no menciona comisiones. Añadirlas cambiaría el resultado sin autorización.'],
+    ['La situación de liquidez de la empresa.','supuesto','Sirve para la lectura económica (qué plazo le conviene), no para lo que se pide.']]},
+  elegir:{q:'¿Qué criterio responde a «¿alguna opción es más cara en coste anual?»?', o:[
+    ['El tipo efectivo anual de cada opción: el que iguala lo recibido con lo pagado.',1,'Es la medida de precio por año de uso del dinero.'],
+    ['El total de intereses pagados.','criterio','Suma euros de fechas distintas y depende de cuánto tiempo usas el capital. Es útil, pero no es un coste anual.'],
+    ['La cuota: la menor es la más barata.','cuota_coste','La cuota mide exigencia de caja por periodo, no el precio del dinero.']]},
+  anticipar:{q:'Si alargas el plazo de 5 a 8 años manteniendo capital, tipo y sistema, ¿qué esperas?', o:[
+    ['Cuota menor, más intereses totales y el mismo coste anual.',1,'Esa es la predicción; el cálculo la comprobará.'],
+    ['Cuota menor y menos intereses: todo mejora.','vision','Pagas menos cada año pero durante más años, y el saldo vivo baja más despacio: devengas intereses más tiempo.'],
+    ['Cuota menor y coste anual más alto.','criterio','El banco cobra el 5 % sobre el saldo vivo cada año en ambos plazos. Más intereses totales no implica mayor coste anual.']]},
+  plan:{q:'¿Qué expresión da la cuota anual del sistema francés?', o:[
+    ['a = C · i / (1 − (1 + i)^−n)',1,'Es la cuota que hace que el valor actual de las n cuotas iguale el capital.'],
+    ['a = C · (1 + i)^n / n','planteamiento','Lleva todo al final y lo reparte sin descontar: ignora que cada cuota se paga en una fecha distinta.'],
+    ['a = C / n + C · i','planteamiento','Es la primera cuota del sistema de amortización constante, no la del francés.']]},
+  num:{q:'Calcula la cuota del préstamo a 8 años.', target:9283.31, tol:1, unit:'€', dec:2,
+    hints:['¿Qué valen C, i y n en la opción de 8 años?', 'C = 60.000; i = 0,05; n = 8. (1,05)^−8 es el valor hoy de 1 € dentro de 8 años.', '(1,05)^−8 ≈ 0,676839; 1 − 0,676839 = 0,323161.', 'a = 60.000 · 0,05 / 0,323161', 'a ≈ 9.283,31 €'],
+    extra:'5 años: cuota 13.858,49 €, intereses 9.292,44 €. 8 años: cuota 9.283,31 €, intereses 14.266,47 €.'},
+  preset:{c:'cuota', v:{C:60000, i:5, n:8}},
+  decidir:[['Las dos opciones cuestan lo mismo en coste anual (5 %). A 8 años la cuota baja y los intereses totales suben porque el capital se devuelve más despacio.',1,'Conclusión delimitada: responde a lo pedido y explica el mecanismo.'],
+    ['La de 5 años es más barata porque paga 4.974 € menos de intereses.','criterio','Esa diferencia mide más tiempo de uso del capital, no un precio mayor. El coste anual es el mismo.'],
+    ['La de 8 años es mejor para la empresa porque tiene menos tensión de caja.','interpretacion','Es una lectura económica válida si el objetivo fuera liquidez, pero el enunciado no lo da. Presentado como respuesta académica, añade un requisito.']],
+  acad:'Cuotas: 13.858,49 € (5 años) y 9.283,31 € (8 años). Intereses: 9.292,44 € y 14.266,47 €. Coste efectivo anual: 5 % en ambos casos; ninguna es más cara en coste anual.',
+  econ:'Empresa: el plazo largo libera 4.575,18 € de caja al año durante los cinco primeros años, a cambio de usar el capital más tiempo. Banco: mantiene el 5 % sobre más saldo durante más años y queda más tiempo expuesto a impago.',
+  patron:'si cambia solo el plazo, el tipo efectivo no cambia: cambia cuánto tiempo usas el dinero. Más intereses totales pueden significar más tiempo, no más precio.',
+  invalida:'hubiera comisiones fijas (se reparten en más o menos años y cambian el coste efectivo) o el banco aplicara un tipo distinto a cada plazo.',
+  lateral:['Desde el banco: ¿qué riesgo asume al prestar tres años más?', '¿Qué tendría que pasar con la rentabilidad de la flota para que el plazo largo fuera claramente preferible?', 'Si la empresa pudiera invertir la caja liberada al 7 %, ¿cambiaría tu lectura económica? ¿Y la académica?'],
+  pats:['reducir-cuota','pagar-despues']},
+
+ {id:'E2', fam:'Depósito · tipos', title:'La empresa acreedora',
+  enun:'Una empresa tiene un excedente de tesorería de <mark>50.000 €</mark> y quiere colocarlo <mark>2 años</mark> en un banco. Oferta A: <mark>3 % nominal anual con capitalización mensual</mark>. Oferta B: <mark>3,05 % efectivo anual</mark>. Ninguna tiene comisiones. ¿Qué oferta proporciona más rentabilidad a la empresa?',
+  parties:[{n:'Empresa', a:'Acreedor'}, {n:'Banco', a:'Deudor'}],
+  persp:'la empresa (oferta A)',
+  flows:[{t:0, tl:'t = 0', amt:50000, c:'Deposita el excedente', s:-1}, {t:2, tl:'t = 2', amt:53087.85, c:'Recupera capital e intereses', s:1}],
+  identificar:[['Una colocación de excedentes: comparar el rendimiento efectivo de dos ofertas al mismo plazo.',1,'Correcto. Aquí la empresa no se financia: presta su dinero al banco.'],
+    ['Un préstamo a la empresa: calcular lo que paga al banco.','perspectiva','La empresa entrega el dinero y lo recupera con intereses; no paga intereses, los cobra.'],
+    ['Calcular los intereses de cada oferta y quedarse con el mayor número.','comprension','Se pide la oferta con más rentabilidad. Los intereses a la misma fecha sirven, pero el objetivo es comparar rendimientos.']],
+  interpretar:{q:'¿Qué cuidado exige el dato «3 % nominal con capitalización mensual»?', o:[
+    ['Es nominal: el tipo mensual es 3 %/12 y hay que pasarlo a efectivo anual para compararlo con B.',1,'Exacto: el nominal es una convención de expresión, no el rendimiento.'],
+    ['Ninguno: puedo compararlo directamente con 3,05 % porque ambos son anuales.','nominal','Ambos se expresan por año, pero uno es nominal y el otro efectivo. No son comparables así.'],
+    ['Falta la inflación para decidir.','supuesto','La inflación afecta igual a las dos ofertas y el enunciado no la pide.']]},
+  elegir:{q:'¿Qué criterio hace comparables A y B?', o:[
+    ['Tipos efectivos anuales, o montantes finales en la misma fecha.',1,'Las dos vías dan la misma conclusión.'],
+    ['Los tipos tal como aparecen en la oferta.','nominal','Compararías un nominal con un efectivo.'],
+    ['Elegir la oferta con capitalización más frecuente: siempre rinde más.','criterio','Más frecuencia rinde más a igual tipo nominal. Aquí los tipos no son iguales, así que hay que calcular.']]},
+  anticipar:{q:'Antes de calcular, el efectivo anual de A será…', o:[
+    ['Algo mayor que 3 %, sin saber aún si supera 3,05 %.',1,'Buena predicción: dirección clara, magnitud pendiente.'],
+    ['Exactamente 3 %.','nominal','La capitalización mensual hace que los intereses generen intereses dentro del año.'],
+    ['En torno al 3,6 %, porque capitaliza doce veces.','vision','Con tipos bajos, el interés sobre interés dentro de un año añade poco: unas centésimas.']]},
+  plan:{q:'¿Qué expresión convierte el nominal j con m capitalizaciones en efectivo anual?', o:[
+    ['i = (1 + j/m)^m − 1',1,'Capitaliza el tipo periódico m veces y resta el capital.'],
+    ['i = j · m','planteamiento','Multiplicar por 12 confunde el nominal anual con un tipo mensual.'],
+    ['i = j / m','planteamiento','Eso es el tipo mensual, no el efectivo anual.']]},
+  num:{q:'Calcula el tipo efectivo anual de la oferta A (en %, dos decimales).', target:3.0416, tol:0.006, unit:'%', dec:4,
+    hints:['¿Cuál es el tipo mensual?', 'j/m = 0,03/12 = 0,0025.', '(1,0025)^12 ≈ 1,030416.', 'i = 1,030416 − 1', 'i ≈ 3,04 % (3,0416 %).'],
+    extra:'A: 3,0416 % efectivo → 53.087,85 € a 2 años. B: 3,05 % → 53.096,51 €. Diferencia: 8,66 €.'},
+  preset:{c:'efec', v:{j:3, m:12}},
+  decidir:[['B rinde más: 3,05 % frente a 3,0416 % efectivo anual (8,66 € más a dos años). Sin otras diferencias, B domina.',1,'Correcto, y has cuantificado la diferencia.'],
+    ['A, porque capitaliza mensualmente.','nominal','La frecuencia ya está incluida en el 3,0416 %, que sigue por debajo de 3,05 %.'],
+    ['Son iguales; la diferencia es de redondeo.','interpretacion','Es pequeña pero real y se mantiene con cualquier precisión. Que sea pequeña es una cuestión económica, no de cálculo.']],
+  acad:'Tipo efectivo de A: 3,0416 %. B: 3,05 %. B proporciona más rentabilidad: 53.096,51 € frente a 53.087,85 € a dos años.',
+  econ:'Empresa (acreedora): B da 8,66 € más; con una diferencia tan pequeña, poder retirar antes o sin penalización puede pesar más. Banco (deudor): B le supone un coste de captación ligeramente mayor.',
+  patron:'un tipo solo es comparable cuando está expresado como efectivo en la misma unidad de tiempo. «Nominal con capitalización» es la señal para convertir.',
+  invalida:'A permitiera retirar fondos sin penalización y la empresa valorara esa liquidez, o hubiera comisiones o retenciones distintas.',
+  lateral:['¿Por qué un banco anunciaría un nominal con capitalización mensual en lugar del efectivo?', 'Si el plazo fuera 6 meses y B solo pagara al final del año, ¿podrías comparar igual?', '¿Qué papel tiene la empresa aquí que no tenía en el préstamo de E1?'],
+  pats:['comparar-efectivo']},
+
+ {id:'E3', fam:'Cobros · fechas', title:'Cobrar hoy o más tarde',
+  enun:'Tu empresa ha vendido mercancía a un cliente. El cliente propone dos formas de pago: <mark>10.000 € hoy</mark> o <mark>10.400 € dentro de 9 meses</mark>. Tu empresa valora los capitales al <mark>4 % efectivo anual en capitalización compuesta</mark>. ¿Qué opción conviene a tu empresa según ese criterio?',
+  parties:[{n:'Tu empresa', a:'Acreedor'}, {n:'Cliente', a:'Deudor'}],
+  persp:'el CLIENTE (cambio de perspectiva)',
+  flows:[{t:0, tl:'t = 0', amt:10000, c:'Opción 1: paga hoy', s:-1}, {t:0.75, tl:'t = 0,75', amt:10400, c:'Opción 2: paga en 9 meses', s:-1}],
+  identificar:[['Comparar dos cobros de distinta fecha y cuantía para elegir el de más valor para mi empresa.',1,'Bien: dos alternativas excluyentes y un criterio dado (4 % compuesto).'],
+    ['Calcular el interés que paga el cliente por aplazar.','comprension','Es un dato útil (el umbral), pero lo que se pide es qué opción conviene a tu empresa.'],
+    ['Elegir 10.400 € porque es mayor.','fechas','Son cuantías de fechas distintas: así no se pueden comparar.']],
+  interpretar:{q:'Si el enunciado no diera el 4 %, ¿podrías decidir?', o:[
+    ['No. Sin tipo de valoración no puedo llevar 10.400 € a hoy; solo podría dar la decisión en función del tipo, con un umbral.',1,'Exacto: saber qué falta también es una respuesta correcta.'],
+    ['Sí: 10.400 es mayor que 10.000.','fechas','Compararías sumas de momentos distintos como si fueran equivalentes.'],
+    ['Sí: usaría el Euríbor de hoy.','supuesto','Es una hipótesis añadida que cambia la solución. Habría que declararla o pedir el dato.']]},
+  elegir:{q:'¿Con qué criterio comparas las dos opciones?', o:[
+    ['Llevar ambos cobros a una fecha común (hoy) con el 4 % compuesto y comparar.',1,'También valdría llevarlos a t = 0,75: la conclusión no cambia.'],
+    ['Comparar 10.400 con 10.000 directamente.','fechas','Mezcla fechas.'],
+    ['Sumar a 10.000 € el 4 % de un año.','fechas','El aplazamiento es de 9 meses, no de un año, y la ley es compuesta.']]},
+  anticipar:{q:'Antes de calcular, ¿qué esperas?', o:[
+    ['El aplazamiento lleva un 4 % de recargo en solo 9 meses, más que el 4 % anual: esperar parece mejor, pendiente de comprobar.',1,'Buena intuición: comparas el recargo implícito con tu tipo.'],
+    ['Hoy siempre es mejor: el dinero de hoy vale más.','fechas','Vale más que la misma cuantía futura. Aquí la cuantía futura es mayor.'],
+    ['Da igual: 400 € es una diferencia pequeña.','vision','Pequeña o no, hay que ver si compensa 9 meses de espera a tu tipo.']]},
+  plan:{q:'¿Qué expresión da el valor hoy de la opción aplazada?', o:[
+    ['V₀ = 10.400 · (1,04)^−0,75',1,'Ley compuesta, tiempo en años porque el tipo es anual.'],
+    ['V₀ = 10.400 · (1 − 0,04 · 0,75)','planteamiento','Es descuento comercial, otra ley financiera. El enunciado fija capitalización compuesta.'],
+    ['V₀ = 10.400 / (1,04)^9','planteamiento','Si el tipo es anual, el exponente va en años: 9 meses son 0,75 años.']]},
+  num:{q:'Calcula el valor hoy de 10.400 € a 9 meses al 4 % efectivo anual.', target:10098.53, tol:1, unit:'€', dec:2,
+    hints:['¿Qué fracción de año son 9 meses?', 't = 0,75 años; V₀ = 10.400 · 1,04^−0,75.', '1,04^0,75 ≈ 1,029842.', 'V₀ = 10.400 / 1,029842', 'V₀ ≈ 10.098,53 €'],
+    extra:'10.098,53 € > 10.000 €: con el 4 %, esperar vale 98,53 € más hoy. Umbral: el aplazamiento deja de compensar si tu tipo de valoración supera el 5,37 % anual.'},
+  preset:{c:'cap', v:{C:10400, i:4, t:0.75, dir:'desc'}},
+  decidir:[['Con el 4 %, conviene cobrar 10.400 € dentro de 9 meses. Cambia si el tipo de valoración supera el 5,37 %, y el cálculo no incluye el riesgo de impago.',1,'Conclusión con su umbral y su límite.'],
+    ['Cobrar hoy: el dinero presente siempre vale más.','fechas','El valor actual de la opción aplazada es mayor. El principio es cierto a igual cuantía.'],
+    ['Cobrar en 9 meses: es objetivamente la mejor opción para la empresa.','interpretacion','Es la mejor según el criterio dado. El impago o una necesidad de caja quedan fuera del cálculo.']],
+  acad:'Valor actual de la opción aplazada: 10.098,53 € > 10.000 €. Al 4 % compuesto, se prefiere cobrar 10.400 € dentro de 9 meses.',
+  econ:'Tu empresa: gana 98,53 € en valor actual, pero asume 9 meses de riesgo de impago y renuncia a liquidez. Cliente: paga un recargo implícito del 5,37 % anual por financiarse con su proveedor; le conviene si su alternativa es más cara.',
+  patron:'cuantías de fechas distintas solo se comparan llevadas a una fecha común con un tipo de valoración. El umbral (5,37 %) dice cuándo cambia la decisión.',
+  invalida:'el tipo de valoración superara el 5,37 %, la empresa necesitara liquidez inmediata o el riesgo de impago del cliente fuera relevante.',
+  lateral:['¿Por qué el cliente propone el aplazamiento? ¿Cuánto le costaría financiarse en otro sitio?', 'Si en lugar de 9 meses fueran 15, ¿dónde estaría el umbral?', '¿Qué dato harías explícito si tuvieras que defender «cobrar hoy» en un examen?'],
+  pats:['cobrar-antes','pagar-despues']},
+
+ {id:'E4', fam:'Préstamo · carencia', title:'Un año sin pagar',
+  enun:'Una empresa obtiene un préstamo de <mark>100.000 €</mark> al <mark>6 % efectivo anual</mark> a <mark>5 años</mark>. El primer año es de carencia; los 4 siguientes se amortiza por el sistema francés con cuotas anuales vencidas. Compara: (P) <mark>carencia parcial</mark>, en el año 1 se pagan solo intereses; (T) <mark>carencia total</mark>, en el año 1 no se paga nada y los intereses se acumulan al capital. Calcula la cuota de cada modalidad y di si alguna es más barata.',
+  parties:[{n:'Empresa', a:'Deudor'}, {n:'Banco', a:'Acreedor'}],
+  persp:'la empresa (carencia total)',
+  flows:[{t:0, tl:'t = 0', amt:100000, c:'Recibe el préstamo', s:1}, {t:1, tl:'t = 1', amt:0, c:'Sin pago: 6.000 € se suman al capital', s:0, fixed:true}, {t:2, tl:'t = 2…5', amt:30590.70, c:'Cuota anual (× 4)', s:-1, rep:[2,3,4,5]}],
+  identificar:[['Un préstamo con carencia: calcular las cuotas de dos modalidades y comparar su coste.',1,'Correcto: dos cálculos y una comparación de coste.'],
+    ['Un año gratis que abarata el préstamo: calcular cuánto se ahorra.','vision','La carencia aplaza pagos; no los regala.'],
+    ['Elegir la modalidad que necesita menos caja el primer año.','comprension','Eso es una lectura económica. El enunciado pide cuotas y coste.']],
+  interpretar:{q:'¿Qué significa «carencia total»?', o:[
+    ['El año 1 no se paga, pero los intereses (6.000 €) se suman al capital: se amortizan 106.000 €.',1,'Exacto: los intereses se capitalizan.'],
+    ['El año 1 no se devengan intereses.','vision','Sí se devengan; simplemente no se pagan y pasan a deberse.'],
+    ['El banco perdona los intereses del primer año si la empresa paga puntual.','supuesto','El enunciado no dice nada parecido: es una hipótesis inventada.']]},
+  elegir:{q:'¿Con qué criterio dices si una modalidad es más barata?', o:[
+    ['Con el coste efectivo anual de cada una, o comparando valores actuales al mismo tipo.',1,'Es el precio del dinero, independiente de cuánto tiempo se use.'],
+    ['Sumando todo lo pagado: la que paga menos euros es más barata.','fechas','Suma euros de fechas distintas.'],
+    ['Comparando la cuota de amortización.','cuota_coste','La cuota mide caja por periodo, no coste.']]},
+  anticipar:{q:'¿Qué esperas de la carencia total frente a la parcial?', o:[
+    ['Cuotas mayores después y más euros pagados en total, con el mismo coste efectivo del 6 %.',1,'Esa es la hipótesis que vas a comprobar.'],
+    ['Las mismas cuotas: solo cambia el primer año.','vision','En T se deben 106.000 € al empezar a amortizar, no 100.000 €.'],
+    ['Más cara en coste anual, porque se paga interés sobre interés.','criterio','Hay interés sobre interés, pero al mismo 6 %: es el precio de usar 6.000 € más durante 4 años.']]},
+  plan:{q:'¿Qué expresión da la cuota con carencia total?', o:[
+    ['a = 106.000 · 0,06 / (1 − 1,06^−4)',1,'Capital tras la carencia y 4 cuotas.'],
+    ['a = 100.000 · 0,06 / (1 − 1,06^−5)','planteamiento','Ignora la carencia: son 4 cuotas y el capital al final del año 1 es 106.000 €.'],
+    ['a = 100.000 · 0,06 / (1 − 1,06^−4) + 6.000 / 4','planteamiento','Reparte los intereses capitalizados sin intereses: falta el efecto del tiempo sobre esos 6.000 €.']]},
+  num:{q:'Calcula la cuota con carencia total.', target:30590.70, tol:1, unit:'€', dec:2,
+    hints:['¿Cuánto se debe al final del año 1?', '100.000 · 1,06 = 106.000 €, a amortizar en 4 cuotas.', '1,06^−4 ≈ 0,792094; 1 − 0,792094 = 0,207906.', 'a = 106.000 · 0,06 / 0,207906', 'a ≈ 30.590,70 €'],
+    extra:'P: año 1 paga 6.000 €; cuotas 28.859,15 €; total pagado 121.436,60 €. T: cuotas 30.590,70 €; total 122.362,79 €. Ambas al 6 % efectivo.'},
+  preset:{c:'cuota', v:{C:106000, i:6, n:4}},
+  decidir:[['Ninguna es más barata en coste efectivo (6 % en ambas). T paga 926,19 € más en total porque aplaza 6.000 € y los financia al mismo tipo.',1,'Separas euros totales de coste, y explicas de dónde sale la diferencia.'],
+    ['P es más barata porque paga 926 € menos.','fechas','Más euros en total no es más caro si es por usar más dinero durante más tiempo al mismo tipo.'],
+    ['T es más barata porque el primer año no se paga nada.','vision','Interpretas la carencia como gratuita.']],
+  acad:'Cuotas: 28.859,15 € (P) y 30.590,70 € (T). Coste efectivo: 6 % en ambas; al tipo del contrato son financieramente equivalentes.',
+  econ:'Empresa: T conserva 6.000 € de caja el primer año (útil si la inversión tarda en producir) a cambio de cuotas mayores. Banco: en T su exposición sube a 106.000 € antes de empezar a cobrar: más riesgo.',
+  patron:'la carencia mueve pagos en el tiempo, no los elimina. Si el tipo es el mismo, el coste efectivo no cambia; cambian el calendario y el riesgo.',
+  invalida:'la carencia total llevara un tipo distinto o comisiones propias, o la empresa no pudiera asumir las cuotas mayores posteriores.',
+  lateral:['¿Por qué un banco podría exigir un tipo mayor en la carencia total?', 'Si la nave financiada empieza a producir en el año 2, ¿qué modalidad encaja con sus flujos?', '¿En qué se parece la carencia total al aplazamiento de cobro de E3?'],
+  pats:['carencia','pagar-despues']},
+
+ {id:'E5', fam:'Ofertas A/B/C', title:'Tres préstamos, tres criterios',
+  enun:'Una empresa necesita <mark>30.000 €</mark> a <mark>4 años</mark>, con cuotas anuales constantes vencidas (francés). Oferta A: <mark>5 %</mark> sin comisión. Oferta B: <mark>4,6 %</mark> con <mark>comisión de apertura del 1,5 %</mark> (450 €) pagada al inicio. Oferta C: <mark>4,8 %</mark> con comisión del <mark>0,5 %</mark> (150 €). ¿Qué oferta tiene menor coste efectivo para la empresa?',
+  parties:[{n:'Empresa', a:'Deudor'}, {n:'Banco', a:'Acreedor'}],
+  persp:'la empresa (oferta B)',
+  flows:[{t:0, tl:'t = 0', amt:30000, c:'Recibe el préstamo', s:1}, {t:0.01, tl:'t = 0', amt:450, c:'Paga la comisión de apertura', s:-1}, {t:1, tl:'t = 1…4', amt:8381.88, c:'Cuota anual (× 4)', s:-1, rep:[1,2,3,4]}],
+  identificar:[['Comparar tres préstamos por su coste efectivo, incluyendo comisiones.',1,'Exacto: el enunciado fija el criterio (coste efectivo).'],
+    ['Elegir la oferta con el tipo de interés más bajo.','criterio','El tipo nominal no incluye la comisión.'],
+    ['Elegir la oferta con la cuota más baja.','cuota_coste','La cuota no es el coste.']],
+  interpretar:{q:'¿Qué hace la comisión de apertura?', o:[
+    ['Reduce lo que la empresa recibe realmente (29.550 € en B) mientras las cuotas se calculan sobre 30.000 €: sube el coste efectivo.',1,'Exacto: el préstamo «neto» es menor.'],
+    ['Es un gasto aparte que no afecta al coste del préstamo.','vision','Es un flujo que paga el deudor por obtener el préstamo: forma parte de su coste.'],
+    ['Se reparte entre las 4 cuotas: 112,50 € más por año.','fechas','Se paga hoy, no en las cuotas; repartirla sin intereses mezcla fechas.']]},
+  elegir:{q:'¿Qué criterio permite comparar A, B y C?', o:[
+    ['El tipo que iguala lo recibido neto (capital − comisión) con el valor actual de las cuotas.',1,'Ese tipo es el coste efectivo para el deudor.'],
+    ['Sumar intereses y comisión de cada oferta y elegir la menor suma.','fechas','Suma euros de hoy (comisión) con euros de los años 1 a 4 (intereses).'],
+    ['La menor cuota anual.','cuota_coste','Responde a liquidez, no a coste.']]},
+  anticipar:{q:'Antes de calcular, B (4,6 % + 1,5 %) frente a A (5 %)…', o:[
+    ['Una comisión del 1,5 % en un préstamo de solo 4 años puede sumar más de 0,4 puntos: B podría ser más cara que A.',1,'Buena anticipación: las comisiones pesan más cuanto más corto es el plazo.'],
+    ['B siempre es más barata: su tipo es menor.','criterio','Olvidas la comisión.'],
+    ['La comisión es pequeña: no puede cambiar la conclusión.','vision','1,5 % repartido en solo 4 años es mucho por año.']]},
+  plan:{q:'¿Cómo se plantea el coste efectivo r de B?', o:[
+    ['29.550 = 8.381,88 · (1 − (1 + r)^−4) / r, y despejar r',1,'Lo recibido neto igual al valor actual de lo pagado.'],
+    ['r = 4,6 % + 1,5 %','planteamiento','Suma un porcentaje que se paga una vez con otro que se paga cada año.'],
+    ['r = 4,6 % + 1,5 % / 4','planteamiento','Reparte la comisión sin tener en cuenta el valor del dinero en el tiempo.']]},
+  num:{q:'Calcula el coste efectivo de B (en %, dos decimales). Usa la calculadora, modo «Coste con comisión».', target:5.2499, tol:0.02, unit:'%', dec:2,
+    hints:['¿Cuál es la cuota de B?', 'a = 30.000 · 0,046 / (1 − 1,046^−4) ≈ 8.381,88 €.', 'Lo recibido neto: 30.000 − 450 = 29.550 €.', 'Busca r tal que 8.381,88 · (1 − (1+r)^−4) / r = 29.550. Prueba r = 5 % y r = 5,5 %.', 'r ≈ 5,25 %'],
+    extra:'Coste efectivo: A 5,00 %, B 5,25 %, C 5,02 %. Suma de intereses + comisión: A 3.841,42 €, B 3.977,53 €, C 3.834,34 €.'},
+  preset:{c:'irr', v:{C:30000, f:1.5, i:4.6, n:4}},
+  decidir:[['A tiene el menor coste efectivo (5,00 %). C suma menos euros (3.834 €), pero paga su comisión hoy y en valor actual cuesta algo más. B tiene la menor cuota: solo conviene si el objetivo fuera aliviar caja.',1,'Respondes al criterio pedido y explicas por qué los otros criterios dan otra respuesta.'],
+    ['C, porque es la que paga menos euros en total.','fechas','Suma euros de fechas distintas: la comisión de C se paga hoy y el ahorro de intereses llega después.'],
+    ['B, porque tiene el menor tipo y la menor cuota.','criterio','Ninguna de las dos medidas incluye la comisión ni es el coste efectivo.']],
+  acad:'Coste efectivo: A 5,00 %, C 5,02 %, B 5,25 %. La oferta de menor coste efectivo es A.',
+  econ:'Empresa: A minimiza coste; B minimiza cuota (78,47 € menos al año que A) a cambio de 0,25 puntos; C casi empata con A. Banco: la comisión adelanta ingresos y cubre costes de estudio, pero no es necesariamente más beneficio.',
+  patron:'las comisiones iniciales pesan más cuanto más corto es el préstamo; el coste efectivo es el único criterio que junta tipo, comisión y calendario.',
+  invalida:'el plazo se alargara (la comisión se diluye), C admitiera amortización anticipada sin coste o el objetivo declarado fuera la cuota mínima.',
+  lateral:['¿A partir de qué comisión deja C de competir con A? Pruébalo en Comparación A/B/C.', 'Si fueran 15 años, ¿seguiría ganando A?', '¿Por qué un banco puede preferir cobrar comisión a subir el tipo?'],
+  pats:['comparar-efectivo','reducir-cuota','aumentar-tipo']}
+];
+
+/* ============ Diagnóstico ============ */
+const DIAG = [
+  {c:'Comprensión', q:'«Calcula el capital que debe depositarse hoy al 3 % para disponer de 20.000 € dentro de 5 años.» ¿Qué te piden?', o:[['Un valor actual',1],['Un montante final',0],['Un tipo de interés',0]], e:'Se conoce el capital futuro y se busca el de hoy: es un valor actual.'},
+  {c:'Comprensión', q:'Una empresa compra letras del Tesoro. ¿Qué papel tiene la empresa?', o:[['Acreedora del Estado',1],['Deudora del Estado',0],['Ninguno: es una simple compra',0]], e:'Entrega dinero hoy a cambio de cobrar después: presta al Estado.'},
+  {c:'Criterio', q:'Préstamo X: cuota 500 €/mes. Préstamo Y: cuota 450 €/mes. ¿Cuál es más barato?', o:[['Faltan datos: capital, plazo y gastos',1],['Y',0],['X',0]], e:'La cuota sola no dice nada del coste: depende de capital, plazo y gastos.'},
+  {c:'Criterio', q:'Para comparar 1.000 € hoy con 1.050 € dentro de un año necesito…', o:[['Un tipo de valoración',1],['Nada: 1.050 es mayor',0],['La inflación de la próxima década',0]], e:'Sin tipo no puedes llevar ambos capitales a la misma fecha.'},
+  {c:'Cálculo', q:'1.000 € al 10 % compuesto anual durante 2 años se convierten en…', o:[['1.210 €',1],['1.200 €',0],['1.100 €',0]], e:'1.000 · 1,1² = 1.210 €. 1.200 sería capitalización simple.'},
+  {c:'Cálculo', q:'Tipo nominal del 12 % anual con capitalización mensual. El tipo mensual es…', o:[['1 %',1],['12 %',0],['0,95 %',0]], e:'j/m = 12 %/12 = 1 %. El efectivo anual sería 12,68 %.'},
+  {c:'Visión económica', q:'Un banco sube el tipo de un préstamo. ¿Gana necesariamente más?', o:[['No: ingresa más por contrato, pero puede asumir más riesgo de impago',1],['Sí: más tipo es más beneficio',0],['No: los tipos no afectan al banco',0]], e:'Ingreso contractual no es beneficio: el riesgo y los costes del banco también cuentan.'}
+];
+
+/* ============ Estado ============ */
+let S = Object.assign({book:[], pats:{}, cfg:{prog:'',ej:'',conv:''}, errs:[]}, store.get());
+let mode = 'train', exIdx = 0, run = null, bookView = 'entry', bookIdx = Math.max(0, S.book.length-1);
+function save(){ store.set({book:S.book, pats:S.pats, cfg:S.cfg, errs:S.errs.slice(-200)}); }
+
+function newRun(i){
+  exIdx = i; const ex = EX[i];
+  run = {ex, step:0, phase:'plan', rec:{}, signs:{}, roles:{}, pred:null, done:false, seed:Date.now()%10000, hintLvl:{}, fb:null, checked:{}};
+  updateEnun(); updateTimeline(); setCalcPreset(false); renderCenter();
+}
+function rec(k){ return run.rec[k] || (run.rec[k] = {tries:0, ok:false, hints:0, errs:[], revealed:false}); }
+function attempt(k, ok, err){
+  const r = rec(k); r.tries++;
+  if (ok) r.ok = true; else { r.errs.push(err); S.errs.push({ex:run.ex.id, k, err, at:Date.now()}); }
+}
+function keyScore(k){
+  const r = run.rec[k]; if (!r || !r.ok || r.revealed) return 0;
+  if (mode === 'sim') return r.tries === 1 ? 1 : 0;
+  return r.tries === 1 ? 1 : r.tries === 2 ? .5 : .25;
+}
+function rubric(){
+  const out = {}; for (const c in COMP) out[c] = 0;
+  for (const k in KEYW){ const [c,w] = KEYW[k]; out[c] += w * keyScore(k); }
+  let total = 0; for (const c in out){ out[c] = Math.round(out[c]*100)/100; total += out[c]; }
+  return {parts:out, total:Math.round(total*10)/10};
+}
+
+/* ============ Fondo: vacío con partículas ============ */
+const pointer = {tx:0, ty:0, x:0, y:0};
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const finePointer = matchMedia('(pointer: fine)').matches;
+addEventListener('pointermove', e => { pointer.tx = e.clientX/innerWidth - .5; pointer.ty = e.clientY/innerHeight - .5; }, {passive:true});
+(function voidBg(){
+  const cv = $('#voidbg'), ctx = cv.getContext('2d'); let W, H, dpr, pts = [];
+  function size(){ dpr = Math.min(2, devicePixelRatio||1); W = innerWidth; H = innerHeight; cv.width = W*dpr; cv.height = H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+    pts = Array.from({length: Math.round(W*H/9000)}, () => ({x:Math.random()*W, y:Math.random()*H, z:Math.random()*.9+.1, s:Math.random()})); }
+  size(); addEventListener('resize', size);
+  const root = document.documentElement;
+  function frame(t){
+    pointer.x += (pointer.tx - pointer.x) * .06; pointer.y += (pointer.ty - pointer.y) * .06;
+    if (finePointer && !reduce && innerWidth > 820){
+      root.style.setProperty('--px', (pointer.x * -16).toFixed(2)+'px'); root.style.setProperty('--py', (pointer.y * -12).toFixed(2)+'px');
+      root.style.setProperty('--gry', (pointer.x * 4).toFixed(2)+'deg'); root.style.setProperty('--grx', (pointer.y * -3).toFixed(2)+'deg');
+    }
+    ctx.clearRect(0,0,W,H);
+    // rejilla en perspectiva (suelo del vacío)
+    const hz = H*.62 + pointer.y*-30, cx = W/2 + pointer.x*-60;
+    ctx.strokeStyle = 'rgba(120,145,210,0.07)'; ctx.lineWidth = 1;
+    for (let i=-14;i<=14;i++){ ctx.beginPath(); ctx.moveTo(cx + i*18, hz); ctx.lineTo(cx + i*W/6, H+40); ctx.stroke(); }
+    const off = reduce ? 0 : (t/60) % 1;
+    for (let j=0;j<14;j++){ const p = Math.pow((j+off)/14, 2.2); const y = hz + p*(H-hz+60); ctx.globalAlpha = p; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+    ctx.globalAlpha = 1;
+    for (const p of pts){
+      const x = p.x + pointer.x * -60 * p.z, y = p.y + pointer.y * -40 * p.z + (reduce?0:Math.sin(t/2400 + p.s*6)*4*p.z);
+      ctx.fillStyle = p.s > .93 ? 'rgba(233,180,92,'+(.5*p.z)+')' : 'rgba(170,190,240,'+(.45*p.z)+')';
+      ctx.beginPath(); ctx.arc(x, y, p.z*1.4, 0, 6.283); ctx.fill();
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+// inclinación local de cada panel
+document.addEventListener('pointermove', e => {
+  if (!finePointer || reduce || innerWidth <= 820) return;
+  const el = e.target.closest && e.target.closest('.float');
+  $$('.float.tilting').forEach(f => { if (f !== el){ f.classList.remove('tilting'); f.style.setProperty('--lx','0deg'); f.style.setProperty('--ly','0deg'); } });
+  if (!el) return; el.classList.add('tilting');
+  const r = el.getBoundingClientRect(); const lx = (e.clientX - r.left)/r.width - .5, ly = (e.clientY - r.top)/r.height - .5;
+  el.style.setProperty('--ly', (lx*5).toFixed(2)+'deg'); el.style.setProperty('--lx', (ly*-5).toFixed(2)+'deg');
+}, {passive:true});
+
+/* ============ Línea temporal 3D ============ */
+const TL = {ok:false};
+(function initTL(){
+  const wrap = $('#tlWrap'), cv = $('#tlCanvas');
+  if (typeof THREE === 'undefined'){ wrap.insertAdjacentHTML('beforeend','<div class="tl-fallback">La vista 3D no ha podido cargarse. Los flujos siguen en la tarjeta «Dibujar».</div>'); return; }
+  const renderer = new THREE.WebGLRenderer({canvas:cv, antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(2, devicePixelRatio||1));
+  const scene = new THREE.Scene(); scene.fog = new THREE.Fog(0x060a14, 14, 30);
+  const cam = new THREE.PerspectiveCamera(38, 1, .1, 100);
+  scene.add(new THREE.AmbientLight(0x9fb0e0, .55));
+  const dl = new THREE.DirectionalLight(0xffffff, .9); dl.position.set(4,8,6); scene.add(dl);
+  const grid = new THREE.GridHelper(18, 18, 0x3a4a78, 0x1d2744); grid.material.transparent = true; grid.material.opacity = .55; scene.add(grid);
+  const axisMat = new THREE.LineBasicMaterial({color:0xe9b45c});
+  const axis = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-7.5,0,0), new THREE.Vector3(7.5,0,0)]), axisMat); scene.add(axis);
+  const dust = new THREE.BufferGeometry(); const N = 260, pos = new Float32Array(N*3);
+  for (let i=0;i<N;i++){ pos[i*3] = (Math.random()-.5)*22; pos[i*3+1] = (Math.random()-.3)*10; pos[i*3+2] = (Math.random()-.5)*14; }
+  dust.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  scene.add(new THREE.Points(dust, new THREE.PointsMaterial({color:0xaabbe8, size:.05, transparent:true, opacity:.7})));
+  const group = new THREE.Group(); scene.add(group);
+  let orbit = {x:0, y:0, tx:0, ty:0}, drag = null;
+  wrap.addEventListener('pointermove', e => { const r = wrap.getBoundingClientRect(); orbit.tx = ((e.clientX-r.left)/r.width - .5); orbit.ty = ((e.clientY-r.top)/r.height - .5); if (drag !== null){ orbit.spin += (e.clientX - drag)/180; drag = e.clientX; } });
+  wrap.addEventListener('pointerdown', e => { drag = e.clientX; wrap.setPointerCapture(e.pointerId); wrap.style.cursor='grabbing'; });
+  wrap.addEventListener('pointerup', () => { drag = null; wrap.style.cursor='grab'; });
+  wrap.addEventListener('pointerleave', () => { orbit.tx = 0; orbit.ty = 0; });
+  orbit.spin = 0;
+  function resize(){ const w = wrap.clientWidth, h = wrap.clientHeight; renderer.setSize(w, h, false); cam.aspect = w/h; cam.updateProjectionMatrix(); }
+  new ResizeObserver(resize).observe(wrap); resize();
+  function label(text, color){
+    const c = document.createElement('canvas'); c.width = 512; c.height = 96; const g = c.getContext('2d');
+    g.font = '500 40px "IBM Plex Mono", monospace'; g.fillStyle = color; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 256, 48);
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c), transparent:true, depthWrite:false}));
+    sp.scale.set(3.2, .6, 1); return sp;
+  }
+  TL.set = function(flows, signs, reveal){
+    while (group.children.length){ const o = group.children.pop(); o.geometry && o.geometry.dispose(); o.material && (o.material.map && o.material.map.dispose(), o.material.dispose()); }
+    const items = []; flows.forEach((f, idx) => (f.rep || [f.t]).forEach(t => items.push({f, idx, t})));
+    const maxT = Math.max(1, ...items.map(i => i.t)), maxA = Math.max(...flows.map(f => f.amt));
+    items.forEach(({f, idx, t}, n) => {
+      const x = -6.5 + (t/maxT)*13;
+      const sg = f.fixed ? 0 : (reveal ? f.s : (signs[idx] || 0));
+      const h = f.amt ? .5 + 3.6*Math.sqrt(f.amt/maxA) : .08;
+      const col = f.fixed ? 0x8f9bb8 : sg > 0 ? 0x4fd1b5 : sg < 0 ? 0xff7d6e : 0x8f9bb8;
+      const mat = new THREE.MeshStandardMaterial({color:col, emissive:col, emissiveIntensity:sg ? .35 : .1, transparent:true, opacity:sg ? .92 : .35, roughness:.4, metalness:.1, wireframe:!sg && !f.fixed});
+      const zOff = (f.t === 0.01 ? .9 : 0);
+      const m = new THREE.Mesh(new THREE.BoxGeometry(.55, 1, .55), mat);
+      m.userData = {h, s: sg || 1, x}; m.scale.y = .01; m.position.set(x + zOff*.4, 0, zOff); group.add(m);
+      if ((f.rep ? t === f.rep[0] : true) && f.amt){
+        const lb = label((sg>0?'+':sg<0?'−':'±') + fmt(f.amt), sg>0 ? '#4fd1b5' : sg<0 ? '#ff7d6e' : '#c8d0e4');
+        lb.position.set(x + zOff*.4, (sg<0 ? -1 : 1)*(h + .55), zOff); group.add(lb);
+      }
+      if (f.rep ? t === f.rep[0] : true){ const tl = label(f.tl, '#97a3bf'); tl.scale.set(2.4,.45,1); tl.position.set(x + zOff*.4, -.35*(sg<0?-1:1) , 1.4 + zOff); group.add(tl); }
+    });
+  };
+  function loop(){
+    orbit.x += (orbit.tx - orbit.x)*.07; orbit.y += (orbit.ty - orbit.y)*.07;
+    const ang = orbit.spin + orbit.x*.9 + (reduce ? 0 : Math.sin(performance.now()/5200)*.12);
+    cam.position.set(Math.sin(ang)*13, 4.2 - orbit.y*4, Math.cos(ang)*13); cam.lookAt(0, .3, 0);
+    group.children.forEach(o => { if (o.isMesh){ const u = o.userData; o.scale.y += (u.h - o.scale.y)*.12; o.position.y = u.s * o.scale.y/2; } });
+    renderer.render(scene, cam); requestAnimationFrame(loop);
+  }
+  TL.ok = true; loop();
+})();
+function updateTimeline(){
+  if (!run) return;
+  const reveal = !!(run.rec.dibujar && run.rec.dibujar.ok) || run.done;
+  TL.ok && TL.set(run.ex.flows, run.signs, reveal);
+  $('#tlPersp').textContent = 'Perspectiva: ' + run.ex.persp + (reveal ? ' · signos comprobados' : ' · asigna los signos en «Dibujar»');
+}
+
+/* ============ Enunciado ============ */
+function renderPicker(){
+  $('#exPicker').innerHTML = EX.map((e,i) => `<button data-ex="${i}" aria-pressed="${i===exIdx}">${e.id}<small>${esc(e.fam)}</small></button>`).join('');
+}
+function updateEnun(){
+  renderPicker();
+  const ex = run.ex; $('#enun').innerHTML = `<h3 style="font-size:17px;margin-bottom:6px">${esc(ex.title)}</h3>` + ex.enun;
+  const situado = run.rec.situar && run.rec.situar.ok;
+  $('#parties').innerHTML = ex.parties.map(p => `<span class="party ${situado ? p.a.toLowerCase() : ''}"><b>${esc(p.n)}</b> · ${situado ? esc(p.a) : '¿papel?'}</span>`).join('');
+}
+$('#exPicker').addEventListener('click', e => { const b = e.target.closest('button[data-ex]'); if (!b) return; if (mode === 'diag' || mode === 'corr') setMode('train'); newRun(+b.dataset.ex); if (mode === 'abc') renderCenter(); });
+
+/* ============ Calculadora ============ */
+let calcMode = 'cap'; const CV = {cap:{C:10000, i:4, t:2, dir:'cap'}, cuota:{C:60000, i:5, n:5}, efec:{j:3, m:12}, irr:{C:30000, f:1.5, i:4.6, n:4}};
+const CF = {
+  cap:[['C','Capital (€)'],['i','Tipo efectivo anual (%)'],['t','Tiempo (años)'],['dir','Sentido',[['cap','Capitalizar → Cₜ'],['desc','Descontar → V₀']]]],
+  cuota:[['C','Capital (€)'],['i','Tipo por periodo (%)'],['n','Número de cuotas']],
+  efec:[['j','Tipo nominal anual (%)'],['m','Capitalizaciones al año']],
+  irr:[['C','Capital nominal (€)'],['f','Comisión inicial (%)'],['i','Tipo del préstamo (%)'],['n','Número de cuotas anuales']]
+};
+function renderCalc(){
+  $$('#calcTabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.c === calcMode));
+  $('#calcFields').innerHTML = CF[calcMode].map(([k,l,opts]) => `<div class="field"><label for="cf_${k}">${l}</label>${opts ? `<select id="cf_${k}" data-k="${k}">${opts.map(([v,t]) => `<option value="${v}" ${CV[calcMode][k]===v?'selected':''}>${t}</option>`).join('')}</select>` : `<input id="cf_${k}" data-k="${k}" inputmode="decimal" value="${String(CV[calcMode][k]).replace('.',',')}">`}</div>`).join('');
+  calcOut();
+}
+function calcOut(){
+  const v = CV[calcMode]; let big='—', formula='', meaning='';
+  const ok = x => Number.isFinite(x);
+  if (calcMode === 'cap'){ const i = v.i/100; if (ok(v.C)&&ok(i)&&ok(v.t)){
+      if (v.dir === 'cap'){ const r = v.C*Math.pow(1+i, v.t); big = fmt(r)+' €'; formula = `Cₜ = ${fmt(v.C)} · (1 + ${fmt(i,4)})^${fmt(v.t,2)} = ${fmt(r)}`; meaning = 'Cuánto vale en el futuro un capital de hoy, con interés sobre interés.'; }
+      else { const r = v.C*Math.pow(1+i, -v.t); big = fmt(r)+' €'; formula = `V₀ = ${fmt(v.C)} · (1 + ${fmt(i,4)})^−${fmt(v.t,2)} = ${fmt(r)}`; meaning = 'Cuánto vale hoy un capital futuro: lo que tendrías que invertir hoy al tipo dado para obtenerlo.'; } } }
+  if (calcMode === 'cuota'){ const i = v.i/100; if (ok(v.C)&&ok(i)&&v.n>0){ const a = cuota(v.C,i,v.n); big = fmt(a)+' €'; formula = `a = ${fmt(v.C)} · ${fmt(i,4)} / (1 − (1 + ${fmt(i,4)})^−${v.n}) = ${fmt(a)}`; meaning = `Cuota constante cuyo valor actual iguala el capital. Total pagado: ${fmt(a*v.n)} €; intereses: ${fmt(a*v.n - v.C)} €.`; } }
+  if (calcMode === 'efec'){ const j = v.j/100; if (ok(j)&&v.m>0){ const r = Math.pow(1+j/v.m, v.m)-1; big = fmt(r*100,4)+' %'; formula = `i = (1 + ${fmt(j,4)}/${v.m})^${v.m} − 1 = ${fmt(r,6)}`; meaning = `Tipo periódico: ${fmt(j/v.m*100,4)} %. El efectivo anual mide lo que rinde o cuesta de verdad un año.`; } }
+  if (calcMode === 'irr'){ const i = v.i/100, f = v.f/100; if (ok(v.C)&&ok(i)&&ok(f)&&v.n>0){ const a = cuota(v.C,i,v.n), neto = v.C*(1-f), r = costeEf(neto, a, v.n); big = fmt(r*100,4)+' %'; formula = `${fmt(neto)} = ${fmt(a)} · (1 − (1 + r)^−${v.n}) / r  →  r = ${fmt(r*100,4)} %`; meaning = `Cuota: ${fmt(a)} €. Recibes neto ${fmt(neto)} € y devuelves cuotas calculadas sobre ${fmt(v.C)} €: r es el coste efectivo para el deudor.`; } }
+  $('#calcOut').innerHTML = `<div class="big">${big}</div><div class="formula">${esc(formula)}</div><div class="meaning">${esc(meaning)}</div>`;
+}
+$('#calcTabs').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; calcMode = b.dataset.c; renderCalc(); });
+$('#calcFields').addEventListener('input', e => { const k = e.target.dataset.k; if (!k) return; CV[calcMode][k] = e.target.tagName === 'SELECT' ? e.target.value : parseNum(e.target.value); calcOut(); });
+$('#calcFields').addEventListener('change', e => { const k = e.target.dataset.k; if (!k) return; CV[calcMode][k] = e.target.tagName === 'SELECT' ? e.target.value : parseNum(e.target.value); calcOut(); });
+function setCalcPreset(show){ const p = run.ex.preset; Object.assign(CV[p.c], p.v); if (show){ calcMode = p.c; } renderCalc(); }
+$('#calcPreset').addEventListener('click', () => {
+  if (!run) return;
+  if (mode === 'sim'){ $('#calcOut').insertAdjacentHTML('beforeend','<div class="meaning" style="color:var(--warn)">En simulacro introduce tú los datos.</div>'); return; }
+  if (!run.done && STEPS[run.step].k === 'calcular') rec(run.phase).hints++;
+  setCalcPreset(true);
+});
+
+/* ============ Centro: recorrido de criterio ============ */
+function stepKeyDone(si){ const k = STEPS[si].k; if (k === 'calcular') return run.rec.num && run.rec.num.ok || (mode==='sim' && run.rec.num && run.rec.num.tries>0); const r = run.rec[k]; return r && (r.ok || (mode==='sim' && r.tries>0)); }
+function stepHadErr(si){ const k = STEPS[si].k; const ks = k === 'calcular' ? ['plan','num'] : [k]; return ks.some(x => run.rec[x] && run.rec[x].errs.length); }
+function renderRail(){
+  return `<div class="rail" role="list">${STEPS.map((s,i) => {
+    const cls = [i === run.step && !run.done ? 'active' : '', stepKeyDone(i) ? 'done' : '', mode !== 'sim' && stepHadErr(i) ? 'err' : ''].join(' ');
+    const can = i <= run.step || stepKeyDone(i);
+    return `<button role="listitem" class="${cls}" data-go="${i}" ${can && mode !== 'sim' ? '' : 'disabled'} aria-label="Paso ${i+1}: ${s.n}"><span class="node">${i+1}</span><span class="lbl">${s.n}</span></button>`; }).join('')}</div>`;
+}
+function optList(k, opts, locked){
+  const order = shuffle(opts.map((o,i)=>i), run.seed + k.length*7);
+  const r = run.rec[k] || {};
+  return `<div class="opts">${order.map((oi,n) => { const o = opts[oi]; const tried = (run.checked[k]||[]).includes(oi);
+    const cls = mode !== 'sim' && tried ? (o[1] === 1 ? 'ok' : 'bad') : '';
+    return `<button class="opt ${cls}" data-opt="${oi}" data-k="${k}" ${locked || tried ? 'disabled' : ''}><span class="k">${'ABCD'[n]}</span>${esc(o[0])}</button>`; }).join('')}</div>`;
+}
+function fbHtml(){
+  if (!run.fb) return '';
+  const f = run.fb; return `<div class="fb ${f.kind}" role="status">${f.tag ? `<span class="tag">${esc(f.tag)}</span>` : ''}${f.html}</div>`;
+}
+function renderCenter(){
+  const c = $('#center');
+  if (mode === 'diag') return renderDiag(c);
+  if (mode === 'abc') return renderABC(c);
+  if (mode === 'corr') return renderCorr(c);
+  if (run.done) return renderSummary(c);
+  const st = STEPS[run.step], ex = run.ex, k = st.k === 'calcular' ? run.phase : st.k;
+  const r = run.rec[k] || {}; const solved = r.ok || (mode === 'sim' && r.tries > 0);
+  let body = '', sub = '';
+  if (st.k === 'identificar'){ sub = 'Explica primero con tus palabras qué te preguntan; después elige la descripción que coincide.'; body = optList('identificar', ex.identificar, solved); }
+  else if (st.k === 'situar'){ sub = 'Asigna un papel a cada parte. Acreedor es quien tiene derecho a cobrar; deudor, quien tiene que pagar.';
+    body = `<div class="roles">${ex.parties.map((p,i) => { const v = run.roles[i]; const chk = run.checked.situar; const cls = chk && mode!=='sim' ? (v === p.a ? 'right' : 'wrong') : '';
+      return `<div class="role ${cls}"><b>${esc(p.n)}</b><div class="seg">${['Acreedor','Deudor'].map(a => `<button data-role="${i}" data-v="${a}" aria-pressed="${v===a}" ${solved?'disabled':''}>${a}</button>`).join('')}</div></div>`; }).join('')}</div>
+      ${solved ? '' : `<div class="btn-row"><button class="btn primary" data-act="checkRoles">Comprobar papeles</button></div>`}`; }
+  else if (st.k === 'dibujar'){ sub = `Asigna el signo de cada flujo desde la perspectiva de <b>${esc(ex.persp)}</b>: + si entra, − si sale. La línea 3D cambia a la vez.`;
+    body = `<div class="flows">${ex.flows.map((f,i) => { const v = run.signs[i]; const chk = run.checked.dibujar; const cls = f.fixed ? 'fixed' : (chk && mode!=='sim' ? (v === f.s ? 'right' : 'wrong') : '');
+      return `<div class="flow ${cls}"><span class="t">${esc(f.tl)}</span><div style="min-width:0"><div class="amt">${f.amt ? fmt(f.amt)+' €' : '0 €'}</div><div class="c">${esc(f.c)}</div></div>
+      <div class="sign">${f.fixed ? 'sin flujo' : `<button class="plus" data-sign="${i}" data-v="1" aria-pressed="${v===1}" aria-label="Cobro" ${solved?'disabled':''}>+</button><button class="minus" data-sign="${i}" data-v="-1" aria-pressed="${v===-1}" aria-label="Pago" ${solved?'disabled':''}>−</button>`}</div></div>`; }).join('')}</div>
+      ${solved ? '' : `<div class="btn-row"><button class="btn primary" data-act="checkSigns">Comprobar flujos</button></div>`}`; }
+  else if (st.k === 'calcular'){
+    if (run.phase === 'plan'){ sub = ex.plan.q; body = optList('plan', ex.plan.o, solved); }
+    else { sub = ex.num.q + ' Puedes usar la calculadora de la izquierda.';
+      body = `<div class="numin"><label for="numIn" class="sr">Resultado</label><input id="numIn" inputmode="decimal" placeholder="Tu resultado" ${solved?'disabled':''} value="${esc(run.numVal||'')}"><span class="unit">${ex.num.unit}</span>${solved ? '' : `<button class="btn primary" data-act="checkNum">Comprobar</button>`}</div>`; }
+  }
+  else if (st.k === 'decidir'){ sub = 'Elige la conclusión que responde a lo pedido sin afirmar más de lo que el cálculo demuestra.'; body = optList('decidir', ex.decidir, solved); }
+  else { const d = ex[st.k]; sub = d.q; body = optList(st.k, d.o, solved); }
+
+  const hints = mode === 'train';
+  const hl = run.hintLvl[k] || 0; const maxH = k === 'num' ? ex.num.hints.length : GH[k] ? GH[k].length : 0;
+  const nextLbl = run.step === STEPS.length-1 ? 'Cerrar ejercicio y escribir en el cuaderno' : (st.k === 'calcular' && run.phase === 'plan' ? 'Pasar al cálculo' : 'Siguiente paso');
+  const phaseTag = st.k === 'calcular' ? (run.phase === 'plan' ? ' · planteamiento' : ' · cálculo') : '';
+  c.innerHTML = `${renderRail()}
+  <div class="deck">
+    ${run.step < 7 ? `<div class="ghost-card g2" aria-hidden="true">${run.step+3 <= 8 ? (run.step+3)+' · '+STEPS[Math.min(7,run.step+2)].n : ''}</div><div class="ghost-card" aria-hidden="true">${run.step+2} · ${STEPS[run.step+1].n}</div>` : ''}
+    <section class="float card" style="--d:.55;--bd:-2s" aria-live="polite">
+      <div class="card-head"><div class="eyebrow">Paso ${run.step+1} de 8${phaseTag} · ${esc(ex.id)} · ${mode === 'sim' ? 'Simulacro: sin pistas ni corrección hasta el final' : 'Entrenamiento guiado'}</div>
+      ${hints ? `<span class="help-meter">Ayuda usada: ${hl}/${maxH}</span>` : ''}</div>
+      <h2>${esc(st.k === 'calcular' && run.phase === 'num' ? '¿Cuánto da?' : st.q)}</h2>
+      <p class="sub">${sub}</p>
+      ${body}
+      ${fbHtml()}
+      <div class="card-foot">
+        <div class="btn-row" style="margin:0">${hints && !solved && hl < maxH ? `<button class="btn" data-act="hint">${hl === 0 ? 'Pista' : 'Más ayuda'}</button>` : ''}${hints ? `<button class="btn ghost" data-act="askTutor">Preguntar al tutor</button>` : ''}</div>
+        <button class="btn primary" data-act="next" ${solved ? '' : 'disabled'}>${nextLbl}</button>
+      </div>
+    </section>
+  </div>`;
+}
+function gotoStep(i){ run.step = i; run.fb = null; if (STEPS[i].k === 'calcular') run.phase = run.rec.plan && run.rec.plan.ok ? 'num' : 'plan'; renderCenter(); }
+$('#center').addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t || !run) return;
+  if (t.dataset.go){ gotoStep(+t.dataset.go); return; }
+  if (t.dataset.opt !== undefined && t.dataset.k && !t.dataset.diag){ chooseOpt(t.dataset.k, +t.dataset.opt); return; }
+  if (t.dataset.role !== undefined){ run.roles[t.dataset.role] = t.dataset.v; run.checked.situar = false; renderCenter(); return; }
+  if (t.dataset.sign !== undefined){ run.signs[t.dataset.sign] = +t.dataset.v; run.checked.dibujar = false; updateTimeline(); renderCenter(); return; }
+  const act = t.dataset.act; if (!act) return;
+  if (act === 'checkRoles') checkRoles();
+  else if (act === 'checkSigns') checkSigns();
+  else if (act === 'checkNum') checkNum();
+  else if (act === 'hint') giveHint();
+  else if (act === 'next') nextStep();
+  else if (act === 'askTutor'){ $('#chatBox').focus(); $('#chatBox').scrollIntoView({behavior: reduce ? 'auto' : 'smooth', block:'center'}); }
+  else if (act === 'nextEx'){ newRun((exIdx+1) % EX.length); }
+  else if (act === 'again'){ newRun(exIdx); }
+});
+$('#center').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'numIn'){ e.preventDefault(); checkNum(); } });
+$('#center').addEventListener('input', e => { if (e.target.id === 'numIn') run.numVal = e.target.value; });
+
+function optSet(k){ const st = STEPS[run.step]; if (k === 'plan') return run.ex.plan.o; if (k === 'identificar') return run.ex.identificar; if (k === 'decidir') return run.ex.decidir; return run.ex[k].o; }
+function chooseOpt(k, oi){
+  const o = optSet(k)[oi]; const ok = o[1] === 1;
+  attempt(k, ok, ok ? null : o[1]);
+  (run.checked[k] = run.checked[k] || []).push(oi);
+  if (k === 'anticipar' && rec(k).tries === 1) run.pred = {text:o[0], ok};
+  if (mode === 'sim'){ run.checked[k] = [oi]; nextStep(true); return; }
+  if (ok){ run.fb = {kind:'ok', tag:'Correcto', html:esc(o[2])}; if (k === 'decidir') run.fb.html += decideExtra(); }
+  else { const E = ERR[o[1]]; run.fb = {kind:'bad', tag:E.n, html:`${esc(o[2])}<div style="margin-top:6px;color:var(--muted)">Por qué suele aparecer: ${esc(E.why)}</div>`}; }
+  renderCenter();
+}
+function decideExtra(){ const ex = run.ex;
+  return `<div class="lecturas"><div class="lectura acad"><h3>Lectura académica</h3><p>${esc(ex.acad)}</p></div><div class="lectura econ"><h3>Lectura económica</h3><p>${esc(ex.econ)}</p></div></div>
+  <div class="closing"><p><b>El patrón que debes reconocer en otro problema es</b> que ${esc(ex.patron)}</p><p><b>Esta conclusión dejaría de ser válida si</b> ${esc(ex.invalida)}</p></div>`; }
+function checkRoles(){
+  const ps = run.ex.parties; if (ps.some((p,i) => !run.roles[i])){ run.fb = {kind:'hint', tag:'Falta', html:'Asigna un papel a cada parte antes de comprobar.'}; renderCenter(); return; }
+  const ok = ps.every((p,i) => run.roles[i] === p.a); attempt('situar', ok, ok ? null : 'perspectiva'); run.checked.situar = true;
+  if (mode === 'sim'){ nextStep(true); return; }
+  run.fb = ok ? {kind:'ok', tag:'Correcto', html:`Papeles bien situados. ${run.ex.parties[0].a === 'Acreedor' ? 'Fíjate: aquí la empresa es acreedora. No hay papeles fijos por tipo de entidad.' : 'La empresa recibe el capital y se obliga a devolverlo: es deudora.'}`}
+     : {kind:'bad', tag:ERR.perspectiva.n, html:esc(ERR.perspectiva.why) + ' Recorre la operación: ¿quién entrega el dinero en t = 0?'};
+  if (ok) updateEnun(); renderCenter();
+}
+function checkSigns(){
+  const fl = run.ex.flows; const need = fl.map((f,i)=>i).filter(i => !fl[i].fixed);
+  if (need.some(i => !run.signs[i])){ run.fb = {kind:'hint', tag:'Falta', html:'Da signo a todos los flujos antes de comprobar.'}; renderCenter(); return; }
+  const wrong = need.filter(i => run.signs[i] !== fl[i].s); const ok = !wrong.length;
+  const err = ok ? null : (wrong.length === need.length ? 'perspectiva' : 'fechas');
+  attempt('dibujar', ok, err); run.checked.dibujar = true; updateTimeline();
+  if (mode === 'sim'){ nextStep(true); return; }
+  run.fb = ok ? {kind:'ok', tag:'Correcto', html: run.ex.id === 'E3' ? 'Desde el cliente, las dos opciones son pagos. Las fechas y cuantías son las mismas que vería tu empresa; solo cambian los signos.' : 'Flujos coherentes con la perspectiva elegida. La línea 3D ya muestra la operación completa.'}
+     : {kind:'bad', tag:ERR[err].n, html: err === 'perspectiva' ? 'Todos los signos están invertidos: estás mirando desde la otra parte. Vuelve a leer la perspectiva indicada.' : 'Algún flujo tiene el signo cambiado. Pregunta en cada fecha: ¿entra o sale dinero de esta parte?'};
+  renderCenter();
+}
+function checkNum(){
+  const v = parseNum($('#numIn') ? $('#numIn').value : run.numVal); const ex = run.ex;
+  if (!Number.isFinite(v)){ run.fb = {kind:'hint', tag:'Formato', html:'Escribe un número, por ejemplo 9283,31 o 3,04.'}; renderCenter(); return; }
+  const ok = Math.abs(v - ex.num.target) <= ex.num.tol;
+  let err = 'calculo';
+  if (!ok && ex.num.unit === '€' && Math.abs(v/ex.num.target - 1) > .25) err = 'planteamiento';
+  attempt('num', ok, ok ? null : err);
+  if (mode === 'sim'){ nextStep(true); return; }
+  if (ok){ const p = run.pred; run.fb = {kind:'ok', tag:'Correcto', html:`${esc(ex.num.extra)}${p ? `<div style="margin-top:8px">Tu predicción: «${esc(p.text)}» → <b>${p.ok ? 'el cálculo la confirma' : 'el cálculo la corrige; revisa por qué esperabas otra cosa'}</b>.</div>` : ''}`}; }
+  else { const mag = v / ex.num.target; run.fb = {kind:'bad', tag:ERR[err].n, html: err === 'planteamiento' ? `Tu resultado está lejos (${fmt(mag*100,0)} % del valor esperado): revisa la fórmula y qué capital, tipo y número de periodos usas.` : 'Cerca, pero no dentro de la tolerancia. Conserva decimales internos y redondea solo al final; revisa la unidad del tipo.'}; }
+  renderCenter();
+}
+function giveHint(){
+  const st = STEPS[run.step]; const k = st.k === 'calcular' ? run.phase : st.k; const r = rec(k);
+  const list = k === 'num' ? run.ex.num.hints : GH[k]; const lvl = run.hintLvl[k] || 0; if (lvl >= list.length) return;
+  run.hintLvl[k] = lvl + 1; r.hints++;
+  const levels = ['Pregunta que localiza la dificultad','Pista conceptual','Ordenar fechas y flujos','Planteamiento parcial','Solución'];
+  if (k === 'num' && lvl + 1 === list.length) r.revealed = true;
+  run.fb = {kind:'hint', tag: k === 'num' ? levels[lvl] : 'Pista '+(lvl+1), html:esc(list[lvl])};
+  renderCenter();
+}
+function nextStep(silent){
+  const st = STEPS[run.step];
+  if (st.k === 'calcular' && run.phase === 'plan'){ run.phase = 'num'; run.fb = null; renderCenter(); return; }
+  if (run.step < STEPS.length - 1){ run.step++; run.fb = null; if (STEPS[run.step].k === 'calcular') run.phase = 'plan'; renderCenter(); return; }
+  finishRun();
+}
+function finishRun(){
+  run.done = true; updateTimeline(); updateEnun();
+  const rb = rubric(); const ex = run.ex;
+  const errs = []; for (const k in run.rec) run.rec[k].errs.forEach(e => errs.push({k, e}));
+  const hints = Object.values(run.rec).reduce((s,r) => s + r.hints, 0);
+  const decOk = run.rec.decidir && run.rec.decidir.ok && run.rec.decidir.tries === 1;
+  if (decOk) ex.pats.forEach(p => { const a = S.pats[p] = S.pats[p] || []; if (!a.includes(ex.id)) a.push(ex.id); });
+  const entry = {type:'ex', at:Date.now(), mode, ex:ex.id, title:ex.title, fam:ex.fam, rb, errs, hints, pred:run.pred, recs:Object.fromEntries(Object.entries(run.rec).map(([k,r]) => [k, {ok:r.ok, tries:r.tries}]))};
+  S.book.push(entry); save(); bookIdx = S.book.length - 1; bookView = 'entry'; renderBook(true); renderPatterns();
+  renderCenter();
+}
+function renderSummary(c){
+  const ex = run.ex, rb = rubric();
+  const rows = STEPS.map((s,i) => { const ks = s.k === 'calcular' ? ['plan','num'] : [s.k]; return ks.map(k => { const r = run.rec[k] || {tries:0, ok:false, errs:[]};
+      return `<div class="rb"><span>${i+1} · ${s.n}${s.k==='calcular' ? (k==='plan'?' (método)':' (número)') : ''}</span><span class="mono" style="color:${r.ok ? 'var(--cobro)' : 'var(--pago)'}">${r.ok ? (r.tries === 1 ? 'a la primera' : r.tries+' intentos') : 'no resuelto'}</span><span class="v">${r.errs.length ? esc(ERR[r.errs[0]].n.split(' ')[0]) : ''}</span></div>`; }).join(''); }).join('');
+  c.innerHTML = `${renderRail()}<section class="float card" style="--d:.55">
+    <div class="eyebrow">${esc(ex.id)} · ${mode === 'sim' ? 'Simulacro corregido' : 'Ejercicio cerrado'} · registrado en el cuaderno</div>
+    <h2>${esc(ex.title)}: ${fmt(rb.total,1)} / 10</h2>
+    <p class="sub">Rúbrica diagnóstica provisional. Se ajustará a la de tu profesor cuando la tengamos.</p>
+    <div class="rubric">${Object.entries(COMP).map(([c,m]) => `<div class="rb"><span>${m.n}</span><span class="bar"><i style="width:${rb.parts[c]/m.max*100}%"></i></span><span class="v">${fmt(rb.parts[c],1)}/${m.max}</span></div>`).join('')}</div>
+    ${mode === 'sim' ? `<h3 style="font-size:15px;margin-top:18px">Paso a paso</h3><div class="rubric">${rows}</div>` : ''}
+    ${decideExtra()}
+    <div class="card-foot"><button class="btn" data-act="again">Repetir con otro orden</button><button class="btn primary" data-act="nextEx">Siguiente ejercicio</button></div>
+  </section>`;
+}
+
+/* ============ Diagnóstico ============ */
+let diag = null;
+function renderDiag(c){
+  if (!diag) diag = {i:0, ans:[]};
+  if (diag.i >= DIAG.length){
+    const cats = {}; DIAG.forEach((d,i) => { const k = d.c; cats[k] = cats[k] || {ok:0, n:0}; cats[k].n++; if (diag.ans[i]) cats[k].ok++; });
+    const weakest = Object.entries(cats).sort((a,b) => a[1].ok/a[1].n - b[1].ok/b[1].n)[0][0];
+    const reco = {'Comprensión':'Empieza por E2 en entrenamiento guiado: obliga a situar a la empresa como acreedora.', 'Criterio':'Empieza por E3: fechas distintas, criterio de fecha común y umbral.', 'Cálculo':'Empieza por E2 y E4: fórmulas cortas, con la calculadora para comprobar cada paso.', 'Visión económica':'Empieza por E4: la carencia obliga a pensar qué usa cada parte y durante cuánto tiempo.'}[weakest];
+    c.innerHTML = `<section class="float card" style="--d:.55"><div class="eyebrow">Diagnóstico inicial · resultado</div><h2>Tu punto de partida</h2>
+      <p class="sub">Siete preguntas no bastan para un diagnóstico firme: es una primera hipótesis que se irá corrigiendo con los ejercicios.</p>
+      <div class="rubric">${Object.entries(cats).map(([k,v]) => `<div class="rb"><span>${k}</span><span class="bar"><i style="width:${v.ok/v.n*100}%"></i></span><span class="v">${v.ok}/${v.n}</span></div>`).join('')}</div>
+      <div class="verdict">Causa más probable de tus dificultades ahora: <b>${weakest}</b>. ${reco}</div>
+      <div class="card-foot"><button class="btn" data-act="diagAgain">Repetir diagnóstico</button><button class="btn primary" data-act="diagGo" data-ex="${({'Comprensión':1,'Criterio':2,'Cálculo':1,'Visión económica':3})[weakest]}">Ir al ejercicio recomendado</button></div></section>`;
+    if (!diag.logged){ diag.logged = true; S.book.push({type:'diag', at:Date.now(), cats, weakest, reco}); save(); bookIdx = S.book.length-1; bookView='entry'; renderBook(true); }
+    return;
+  }
+  const d = DIAG[diag.i], answered = diag.ans[diag.i] !== undefined;
+  c.innerHTML = `<div class="rail" style="grid-template-columns:repeat(${DIAG.length},minmax(0,1fr))">${DIAG.map((x,i) => `<button disabled class="${i===diag.i?'active':''} ${diag.ans[i]===true?'done':''} ${diag.ans[i]===false?'err':''}"><span class="node">${i+1}</span><span class="lbl">${x.c}</span></button>`).join('')}</div>
+   <section class="float card" style="--d:.55"><div class="eyebrow">Diagnóstico · ${d.c} · sin calculadora ni pistas</div><h2>${esc(d.q)}</h2><p class="sub">Responde rápido: interesa tu primera lectura.</p>
+   <div class="opts">${shuffle(d.o.map((o,i)=>i), 37+diag.i).map((oi,n) => { const o = d.o[oi]; const cls = answered && (o[1] ? 'ok' : diag.pick === oi ? 'bad' : ''); return `<button class="opt ${cls||''}" data-diag="1" data-opt="${oi}" ${answered?'disabled':''}><span class="k">${'ABC'[n]}</span>${esc(o[0])}</button>`; }).join('')}</div>
+   ${answered ? `<div class="fb ${diag.ans[diag.i] ? 'ok' : 'bad'}"><span class="tag">${diag.ans[diag.i] ? 'Correcto' : d.c}</span>${esc(d.e)}</div>` : ''}
+   <div class="card-foot"><span class="help-meter">${diag.i+1} de ${DIAG.length}</span><button class="btn primary" data-act="diagNext" ${answered?'':'disabled'}>${diag.i === DIAG.length-1 ? 'Ver diagnóstico' : 'Siguiente'}</button></div></section>`;
+}
+$('#center').addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t || mode !== 'diag') return;
+  if (t.dataset.diag){ const oi = +t.dataset.opt; diag.pick = oi; diag.ans[diag.i] = DIAG[diag.i].o[oi][1] === 1; renderCenter(); }
+  else if (t.dataset.act === 'diagNext'){ diag.i++; diag.pick = null; renderCenter(); }
+  else if (t.dataset.act === 'diagAgain'){ diag = null; renderCenter(); }
+  else if (t.dataset.act === 'diagGo'){ setMode('train'); newRun(+t.dataset.ex); }
+});
+
+/* ============ Comparación A/B/C ============ */
+const ABC0 = {C:30000, n:4, o:[{n:'A', i:5, f:0}, {n:'B', i:4.6, f:1.5}, {n:'C', i:4.8, f:.5}], crit:'coste'};
+let ABC = JSON.parse(JSON.stringify(ABC0));
+const OC = ['var(--oa)','var(--ob)','var(--oc)'];
+function abcCalc(){
+  return ABC.o.map(o => { const a = cuota(ABC.C, o.i/100, ABC.n), com = ABC.C*o.f/100, r = costeEf(ABC.C - com, a, ABC.n); return {...o, a, com, r, suma:a*ABC.n - ABC.C + com}; });
+}
+function threshold(o, target){ // comisión (%) que iguala el coste de o con target
+  const a = cuota(ABC.C, o.i/100, ABC.n); if (costeEf(ABC.C, a, ABC.n) > target + 1e-9) return null;
+  let lo = 0, hi = 20; for (let k=0;k<80;k++){ const m = (lo+hi)/2; if (costeEf(ABC.C*(1-m/100), a, ABC.n) < target) lo = m; else hi = m; } return (lo+hi)/2;
+}
+const CRIT = {coste:['Coste efectivo', x => x.r, v => fmt(v*100,2)+' %'], cuota:['Cuota anual', x => x.a, v => fmt(v)+' €'], inicial:['Desembolso inicial', x => x.com, v => fmt(v)+' €'], suma:['Suma de intereses + comisión (mezcla fechas)', x => x.suma, v => fmt(v)+' €']};
+function renderABC(c){
+  c.innerHTML = `<section class="float card" style="--d:.55">
+    <div class="eyebrow">Comparación A/B/C · laboratorio de ofertas · base E5</div>
+    <h2>¿Mejor según qué criterio?</h2>
+    <p class="sub">Mueve una sola variable cada vez para ver su efecto; después combina. El coste efectivo incluye tipo, comisión y calendario. Capital y plazo son comunes a las tres ofertas.</p>
+    <div class="fields" style="max-width:420px"><div class="field"><label for="abcC">Capital (€)</label><input id="abcC" data-abc="C" inputmode="decimal" value="${ABC.C}"></div><div class="field"><label for="abcN">Años (cuotas anuales)</label><input id="abcN" data-abc="n" inputmode="numeric" value="${ABC.n}"></div></div>
+    <div class="offers" style="margin-top:14px">${ABC.o.map((x,i) => `<div class="offer" id="abcO${i}"><h3><i class="sw" style="background:${OC[i]}"></i>Oferta ${x.n}</h3>
+      <div class="rng"><label for="r_i${i}"><span>Tipo</span><span id="abcLi${i}"></span></label><input type="range" id="r_i${i}" data-o="${i}" data-f="i" min="2" max="9" step="0.05" value="${x.i}"></div>
+      <div class="rng"><label for="r_f${i}"><span>Comisión</span><span id="abcLf${i}"></span></label><input type="range" id="r_f${i}" data-o="${i}" data-f="f" min="0" max="4" step="0.05" value="${x.f}"></div>
+      <dl id="abcDl${i}"></dl></div>`).join('')}</div>
+    <div class="metric-bars" id="abcBars"></div>
+    <div class="crit-row seg" role="group" aria-label="Criterio" id="abcCrit">${Object.entries(CRIT).map(([k,v]) => `<button data-crit="${k}" aria-pressed="${ABC.crit===k}">${v[0]}</button>`).join('')}</div>
+    <div class="verdict" id="abcVerdict" aria-live="polite"></div>
+    <div class="card-foot"><button class="btn" data-act="abcReset">Volver a los datos de E5</button><button class="btn primary" data-act="abcEx">Resolver E5 paso a paso</button></div>
+  </section>`;
+  abcUpdate();
+}
+function abcUpdate(){
+  const R = abcCalc();
+  const best = {}; for (const k in CRIT){ const g = CRIT[k][1]; best[k] = R.reduce((b,x) => g(x) < g(b) - 1e-9 ? x : b, R[0]).n; }
+  const dom = R.find(x => R.every(y => y === x || (x.r <= y.r + 1e-9 && x.a <= y.a + 1e-9 && x.com <= y.com + 1e-9)));
+  const minR = Math.min(...R.map(x => x.r)); const bestCost = R.find(x => x.r === minR);
+  R.forEach((x,i) => {
+    $('#abcO'+i).classList.toggle('best', x === bestCost);
+    $('#abcLi'+i).textContent = fmt(x.i,2)+' %'; $('#abcLf'+i).textContent = fmt(x.f,2)+' %';
+    $('#abcDl'+i).innerHTML = `<dt>Cuota</dt><dd>${fmt(x.a)} €</dd><dt>Coste efectivo</dt><dd>${fmt(x.r*100,3)} %</dd><dt>Comisión hoy</dt><dd>${fmt(x.com)} €</dd><dt>Int. + comisión</dt><dd>${fmt(x.suma)} €</dd>`;
+  });
+  $('#abcBars').innerHTML = ['coste','cuota','inicial'].map(k => { const g = CRIT[k][1], vals = R.map(g), lo = Math.min(...vals), hi = Math.max(...vals), span = hi - lo || 1;
+    const order = R.map((x,i) => i).sort((a,b) => g(R[a]) - g(R[b]));
+    return `<div class="mbar"><h4>${CRIT[k][0]} · menor es mejor para la empresa</h4><div class="track" style="height:${24 + 14*2}px">${R.map((x,i) => `<span class="mk" style="left:${4 + (g(x)-lo)/span*62}%;background:${OC[i]}"><span style="color:${OC[i]};top:${order.indexOf(i)*14}px">${x.n} ${CRIT[k][2](g(x))}</span></span>`).join('')}</div></div>`; }).join('');
+  $$('#abcCrit button').forEach(b => b.setAttribute('aria-pressed', b.dataset.crit === ABC.crit));
+  const th = R.filter(x => x !== bestCost).map(x => { const t = threshold(x, bestCost.r); return `${x.n} iguala a ${bestCost.n} ${t === null ? 'ni sin comisión: su tipo ya cuesta más' : `si su comisión baja al ${fmt(t,2)} % (ahora ${fmt(x.f,2)} %)`}`; });
+  $('#abcVerdict').innerHTML = `Según <b>${CRIT[ABC.crit][0].toLowerCase()}</b>, la preferida es <b>${best[ABC.crit]}</b>.${ABC.crit === 'suma' ? ' Atención: este criterio suma euros de fechas distintas y no responde a «qué cuesta menos».' : ''}<br>
+    ${dom ? `La oferta <b>${dom.n}</b> domina: es igual o mejor en coste, cuota y desembolso inicial, así que conviene con cualquiera de estos criterios.` : `<b>No hay una alternativa universalmente mejor.</b> Coste: ${best.coste}. Cuota: ${best.cuota}. Desembolso inicial: ${best.inicial}. Para decidir hace falta el objetivo de la empresa: minimizar coste, aliviar caja o no adelantar dinero.`}<br>
+    <span style="color:var(--muted)">Umbrales: ${th.join(' · ')}.</span>`;
+}
+$('#center').addEventListener('input', e => {
+  if (mode !== 'abc') return; const t = e.target;
+  if (t.dataset.o !== undefined){ ABC.o[+t.dataset.o][t.dataset.f] = +t.value; abcUpdate(); }
+  else if (t.dataset.abc){ const v = parseNum(t.value); if (Number.isFinite(v) && v > 0){ ABC[t.dataset.abc] = t.dataset.abc === 'n' ? Math.max(1, Math.min(40, Math.round(v))) : v; abcUpdate(); } }
+});
+$('#center').addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t || mode !== 'abc') return;
+  if (t.dataset.crit){ ABC.crit = t.dataset.crit; abcUpdate(); }
+  else if (t.dataset.act === 'abcReset'){ ABC = JSON.parse(JSON.stringify(ABC0)); renderCenter(); }
+  else if (t.dataset.act === 'abcEx'){ setMode('train'); newRun(4); }
+});
+
+/* ============ Corrección con Claude ============ */
+function renderCorr(c){
+  c.innerHTML = `<section class="float card" style="--d:.55"><div class="eyebrow">Corrección de mi solución · ${esc(run.ex.id)}</div><h2>Pega tu solución y la corrijo con la rúbrica</h2>
+   <p class="sub">Escribe tu planteamiento, cálculos y conclusión del ejercicio seleccionado a la izquierda (o pega uno tuyo con su enunciado). La corrección separa comprensión, flujos, criterio, planteamiento, cálculo e interpretación.</p>
+   <label for="corrIn" class="sr">Tu solución</label><textarea id="corrIn" class="big" style="min-height:200px" placeholder="Planteamiento: la empresa es deudora… Cuota = 60.000 · 0,05 / (1 − 1,05^−8) = …">${esc(S.corrDraft||'')}</textarea>
+   <div class="btn-row"><button class="btn primary" id="corrGo">Corregir con la rúbrica</button><button class="btn ghost" id="corrStop" hidden>Parar</button></div>
+   <div id="corrOut" class="msg a" style="max-width:100%;margin-top:14px" hidden></div>
+   <div class="notice" id="corrNotice" hidden></div></section>`;
+  if (!SAMPLE){ $('#corrNotice').hidden = false; $('#corrNotice').textContent = AI_ABSENT; $('#corrGo').disabled = true; }
+}
+let corrCtl = null;
+$('#center').addEventListener('click', async e => {
+  if (mode !== 'corr') return; const t = e.target.closest('button'); if (!t) return;
+  if (t.id === 'corrStop'){ corrCtl && corrCtl.abort(); return; }
+  if (t.id !== 'corrGo') return;
+  const txt = $('#corrIn').value.trim(); if (!txt){ $('#corrIn').focus(); return; }
+  const out = $('#corrOut'); out.hidden = false; out.textContent = 'Pensando… la primera respuesta puede tardar hasta un minuto.'; t.disabled = true; $('#corrStop').hidden = false;
+  corrCtl = new AbortController();
+  const prompt = `${RULES}\n\nMODO: Corrección de mi solución.\n${ctxText()}\n\nSOLUCIÓN DEL ALUMNO:\n"""${txt.slice(0,8000)}"""\n\nCorrige según la rúbrica diagnóstica de diez puntos (objetivo y participantes 1; flujos y fechas 2; criterio 2; planteamiento 2; cálculo y comprobación 2; interpretación 1). Devuelve en markdown: 1) una tabla | Competencia | Puntos | Comentario |; 2) errores clasificados con tipo, por qué aparece y un ejercicio de reparación breve; 3) lectura académica y lectura económica por separado; 4) termina con «El patrón que debes reconocer en otro problema es…» y «Esta conclusión dejaría de ser válida si…». Si no puedes verificar un número, dilo. Breve y claro, nivel 1.º ADE.`;
+  try { await SAMPLE(prompt, {signal:corrCtl.signal, cache:false, onText:({text}) => { out.innerHTML = md(text); }}); }
+  catch(err){ out.innerHTML = err.text ? md(err.text) : ''; if (err.code !== 'cancelled') out.insertAdjacentHTML('beforeend', `<p style="color:var(--pago)">${esc(sampleErr(err))}</p>`); if (['not_granted','sampling_disabled','not_declared','capability_disabled'].includes(err.code)) aiOff(); }
+  finally { t.disabled = !SAMPLE; const s = $('#corrStop'); if (s) s.hidden = true; }
+});
+$('#center').addEventListener('input', e => { if (e.target.id === 'corrIn'){ S.corrDraft = e.target.value; } });
+
+/* ============ Modos ============ */
+function setMode(m){
+  mode = m; $$('nav.modes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === m));
+  if (m === 'abc' && exIdx !== 4){ newRun(4); return; }
+  if (m === 'sim' || m === 'train'){ if (run && (run.done || Object.keys(run.rec).length)) { newRun(exIdx); return; } }
+  if (m === 'diag') diag = null;
+  renderCenter();
+}
+$('nav.modes').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setMode(b.dataset.mode); });
+
+/* ============ Cuaderno ============ */
+const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const dstr = t => { const d = new Date(t); return `${d.getDate()} ${MESES[d.getMonth()]} ${d.getFullYear()} · ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
+const EXAMPLE = {type:'ex', example:true, at:Date.now(), mode:'train', ex:'E3', title:'Cobrar hoy o más tarde', fam:'Cobros · fechas', rb:{parts:{obj:1, flujos:1.2, criterio:1.3, plan:2, calc:2, interp:1}, total:8.5}, errs:[{k:'dibujar', e:'perspectiva'}, {k:'elegir', e:'fechas'}], hints:1, pred:{text:'Hoy siempre es mejor: el dinero de hoy vale más.', ok:false}};
+function entryHtml(en){
+  if (en.type === 'diag') return `<div class="meta">${dstr(en.at)} · Diagnóstico inicial</div><h2>Punto de partida</h2>
+    <h3>Resultados por causa</h3><div class="rubric">${Object.entries(en.cats).map(([k,v]) => `<div class="rb"><span>${k}</span><span class="bar"><i style="width:${v.ok/v.n*100}%"></i></span><span class="v">${v.ok}/${v.n}</span></div>`).join('')}</div>
+    <h3>Hipótesis de trabajo</h3><p class="hand">La dificultad principal parece estar en <b>${esc(en.weakest.toLowerCase())}</b>. Es una hipótesis: se confirma o se corrige con ejercicios de estructura equivalente.</p><p>${esc(en.reco)}</p>`;
+  const ex = EX.find(e => e.id === en.ex); const seen = new Set(); const uniq = en.errs.filter(x => !seen.has(x.e) && seen.add(x.e));
+  return `<div class="meta">${en.example ? '<span class="stamp">Ejemplo</span> · ' : ''}${dstr(en.at)} · ${en.mode === 'sim' ? 'Simulacro' : 'Entrenamiento'} · ${esc(en.ex)}</div>
+   <h2>${esc(en.title)}</h2>
+   <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="total">${fmt(en.rb.total,1)}</span><span class="meta">/ 10 · rúbrica diagnóstica · ${en.hints} pista${en.hints===1?'':'s'}</span> ${en.rb.total >= 8 ? '<span class="stamp g">Criterio sólido</span>' : en.rb.total >= 5 ? '<span class="stamp">Revisar</span>' : '<span class="stamp">Reparar</span>'}</div>
+   <div class="rubric">${Object.entries(COMP).map(([c,m]) => `<div class="rb"><span>${m.n}</span><span class="bar"><i style="width:${en.rb.parts[c]/m.max*100}%"></i></span><span class="v">${fmt(en.rb.parts[c],1)}/${m.max}</span></div>`).join('')}</div>
+   <h3>Errores y por qué aparecen</h3>
+   ${uniq.length ? uniq.map(x => { const E = ERR[x.e]; return `<div class="err"><b>${esc(E.n)}</b> <span class="meta">(${esc(E.causa)})</span><p>${esc(E.why)}</p><p class="hand">Reparación: ${esc(E.fix)} Ejercicio: ${E.rep}.</p></div>`; }).join('') : '<p class="hand">Sin errores registrados. Un acierto no demuestra dominio: prueba un problema distinto con la misma estructura.</p>'}
+   ${en.pred ? `<h3>Predicción frente a cálculo</h3><p class="hand">«${esc(en.pred.text)}» → ${en.pred.ok ? 'confirmada por el cálculo.' : 'corregida por el cálculo. La intuición a revisar está ahí.'}</p>` : ''}
+   ${ex ? `<h3>Para el próximo problema</h3><p><i>El patrón que debes reconocer en otro problema es</i> que ${esc(ex.patron)}</p><p><i>Esta conclusión dejaría de ser válida si</i> ${esc(ex.invalida)}</p>
+   <h3>Ampliar el campo de visión</h3><ul>${ex.lateral.map(l => `<li>${esc(l)}</li>`).join('')}${uniq.map(x => `<li><i>Reencuadre:</i> ${esc(ERR[x.e].reenc)}</li>`).join('')}</ul>` : ''}`;
+}
+function ficha(){
+  const exs = S.book.filter(b => b.type === 'ex');
+  const cnt = {}; exs.forEach(b => b.errs.forEach(x => cnt[x.e] = (cnt[x.e]||0)+1));
+  const errsSorted = Object.entries(cnt).sort((a,b) => b[1]-a[1]);
+  const avgH = exs.length ? exs.reduce((s,b) => s+b.hints,0)/exs.length : 0;
+  const nivel = !exs.length ? 'sin datos' : avgH < 1 ? 'bajo (resuelve casi sin pistas)' : avgH < 3 ? 'medio' : 'alto (necesita planteamiento parcial)';
+  const comprendidos = PAT.filter(p => (S.pats[p.id]||[]).length >= 2).map(p => p.n);
+  const prueba = PAT.filter(p => (S.pats[p.id]||[]).length === 1).map(p => p.n);
+  const pend = PAT.filter(p => !(S.pats[p.id]||[]).length).map(p => p.n);
+  const next = errsSorted.length ? ERR[errsSorted[0][0]].rep : (EX.find(e => !exs.some(b => b.ex === e.id)) || EX[0]).id;
+  const nextEx = EX.find(e => e.id === next);
+  const conv = S.cfg.conv.trim() ? S.cfg.conv.trim().slice(0,400) : 'Ninguna confirmada todavía: contenido provisional de MOF habitual.';
+  const lines = [
+    'FICHA DE SESIÓN · MOF', 'Fecha: ' + dstr(Date.now()), '',
+    'Contenidos trabajados: ' + (exs.length ? [...new Set(exs.map(b => b.ex + ' ' + b.title))].join('; ') : 'ninguno todavía'),
+    'Patrones transferidos (2 problemas distintos): ' + (comprendidos.join(', ') || 'ninguno'),
+    'Patrones con un solo acierto (no basta): ' + (prueba.join(', ') || 'ninguno'),
+    'Patrones pendientes: ' + (pend.join(', ') || 'ninguno'),
+    'Errores detectados: ' + (errsSorted.map(([k,n]) => ERR[k].n + ' ×' + n).join('; ') || 'ninguno registrado'),
+    'Nivel de ayuda necesario: ' + nivel,
+    'Próximo ejercicio recomendado: ' + next + (nextEx ? ' (' + nextEx.title + ')' : '') + (errsSorted.length ? ', para reparar «' + ERR[errsSorted[0][0]].n + '»' : ''),
+    'Convenciones académicas confirmadas: ' + conv
+  ];
+  return lines.join('\n');
+}
+function renderBook(turn){
+  $$('#bookTabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.b === bookView));
+  const pg = $('#bookPage'); let html = '';
+  if (bookView === 'entry'){
+    const list = S.book.length ? S.book : [EXAMPLE]; bookIdx = Math.min(Math.max(0,bookIdx), list.length-1);
+    html = (S.book.length ? '' : '<p class="hand" style="margin-bottom:8px">Aquí se escribe una página por cada ejercicio que cierres: rúbrica, errores con su causa, tu predicción frente al cálculo y preguntas para ampliar la mirada. Esta primera página es un ejemplo.</p>') + entryHtml(list[bookIdx]) +
+      `<div class="book-nav"><button class="btn" data-bnav="-1" ${bookIdx===0?'disabled':''}>← Anterior</button><span>${bookIdx+1} / ${list.length}</span><button class="btn" data-bnav="1" ${bookIdx>=list.length-1?'disabled':''}>Siguiente →</button></div>`;
+  } else if (bookView === 'index'){
+    html = `<div class="meta">Índice del cuaderno</div><h2>Lo que llevas escrito</h2>${S.book.length ? `<div class="idx">${S.book.map((b,i) => `<button data-bgo="${i}"><span>${b.type === 'diag' ? 'Diagnóstico inicial' : esc(b.ex+' · '+b.title)}</span><span class="mono">${b.type === 'diag' ? '—' : fmt(b.rb.total,1)}</span></button>`).join('')}</div>` : '<p class="hand">Todavía vacío. Cierra un ejercicio o haz el diagnóstico.</p>'}
+      <h3>Patrones</h3>${PAT.map(p => { const n = (S.pats[p.id]||[]).length; return `<p>${esc(p.n)} <span class="meta">· ${n >= 2 ? 'transferido ('+S.pats[p.id].join(', ')+')' : n === 1 ? 'un acierto: falta transferir' : 'sin evidencia'}</span></p>`; }).join('')}
+      ${S.book.length ? '<div class="btn-row"><button class="btn" data-bclear="1">Borrar cuaderno</button></div><p id="bclearMsg" class="meta"></p>' : ''}`;
+  } else {
+    html = `<div class="meta">Continuidad</div><h2>Ficha de sesión</h2><p class="hand">Cópiala al cerrar y pégala al empezar la próxima sesión con el tutor. Se guarda en este navegador, no en una cuenta.</p><pre id="fichaTxt">${esc(ficha())}</pre><div class="btn-row"><button class="btn" data-bcopy="1">Copiar ficha</button><span id="copyMsg" class="meta"></span></div>`;
+  }
+  pg.innerHTML = html;
+  if (turn && !reduce){ pg.classList.remove('turn'); void pg.offsetWidth; pg.classList.add('turn'); }
+}
+$('#bookTabs').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; bookView = b.dataset.b; renderBook(true); });
+let clearArm = false;
+$('#bookPage').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.bnav){ bookIdx += +b.dataset.bnav; renderBook(true); }
+  else if (b.dataset.bgo){ bookIdx = +b.dataset.bgo; bookView = 'entry'; renderBook(true); }
+  else if (b.dataset.bcopy){ const txt = ficha(); try { await navigator.clipboard.writeText(txt); $('#copyMsg').textContent = 'Copiada'; } catch(err){ const r = document.createRange(); r.selectNodeContents($('#fichaTxt')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); $('#copyMsg').textContent = 'Texto seleccionado: cópialo con Ctrl/Cmd + C'; } }
+  else if (b.dataset.bclear){ if (!clearArm){ clearArm = true; b.textContent = 'Pulsa otra vez para borrar todo'; return; } S.book = []; S.pats = {}; S.errs = []; save(); clearArm = false; bookIdx = 0; renderBook(true); renderPatterns(); }
+});
+
+/* ============ Patrones ============ */
+function renderPatterns(){
+  $('#patterns').innerHTML = PAT.map(p => { const n = (S.pats[p.id]||[]).length;
+    return `<button class="pcard float" style="--d:${(.5 + (p.n.length%5)*.18).toFixed(2)};--bd:-${p.n.length%7}s;padding:0;background:transparent;border:0;box-shadow:none" data-pat="${p.id}" aria-label="Ficha ${esc(p.n)}: pulsa para girar"><div class="inner">
+      <div class="pface"><span class="who">${esc(p.who)}</span><h3>${esc(p.n)}</h3><span class="lbl">Señal del enunciado</span><p>${esc(p.senal)}</p><span class="lbl">Confusión que detecta</span><p>${esc(p.conf)}</p><span class="pstate ${n>=2?'s2':n===1?'s1':''}">${n >= 2 ? 'Transferido · '+S.pats[p.id].join(', ') : n === 1 ? 'Un acierto ('+S.pats[p.id][0]+'): falta transferir' : 'Sin evidencia todavía'}</span></div>
+      <div class="pface back"><span class="lbl">Mecanismo</span><p>${esc(p.mec)}</p><span class="lbl">Efecto para cada parte</span><p>${esc(p.ef)}</p><span class="lbl">Condición que debe comprobarse</span><p>${esc(p.cond)}</p><span class="lbl">Excepción</span><p>${esc(p.exc)}</p><span class="lbl">Ejercicio de contraste</span><p>${esc(p.con)}</p></div>
+    </div></button>`; }).join('');
+}
+$('#patterns').addEventListener('click', e => { const b = e.target.closest('.pcard'); if (b) b.classList.toggle('flipped'); });
+
+/* ============ Configuración ============ */
+function loadCfg(){ $('#cfgProg').value = S.cfg.prog; $('#cfgEj').value = S.cfg.ej; $('#cfgConv').value = S.cfg.conv; provPill(); }
+function provPill(){ const has = S.cfg.prog.trim() || S.cfg.ej.trim() || S.cfg.conv.trim(); $('#pillProv').classList.toggle('ok', !!has); $('#provTxt').textContent = has ? 'Materiales del alumno cargados · tutor adaptado' : 'Contenido provisional · MOF habitual'; }
+$('#cfgSave').addEventListener('click', () => { S.cfg = {prog:$('#cfgProg').value, ej:$('#cfgEj').value, conv:$('#cfgConv').value}; save(); provPill(); $('#cfgMsg').textContent = 'Guardado en este navegador. El tutor los usará como referencia.'; });
+$('#cfgClear').addEventListener('click', () => { S.cfg = {prog:'',ej:'',conv:''}; save(); loadCfg(); $('#cfgMsg').textContent = 'Materiales borrados.'; });
+
+/* ============ Tutor (Claude) ============ */
+let SAMPLE = null; const turns = []; let chatCtl = null;
+const AI_ABSENT = 'El tutor conversacional y la corrección usan Claude y solo funcionan al abrir esta página en claude.ai con tu permiso. El motor de criterio, la calculadora, el laboratorio A/B/C y el cuaderno funcionan sin él.';
+const RULES = `Actúas como entrenador de Matemáticas de las Operaciones Financieras (MOF) para primero de ADE, dentro de una página de entrenamiento. Objetivo: desarrollar el criterio para interpretar, plantear, resolver y justificar problemas nuevos; calcular es una parte.
+Reglas:
+- No prometas aprobar. No supongas que los errores vienen de falta de experiencia empresarial: diagnostica la causa (comprensión, perspectiva, fechas y flujos, nominal/efectivo, criterio, planteamiento, cálculo, interpretación, visión económica, hipótesis no autorizada).
+- Distingue datos explícitos, consecuencias matemáticas e hipótesis añadidas; identifica cada hipótesis y, si cambia la solución sin estar autorizada, pide el dato o presenta casos condicionados.
+- Separa lectura académica (lo pedido, con las convenciones de la asignatura) y lectura económica (coste, rendimiento, liquidez, riesgo, flexibilidad para cada parte). No cambies una respuesta académica correcta por consideraciones empresariales externas.
+- Identifica quién entrega y recibe capital, quién paga y cobra. La empresa no es siempre deudora ni el banco siempre acreedor. Al cambiar de perspectiva, conserva fechas y cuantías y cambia los signos.
+- Antes de comparar: fecha común, ley financiera adecuada, tipo y unidad temporal compatibles, nominal vs periódico vs efectivo, prepagable vs pospagable, precisión interna y redondeo al presentar. No compares sumas de fechas distintas. No llames TAE a cualquier tasa.
+- No confundas: menor cuota con menor coste; mayor ingreso con mayor beneficio; beneficio contable con caja; garantía con capacidad de pago; carencia con gratuidad; más intereses totales con mayor rentabilidad anual; resultado esperado con seguro.
+- Patrones siempre con condición y excepción. No atribuyas intenciones ocultas: analiza incentivos y efectos observables.
+- Si no hay alternativa dominante ni objetivo dado, la respuesta correcta puede ser «depende del criterio», explicando qué dato permitiría decidir. Calcula umbrales cuando el método lo permita.
+- Ayuda gradual: 1) pregunta que localiza la dificultad, 2) pista conceptual, 3) ordenar fechas y flujos, 4) planteamiento parcial, 5) solución completa solo si la pide o la necesita, seguida de una comprobación breve.
+- Si calcula bien pero decide mal, trabaja criterio; si interpreta bien pero calcula mal, trabaja el método; si memoriza un patrón, introduce una excepción.
+- Si no puedes verificar un resultado numérico, dilo. No inventes precisión. No afirmes que recordarás nada fuera de esta conversación.
+- Español claro de primero de ADE. Mensajes cortos, una pregunta cada vez, sin exigir muchas respuestas simultáneas. Tablas solo si aclaran flujos o alternativas.
+- Al terminar un ejercicio resuelto, cierra con «El patrón que debes reconocer en otro problema es…» y «Esta conclusión dejaría de ser válida si…».`;
+function ctxText(){
+  const ex = run.ex; const st = STEPS[run.step];
+  const errs = []; for (const k in run.rec) run.rec[k].errs.forEach(e => errs.push(`${k}: ${ERR[e].n}`));
+  const tmp = document.createElement('div'); tmp.innerHTML = ex.enun;
+  return `CONTEXTO DE LA PÁGINA
+Ejercicio ${ex.id} (${ex.fam}, contenido provisional de MOF habitual): ${tmp.textContent}
+Paso actual del alumno: ${run.done ? 'ejercicio cerrado' : (run.step+1)+' de 8 · '+st.n+' — '+st.q}${st.k==='calcular' ? ' ('+run.phase+')' : ''}
+Modo: ${mode === 'sim' ? 'simulacro (no des pistas durante la resolución)' : 'entrenamiento guiado'}
+Errores registrados en este ejercicio: ${errs.join('; ') || 'ninguno'}
+Solución verificada (no la reveles salvo que la pida o la necesite): ${ex.acad} ${ex.num.extra}
+${S.cfg.prog.trim() ? 'PROGRAMA DEL ALUMNO:\n'+S.cfg.prog.slice(0,3000)+'\n' : ''}${S.cfg.ej.trim() ? 'EJERCICIO REPRESENTATIVO DEL ALUMNO:\n'+S.cfg.ej.slice(0,3000)+'\n' : ''}${S.cfg.conv.trim() ? 'CONVENCIONES DEL PROFESOR:\n'+S.cfg.conv.slice(0,2000)+'\n' : 'No hay convenciones del profesor: márcalas como provisionales.'}`;
+}
+function md(t){
+  const lines = esc(t).split('\n'); let out = '', list = null, table = [];
+  const inline = s => s.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/(^|[^*])\*(?!\s)(.+?)\*(?!\*)/g,'$1<i>$2</i>').replace(/`([^`]+)`/g,'<code>$1</code>');
+  const flushList = () => { if (list){ out += `</${list}>`; list = null; } };
+  const flushTable = () => { if (table.length){ const rows = table.filter(r => !/^[\s|:-]+$/.test(r)); out += '<div class="md-table"><table>' + rows.map((r,i) => '<tr>' + r.trim().replace(/^\||\|$/g,'').split('|').map(c => `<${i?'td':'th'}>${inline(c.trim())}</${i?'td':'th'}>`).join('') + '</tr>').join('') + '</table></div>'; table = []; } };
+  for (const l of lines){
+    if (/^\s*\|/.test(l)){ flushList(); table.push(l); continue; } else flushTable();
+    let m;
+    if ((m = l.match(/^\s*[-*•]\s+(.*)/))){ if (list !== 'ul'){ flushList(); out += '<ul>'; list = 'ul'; } out += `<li>${inline(m[1])}</li>`; }
+    else if ((m = l.match(/^\s*\d+[.)]\s+(.*)/))){ if (list !== 'ol'){ flushList(); out += '<ol>'; list = 'ol'; } out += `<li>${inline(m[1])}</li>`; }
+    else if ((m = l.match(/^#{1,4}\s+(.*)/))){ flushList(); out += `<p><b>${inline(m[1])}</b></p>`; }
+    else if (l.trim()){ flushList(); out += `<p>${inline(l)}</p>`; }
+    else flushList();
+  }
+  flushList(); flushTable(); return out;
+}
+function sampleErr(e){ return ({rate_limited:'Demasiadas peticiones seguidas. Espera un momento y vuelve a intentarlo.', session_expired:'Tu sesión ha caducado: vuelve a iniciar sesión en claude.ai.', refused:'Claude no ha respondido a este mensaje. Reformúlalo.', empty_completion:'No ha llegado respuesta. Prueba con una pregunta más concreta.', prompt_too_large:'Demasiado texto. Recorta los materiales o la solución.', not_granted:'No se ha concedido permiso para usar Claude en esta página.'})[e.code] || 'Se ha cortado la conexión. Vuelve a intentarlo.'; }
+function aiOff(){ SAMPLE = null; $('#pillAI').classList.remove('ok'); $('#aiTxt').textContent = 'Tutor: no disponible aquí'; $('#aiNotice').hidden = false; $('#aiNotice').textContent = AI_ABSENT; $('#chatSend').disabled = true; $$('#quick button').forEach(b => b.disabled = true); }
+function addMsg(role, html){ const d = document.createElement('div'); d.className = 'msg ' + role; d.innerHTML = html; $('#chat').appendChild(d); $('#chat').scrollTop = 1e9; return d; }
+async function sendChat(text){
+  if (!SAMPLE || !text.trim() || chatCtl) return;
+  addMsg('u', md(text)); turns.push({role:'user', content:text});
+  const bub = addMsg('a', '<p style="color:var(--muted)">Pensando…</p>');
+  chatCtl = new AbortController(); $('#chatSend').disabled = true; $('#chatStop').hidden = false;
+  const input = [{role:'user', content: RULES + '\n\n' + ctxText() + '\n\nResponde solo al último mensaje del alumno, sin repetir estas instrucciones.'}, ...turns.slice(-12)];
+  try { const {text: ans} = await SAMPLE(input, {signal:chatCtl.signal, cache:false, onText:({text}) => { bub.innerHTML = md(text); $('#chat').scrollTop = 1e9; }}); turns.push({role:'assistant', content:ans}); }
+  catch(e){ bub.innerHTML = e.text ? md(e.text) : ''; if (e.text) turns.push({role:'assistant', content:e.text});
+    if (e.code !== 'cancelled') bub.insertAdjacentHTML('beforeend', `<p style="color:var(--pago)">${esc(sampleErr(e))}</p>`); else if (!e.text) bub.remove();
+    if (['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'].includes(e.code)) aiOff(); }
+  finally { chatCtl = null; if (SAMPLE) $('#chatSend').disabled = false; $('#chatStop').hidden = true; }
+}
+$('#chatSend').addEventListener('click', () => { const v = $('#chatBox').value; $('#chatBox').value = ''; sendChat(v); });
+$('#chatBox').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); $('#chatSend').click(); } });
+$('#chatStop').addEventListener('click', () => chatCtl && chatCtl.abort());
+$('#quick').addEventListener('click', e => { const b = e.target.closest('button'); if (b) sendChat(b.dataset.q); });
+addMsg('a', md('Antes de empezar, si los tienes, pégame en **Configuración académica**: 1) el programa o relación de temas, 2) un ejercicio representativo, mejor con solución, y 3) las convenciones del profesor y el formato del examen.\n\nMientras tanto podemos trabajar con contenidos habituales de MOF, marcados como provisionales. Si quieres saber de dónde partes, el modo **Diagnóstico** distingue en siete preguntas si tus dificultades son de comprensión, criterio, cálculo o visión económica.'));
+(async () => {
+  let s = null; try { s = window.claude && window.claude.use ? await window.claude.use('sample') : null; } catch(e){ s = null; }
+  if (s){ SAMPLE = s; $('#pillAI').classList.add('ok'); $('#aiTxt').textContent = 'Tutor: Claude disponible'; if (mode === 'corr') renderCenter(); }
+  else aiOff();
+})();
+
+/* ============ Arranque ============ */
+renderCalc(); loadCfg(); renderPatterns(); newRun(0); renderBook(false);
+</script>
