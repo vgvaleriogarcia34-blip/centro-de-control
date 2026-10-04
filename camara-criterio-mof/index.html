@@ -95,6 +95,11 @@ nav.modes button:hover:not([aria-pressed="true"]){color:var(--fg); background:rg
 .tl-sum .big{font:600 20px/1.2 var(--f-mono); font-variant-numeric:tabular-nums}
 .tl-sum .ok{color:var(--cobro)} .tl-sum .no{color:var(--pago)} .tl-sum .lock{color:var(--muted)}
 .tl-sum .btn-row{margin-top:8px}
+.tlmsg{padding:9px 12px; border-radius:10px; background:rgba(233,180,92,.12); border-left:3px solid var(--brass); color:var(--fg); font-size:13.5px; line-height:1.45}
+.tlrows{display:grid; gap:4px}
+.tlrow{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:0 8px; align-items:baseline; padding:4px 0; border-bottom:1px dashed var(--line); font:12.5px/1.35 var(--f-mono); font-variant-numeric:tabular-nums}
+.tlrow small{color:var(--muted)} .tlarr{grid-column:1/-1; order:3; color:var(--muted); font-size:11.5px}
+.tl-sheet .tlrow{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) auto}.tl-sheet .tlarr{grid-column:auto; order:0}
 .tl-table{width:100%; border-collapse:collapse; font:12.5px/1.4 var(--f-mono); font-variant-numeric:tabular-nums}
 .tl-table th,.tl-table td{padding:6px 8px; border-bottom:1px solid var(--line); text-align:left}
 .tl-table td.n{text-align:right}
@@ -447,7 +452,7 @@ footer{margin-top:34px; color:var(--faint); font-size:12.5px; max-width:90ch}
         <h2 id="hTl" style="font-size:20px;margin-top:4px"><span class="pnum">2</span>Línea temporal<span class="nowtag">Ahora</span></h2>
         <div class="uses">Se dibuja en la estación 3 y se usa para comparar en la 5.</div>
         <div class="tl-host" id="tlHost" role="img" aria-label="Línea temporal de cobros y pagos"><button class="btn tl-zoom" data-tl="zoom">Ampliar y explorar</button><div id="tlSvg"></div></div>
-        <div class="howto"><b>Cómo leerla.</b> Columna = movimiento de dinero; arriba entra, abajo sale. La línea dorada vertical es la <b>fecha de valoración T</b>: arrástrala. Las curvas llevan cada flujo a esa fecha. Abajo ves la suma. Pulsa una columna para ver su curva de valor o «Ampliar y explorar» para la guía completa.</div>
+        <div class="howto"><b>Cómo leerla.</b> Columna = movimiento de dinero; arriba entra, abajo sale. La línea dorada vertical es la <b>fecha de valoración T</b>: arrástrala. Las curvas llevan cada flujo a esa fecha y la columna dorada <b>«En T»</b> muestra cuánto vale allí lo que entra y lo que sale: cambia al mover T, el tipo o la ley. Debajo, cada flujo con su valor en T y un aviso de qué ha cambiado. Pulsa una columna para ver su curva de valor o «Ampliar y explorar» para la guía completa.</div>
         <div class="tl-legend" aria-label="Clave de colores"><span><i class="sw" style="background:var(--cobro)"></i>entra (+)</span><span><i class="sw" style="background:var(--pago)"></i>sale (−)</span><span><i class="sw" style="background:#8f9bb8;opacity:.6"></i>aún sin signo</span></div>
         <div class="tl-legend" id="tlPersp" style="margin-top:4px"></div>
         <div class="tl-ctrl" id="tlCtrl"></div>
@@ -959,9 +964,9 @@ document.addEventListener('pointermove', e => {
 
 /* ============ Línea temporal 2D interactiva ============ */
 const TLCFG = {E1:{i:.05, mode:'sum'}, E2:{i:Math.pow(1.0025,12)-1, mode:'sum'}, E3:{i:.04, mode:'compare'}, E4:{i:.06, mode:'sum'}, E5:{i:.046, mode:'sum'}};
-const tl = {T:0, i:.05, law:'c', sel:null};
-function tlReset(){ const c = TLCFG[run.ex.id] || {i:.05}; tl.T = 0; tl.i = c.i; tl.law = 'c'; tl.sel = null; }
-const tlShow = () => !!run && (run.done || !!(run.rec.num && run.rec.num.ok));
+const tl = {T:0, i:.05, law:'c', sel:null, msg:''};
+function tlReset(){ const c = TLCFG[run.ex.id] || {i:.05}; tl.T = 0; tl.i = c.i; tl.law = 'c'; tl.sel = null; tl.msg = ''; }
+const tlShow = () => !!run && (run.done || !!run.tlPeek || !!(run.rec.num && run.rec.num.ok));
 function tlSigned(){ return !!run && ((run.rec.dibujar && run.rec.dibujar.ok) || run.done); }
 function tlItems(){
   const rev = tlSigned(); const out = [];
@@ -973,6 +978,33 @@ function tlExpr(it){ const d = +(tl.T - it.t).toFixed(4); const b = fmt(1+tl.i, 
   if (tl.law === 's') return d >= 0 ? `${fmt(it.amt)} · (1 + ${fmt(tl.i,4)}·${fmt(d,2)})` : `${fmt(it.amt)} / (1 + ${fmt(tl.i,4)}·${fmt(-d,2)})`;
   return d === 0 ? `${fmt(it.amt)}` : `${fmt(it.amt)} · ${b}^${d > 0 ? '' : '−'}${fmt(Math.abs(d), 2)}`; }
 function tlSumAt(i, T){ return tlItems().filter(x => !x.fixed).reduce((a,x) => a + x.s*tlVal(x.amt, x.t, T, i, tl.law), 0); }
+const tlWho = () => (run.ex.persp || 'la empresa').split(' (')[0];
+const tlLawName = l => l === 's' ? 'capitalización simple' : 'capitalización compuesta';
+function tlSnap(){ const it = tlItems().filter(x => !x.fixed && x.amt && x.s); let pos = 0, neg = 0;
+  it.forEach(x => { const v = tlVal(x.amt, x.t, tl.T, tl.i, tl.law); if (x.s > 0) pos += v; else neg += v; });
+  return {law:tl.law, i:tl.i, T:tl.T, pos, neg, net:pos - neg, n:it.length}; }
+function tlFactor(it){ const d = +(tl.T - it.t).toFixed(4); if (d === 0) return 'no se mueve'; const n = v => Number.isInteger(v) ? String(v) : fmt(v,2);
+  return tl.law === 's' ? (d > 0 ? `×(1 + i·${n(d)})` : `÷(1 + i·${n(-d)})`) : `×(1+i)^${d < 0 ? '−' : ''}${n(Math.abs(d))}`; }
+function tlSame(){ // ¿en esta T las dos leyes coinciden para todos los flujos? (desplazamientos de 0 o 1 periodo)
+  return tlItems().filter(x => !x.fixed && x.amt).every(x => { const d = Math.abs(tl.T - x.t); return d < 1e-9 || Math.abs(tlVal(x.amt,x.t,tl.T,tl.i,'s') - tlVal(x.amt,x.t,tl.T,tl.i,'c')) < 0.005; }); }
+function tlChange(kind, b){ const a = tlSnap(), show = tlShow(), who = tlWho(); const e = v => show ? fmt(v) + ' €' : '?';
+  const netTxt = v => Math.abs(v) < 0.5 ? '≈ 0 €' : (v >= 0 ? '+' : '−') + fmt(Math.abs(v)) + ' €';
+  const pr = (x, y, f) => show ? ` (${f(x)} → ${f(y)})` : '';
+  const moved = Math.abs(a.pos - b.pos) > 0.005 || Math.abs(a.neg - b.neg) > 0.005;
+  let head = '';
+  if (kind === 'law') head = b.law === a.law ? `Ya estabas en ${tlLawName(a.law)}.` : `Ley: ${tlLawName(b.law)} → ${tlLawName(a.law)}.`;
+  else if (kind === 'T') head = `Fecha de valoración: T = ${fmt(b.T,2)} → T = ${fmt(a.T,2)}.`;
+  else if (kind === 'rate') head = `Tipo: ${fmt(b.i*100,3)} % → ${fmt(a.i*100,3)} %.`;
+  else if (kind === 'irr') head = `Tipo que equilibra encontrado: ${fmt(a.i*100,4)} %.`;
+  else if (kind === 'reset'){ const ch = [b.law !== a.law && 'la ley (vuelve a compuesta)', Math.abs(b.i - a.i) > 1e-9 && `el tipo (${fmt(b.i*100,3)} % → ${fmt(a.i*100,3)} %)`, b.T !== a.T && `la fecha (T = ${fmt(b.T,2)} → 0)`].filter(Boolean);
+    head = ch.length ? 'Restablecido: ' + ch.join(', ') + '.' : `No había nada que restablecer: ya estabas con los datos del ejercicio (${tlLawName(a.law)}, i = ${fmt(a.i*100,3)} %, T = 0).`; }
+  if (!a.n){ tl.msg = head + ' Da signo a los flujos en la estación 3 para ver qué gana y qué pierde ' + who + '.'; return; }
+  if (!moved){ tl.msg = head + (kind === 'law' && b.law !== a.law ? ` En T = ${fmt(a.T,2)} las dos leyes dan lo mismo: cada flujo se mueve 0 o 1 periodo, y a un periodo simple y compuesta coinciden. Mueve T más lejos para ver la diferencia.` : kind === 'reset' ? '' : ' Los valores en T no cambian.'); return; }
+  const dir = (x, y) => y > x + 0.005 ? 'sube' : y < x - 0.005 ? 'baja' : 'no cambia';
+  const nd = Math.abs(a.net) < 0.5 && Math.abs(b.net) < 0.5 ? 'sigue en equilibrio (≈ 0): en equilibrio da igual la fecha' : dir(b.net, a.net);
+  tl.msg = head + ` Para ${who}, en T = ${fmt(a.T,2)}: lo que entra ${dir(b.pos,a.pos)}${pr(b.pos,a.pos,e)}, lo que sale ${dir(b.neg,a.neg)}${pr(b.neg,a.neg,e)}; el neto ${nd}${pr(b.net,a.net,netTxt)}.` + (show ? '' : ' Mira cómo cambia de altura la columna dorada «En T».'); }
+// mientras se arrastra, el «antes» es el valor del inicio del gesto (se renueva tras 1,5 s de pausa)
+function tlBase(kind){ const now = Date.now(); if (!tl.base || tl.base.kind !== kind || now - tl.base.at > 1500) tl.base = {kind, snap:tlSnap()}; tl.base.at = now; return tl.base.snap; }
 function tlIRR(){ let lo = -0.5, hi = 1.5; const f = i => tlSumAt(i, 0); let flo = f(1e-6), fhi = f(hi); lo = 1e-6; if (flo*fhi > 0) return null;
   for (let k=0;k<200;k++){ const m = (lo+hi)/2, fm = f(m); if (flo*fm <= 0){ hi = m; } else { lo = m; flo = fm; } } return (lo+hi)/2; }
 const short = a => a >= 1000 ? fmt(a/1000, a >= 100000 ? 0 : 1) + ' k' : fmt(a,0);
@@ -1001,7 +1033,18 @@ function tlSVG(host, big){
   // curvas hacia T
   items.forEach((it,k) => { if (it.fixed || !it.amt) return; const h = bh(it.amt), sg = it.s || 1; const x1 = xs[k], y1 = Y0 - sg*h;
     if (Math.abs(x1 - xT) < 3) return; const cy = Y0 - sg*(h + (big?70:44)); const col = it.s > 0 ? '#4fd1b5' : it.s < 0 ? '#ff7d6e' : '#8f9bb8';
-    svg += `<path class="tl-arc" d="M${x1},${y1} Q${(x1+xT)/2},${cy} ${xT},${Y0 - sg*(big?14:10)}" stroke="${col}" stroke-width="${tl.sel===k ? (big?4.5:3.5) : (big?3:2.4)}" stroke-dasharray="7 4" opacity="${tl.sel==null || tl.sel===k ? .95 : .3}"/>`; });
+    svg += `<path class="tl-arc" d="M${x1},${y1} Q${(x1+xT)/2},${cy} ${xT},${Y0 - sg*(big?14:10)}" stroke="${col}" stroke-width="${tl.sel===k ? (big?4.5:3.5) : (big?3:2.4)}" stroke-dasharray="7 4" opacity="${tl.sel==null || tl.sel===k ? .95 : .3}"/>`;
+    if ((big && items.length <= 4) || tl.sel === k) svg += `<text x="${(x1+xT)/2}" y="${(y1 + cy)/2 + (sg > 0 ? -4 : 12)}" text-anchor="middle" fill="${col}" font-size="${fs-1.5}" font-family="IBM Plex Mono, monospace" paint-order="stroke" stroke="#0b1226" stroke-width="4">${esc(tlFactor(it))}</text>`; });
+  // columna «En T»: lo que entra y lo que sale valorado en T, con la ley y el tipo elegidos
+  { const sn = tlSnap(); if (sn.n){ const top = Math.max(maxA, sn.pos, sn.neg); const bt = a => a ? 10 + (hMax - 10)*Math.sqrt(a/top) : 0; const cw = big ? 26 : 16;
+    const gN = Math.max(0, ...Object.entries(groups).filter(([t]) => Math.abs(+t - tl.T) < 1e-9).map(([,g]) => g.length));
+    const off = (gN ? gN*(bw + 6)/2 : 0) + cw/2 + 8; const xc = xT + off + cw/2 <= W - 4 ? xT + off : xT - off;
+    const hp = bt(sn.pos), hn = bt(sn.neg), lab = v => show ? (big ? fmt(v) : short(v)) : '?';
+    svg += `<g class="tl-atT"><rect x="${xc - cw/2}" y="${Y0 - hp}" width="${cw}" height="${hp}" rx="5" fill="rgba(233,180,92,.9)" stroke="#6ff0d2" stroke-width="2"/>
+      <rect x="${xc - cw/2}" y="${Y0}" width="${cw}" height="${hn}" rx="5" fill="rgba(233,180,92,.55)" stroke="#ffa092" stroke-width="2"/>
+      <text x="${big ? xc : xc + cw/2 + 3}" y="${big ? Y0 - hp - 6 : Y0 - hp + 12}" text-anchor="${big ? 'middle' : 'start'}" fill="#e9b45c" font-size="${fs}" font-weight="700" font-family="IBM Plex Mono, monospace" paint-order="stroke" stroke="#0b1226" stroke-width="4">+${lab(sn.pos)}</text>
+      <text x="${big ? xc : xc + cw/2 + 3}" y="${big ? Y0 + hn + 18 : Y0 + hn - 4}" text-anchor="${big ? 'middle' : 'start'}" fill="#e9b45c" font-size="${fs}" font-weight="700" font-family="IBM Plex Mono, monospace" paint-order="stroke" stroke="#0b1226" stroke-width="4">−${lab(sn.neg)}</text>
+      ${big ? `<text x="${xc}" y="${pT + 40}" text-anchor="middle" fill="#e9b45c" font-size="${fs-1.5}" font-family="IBM Plex Mono, monospace" paint-order="stroke" stroke="#0b1226" stroke-width="4">EN T</text>` : ''}</g>`; } }
   // columnas
   items.forEach((it,k) => { const x0 = xs[k]; if (it.fixed || !it.amt){ svg += `<circle cx="${x0}" cy="${Y0}" r="${big?8:6}" fill="#0b1226" stroke="#8f9bb8" stroke-width="2"/><text x="${x0}" y="${Y0-(big?16:12)}" text-anchor="middle" fill="#97a3bf" font-size="${fs-1}" font-family="IBM Plex Mono, monospace">sin pago</text>`; return; }
     const h = bh(it.amt), sg = it.s; const y = sg < 0 ? Y0 : Y0 - h; const sel = tl.sel === k;
@@ -1051,7 +1094,19 @@ function tlCtrlHTML(){
    <label>Fecha de valoración T: <b>${fmt(tl.T, 2)}</b><input type="range" data-tl="T" min="0" max="${maxT}" step="0.25" value="${tl.T}" aria-label="Fecha de valoración"></label>
    <div class="seg" role="group" aria-label="Ley financiera"><button data-tl="law" data-v="c" aria-pressed="${tl.law==='c'}">Capitalización compuesta</button><button data-tl="law" data-v="s" aria-pressed="${tl.law==='s'}">Capitalización simple</button><button data-tl="reset">Volver al tipo del ejercicio</button></div>`;
 }
-function tlSumHTML(){
+function tlInfoHTML(){
+  const items = tlItems().filter(x => !x.fixed && x.amt); const show = tlShow(); const who = tlWho();
+  const rows = items.map(x => { const v = tlVal(x.amt, x.t, tl.T, tl.i, tl.law); const d = tl.T - x.t;
+    const arrow = Math.abs(d) < 1e-9 ? '= ya está en T' : d > 0 ? '↑ se capitaliza: vale más' : '↓ se descuenta: vale menos';
+    const sg = x.s > 0 ? '+' : x.s < 0 ? '−' : '±'; const col = x.s > 0 ? 'var(--cobro)' : x.s < 0 ? 'var(--pago)' : 'var(--muted)';
+    return `<div class="tlrow"><span style="color:${col}">${sg}${fmt(x.amt)} € <small>en t=${fmt(x.t,2)}</small></span><span class="tlarr">${arrow}</span><b style="color:${col}">${show ? sg + fmt(v) + ' €' : '? en T'}</b></div>`; }).join('');
+  return `${tl.msg ? `<div class="tlmsg" role="status">${esc(tl.msg)}</div>` : ''}
+    <div class="eyebrow" style="margin:8px 0 4px">Cada flujo llevado a T = ${fmt(tl.T,2)} · ${tlLawName(tl.law)} · i = ${fmt(tl.i*100,3)} % · desde ${esc(who)}</div>
+    <div class="tlrows">${rows}</div>
+    ${show ? '' : `<div class="btn-row" style="margin-top:6px"><button class="btn" data-tl="peek">Ver las cifras ahora (cuenta como pista)</button></div>`}
+    <hr style="border:0;border-top:1px solid var(--line);margin:10px 0">`; }
+function tlSumHTML(){ return tlInfoHTML() + tlSumCore(); }
+function tlSumCore(){
   const items = tlItems().filter(x => !x.fixed && x.amt); const cfg = TLCFG[run.ex.id] || {mode:'sum'}; const show = tlShow();
   if (items.some(x => !x.s)) return `<span class="lock">Falta dar signo a algún flujo (estación 3). Sin signos no se puede sumar: no sabemos qué entra y qué sale.</span>`;
   if (cfg.mode === 'compare'){
@@ -1084,7 +1139,7 @@ function updateTimeline(){
 function tlPointer(host, e, big){
   const g = host._geo; if (!g) return; const r = host.getBoundingClientRect(); const x = e.clientX - r.left;
   const T = Math.round(Math.max(0, Math.min(g.maxT, (x - g.pL)/(g.W - g.pL - g.pR)*g.maxT))*4)/4;
-  if (T !== tl.T){ tl.T = T; drawTimelines(); }
+  if (T !== tl.T){ const b4 = tlBase('T'); tl.T = T; tlChange('T', b4); drawTimelines(); }
 }
 ['#tlHost','#tlHostM','#tlCurve'].forEach(sel => { const host = $(sel); let drag = false;
   host.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; const bar = e.target.closest('.bar');
@@ -1097,17 +1152,18 @@ $('#tlHost')._geo = null;
 // los hosts guardan la geometría en su contenedor svg
 ['#tlHost','#tlHostM'].forEach(sel => { const h = $(sel); Object.defineProperty(h, '_geo', {get(){ const inner = h.querySelector('[id^="tlSvg"]'); return inner && inner._geo; }, set(){}}); });
 document.addEventListener('input', e => { const t = e.target; if (!t.dataset || !t.dataset.tl) return;
-  if (t.dataset.tl === 'rate'){ tl.i = +t.value/100; if (calcMode === 'cap'){ CV.cap.i = +(+t.value).toFixed(2); renderCalc(); } }
-  if (t.dataset.tl === 'T') tl.T = +t.value;
+  if (t.dataset.tl === 'rate'){ const b4 = tlBase('rate'); tl.i = +t.value/100; if (calcMode === 'cap'){ CV.cap.i = +(+t.value).toFixed(2); renderCalc(); } tlChange('rate', b4); }
+  if (t.dataset.tl === 'T'){ const b4 = tlBase('T'); tl.T = +t.value; tlChange('T', b4); }
   drawTimelinesKeep(t);
 });
 function drawTimelinesKeep(t){ const which = t.closest('#tlCtrlM') ? '#tlCtrlM' : '#tlCtrl'; const k = t.dataset.tl; drawTimelines(); const n = document.querySelector(`${which} [data-tl="${k}"]`); n && n.focus(); }
 document.addEventListener('click', e => { const b = e.target.closest('[data-tl]'); if (!b || b.tagName === 'INPUT') return; const k = b.dataset.tl;
   if (k === 'zoom'){ $('#tlModal').hidden = false; drawTimelines(); $('[data-tl="close"]').focus(); }
   else if (k === 'close'){ $('#tlModal').hidden = true; }
-  else if (k === 'law'){ tl.law = b.dataset.v; drawTimelines(); }
-  else if (k === 'reset'){ tlReset(); drawTimelines(); }
-  else if (k === 'irr'){ const r = tlIRR(); if (r != null){ tl.i = r; drawTimelines(); } }
+  else if (k === 'law'){ const b4 = tlSnap(); tl.law = b.dataset.v; tlChange('law', b4); drawTimelines(); }
+  else if (k === 'reset'){ const b4 = tlSnap(); tlReset(); tlChange('reset', b4); drawTimelines(); }
+  else if (k === 'irr'){ const b4 = tlSnap(); const r = tlIRR(); if (r != null){ tl.i = r; tlChange('irr', b4); } else tl.msg = 'Con estos signos no hay un tipo que equilibre: revisa qué entra y qué sale.'; drawTimelines(); }
+  else if (k === 'peek'){ if (run && !run.done && mode === 'train') rec('num').hints++; run.tlPeek = true; tl.msg = 'Cifras visibles. Cuenta como una pista en la estación 7.'; drawTimelines(); }
   else if (k === 'calc'){ const it = tlItems()[tl.sel]; if (!it) return;
     if (!tlShow() && run && !run.done && mode === 'train') rec('num').hints++;
     calcMode = 'cap'; CV.cap = {C:it.amt, i:+(tl.i*100).toFixed(4), t:+Math.abs(tl.T - it.t).toFixed(4), dir: tl.T >= it.t ? 'cap' : 'desc'}; renderCalc();
