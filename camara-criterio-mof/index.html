@@ -75,12 +75,42 @@ nav.modes button:hover:not([aria-pressed="true"]){color:var(--fg); background:rg
 .party b{color:var(--fg); font-weight:500}
 .party.acreedor{border-style:solid; border-color:var(--cobro)} .party.deudor{border-style:solid; border-color:var(--pago)}
 
-/* Línea temporal 3D */
-.tl-wrap{position:relative; height:250px; border-radius:12px; overflow:hidden; background:radial-gradient(80% 90% at 50% 40%, rgba(80,110,190,.16), transparent 70%); margin-top:10px; cursor:grab}
-.tl-wrap canvas{display:block; width:100%; height:100%}
+/* Línea temporal 2D interactiva */
+.tl-host{position:relative; margin-top:12px; border-radius:14px; background:radial-gradient(120% 90% at 50% 45%, rgba(70,100,180,.22), rgba(6,10,20,.6) 75%); border:1px solid var(--line); overflow:hidden; cursor:crosshair; touch-action:none}
+.tl-host svg{display:block; width:100%}
+.tl-host .bar{cursor:pointer; transition:filter .2s}
+.tl-host .bar:hover{filter:brightness(1.25)}
+.tl-arc{fill:none; stroke-linecap:round; animation:dash 1.6s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-22}}
+@media (prefers-reduced-motion: reduce){.tl-arc{animation:none}}
+.tl-zoom{position:absolute; top:8px; right:8px; z-index:2}
 .tl-legend{display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; font:12px/1.3 var(--f-mono); color:var(--muted)}
 .sw{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; vertical-align:-1px}
-.tl-fallback{position:absolute; inset:0; display:grid; place-items:center; color:var(--muted); font-size:13px; padding:16px; text-align:center}
+.tl-ctrl{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px 14px; margin-top:12px; align-items:end}
+.tl-ctrl label{display:block; font:500 11px/1.3 var(--f-mono); color:var(--muted); letter-spacing:.04em}
+.tl-ctrl label b{color:var(--brass); font-size:13px}
+.tl-ctrl input[type=range]{width:100%; accent-color:var(--brass)}
+.tl-ctrl .seg{grid-column:1/-1}
+.tl-sum{margin-top:12px; padding:12px 14px; border-radius:12px; background:rgba(5,10,22,.6); border:1px solid var(--line-2); font-size:13.5px}
+.tl-sum .big{font:600 20px/1.2 var(--f-mono); font-variant-numeric:tabular-nums}
+.tl-sum .ok{color:var(--cobro)} .tl-sum .no{color:var(--pago)} .tl-sum .lock{color:var(--muted)}
+.tl-sum .btn-row{margin-top:8px}
+.tl-table{width:100%; border-collapse:collapse; font:12.5px/1.4 var(--f-mono); font-variant-numeric:tabular-nums}
+.tl-table th,.tl-table td{padding:6px 8px; border-bottom:1px solid var(--line); text-align:left}
+.tl-table td.n{text-align:right}
+.tl-table tr.sel td{background:rgba(233,180,92,.1)}
+.tl-modal{position:fixed; inset:0; z-index:50; background:rgba(3,6,14,.82); backdrop-filter:blur(4px); display:grid; place-items:start center; overflow:auto; padding:calc(env(safe-area-inset-top,0px) + 20px) 16px 40px}
+.tl-modal[hidden]{display:none!important}
+.tl-sheet{width:min(1180px,100%); background:linear-gradient(160deg,var(--glass-2),var(--glass)); border:1px solid var(--line-2); border-radius:20px; padding:20px 22px; box-shadow:0 50px 100px -30px rgba(0,0,0,.9)}
+.tl-sheet-head{display:flex; justify-content:space-between; gap:12px; align-items:start; flex-wrap:wrap}
+.tl-grid{display:grid; grid-template-columns:minmax(0,1.6fr) minmax(0,1fr); gap:18px; margin-top:14px}
+@media (max-width:900px){.tl-grid{grid-template-columns:minmax(0,1fr)}}
+.tl-how{margin:0; padding-left:20px; font-size:14px; display:grid; gap:6px}
+.tl-how b{color:var(--brass)}
+.tl-curve{margin-top:12px; border-radius:12px; border:1px solid var(--line); background:rgba(5,10,22,.5)}
+.tl-curve svg{display:block; width:100%}
+.flash{animation:flash 1.2s ease-out}
+@keyframes flash{0%{box-shadow:0 0 0 0 rgba(233,180,92,.8)}100%{box-shadow:0 0 0 18px rgba(233,180,92,0)}}
 
 /* Calculadora */
 .calc-tabs{display:flex; gap:4px; flex-wrap:wrap; margin:10px 0 12px}
@@ -366,10 +396,12 @@ footer{margin-top:34px; color:var(--faint); font-size:12.5px; max-width:90ch}
         <div class="eyebrow">Mesa de operación</div>
         <h2 id="hTl" style="font-size:20px;margin-top:4px"><span class="pnum">2</span>Línea temporal<span class="nowtag">Ahora</span></h2>
         <div class="uses">Se dibuja en la estación 3 y se usa para comparar en la 5.</div>
-        <div class="tl-wrap" id="tlWrap"><canvas id="tlCanvas" aria-label="Línea temporal tridimensional de cobros y pagos"></canvas></div>
-        <div class="howto"><b>Cómo leerla.</b> Cada columna es un movimiento de dinero; el eje dorado es el tiempo, de izquierda a derecha. Hacia arriba, dinero que entra a la parte desde la que miras; hacia abajo, dinero que sale. Arrastra para girarla. Aquí no se edita: los signos se ponen en la tarjeta de la estación 3 y la línea se redibuja sola.</div>
+        <div class="tl-host" id="tlHost" role="img" aria-label="Línea temporal de cobros y pagos"><button class="btn tl-zoom" data-tl="zoom">Ampliar y explorar</button><div id="tlSvg"></div></div>
+        <div class="howto"><b>Cómo leerla.</b> Columna = movimiento de dinero; arriba entra, abajo sale. La línea dorada vertical es la <b>fecha de valoración T</b>: arrástrala. Las curvas llevan cada flujo a esa fecha. Abajo ves la suma. Pulsa una columna para ver su curva de valor o «Ampliar y explorar» para la guía completa.</div>
         <div class="tl-legend" aria-label="Clave de colores"><span><i class="sw" style="background:var(--cobro)"></i>entra (+)</span><span><i class="sw" style="background:var(--pago)"></i>sale (−)</span><span><i class="sw" style="background:#8f9bb8;opacity:.6"></i>aún sin signo</span></div>
         <div class="tl-legend" id="tlPersp" style="margin-top:4px"></div>
+        <div class="tl-ctrl" id="tlCtrl"></div>
+        <div class="tl-sum" id="tlSum"></div>
       </section>
       <section class="float" data-panel="3" style="--d:1.1;--bd:-6s" aria-labelledby="hCalc">
         <div class="eyebrow">Mesa de operación</div>
@@ -450,7 +482,37 @@ footer{margin-top:34px; color:var(--faint); font-size:12.5px; max-width:90ch}
   <footer>Ejercicios de muestra con resultados verificados por cálculo. Son contenidos habituales de MOF, provisionales hasta que se alineen con el programa y las convenciones de tu profesor. El cuaderno se guarda en este navegador; si borras los datos del sitio, se pierde.</footer>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<div class="tl-modal" id="tlModal" hidden role="dialog" aria-modal="true" aria-labelledby="tlMTitle">
+  <div class="tl-sheet">
+    <div class="tl-sheet-head">
+      <div><div class="eyebrow">Panel 2 ampliado · <span id="tlMEx"></span></div><h2 id="tlMTitle" style="font-size:clamp(22px,2.6vw,32px)">Línea temporal: llevar el dinero a una misma fecha</h2></div>
+      <button class="btn" data-tl="close">Cerrar (Esc)</button>
+    </div>
+    <div class="tl-grid">
+      <div style="min-width:0">
+        <div class="tl-host" id="tlHostM"><div id="tlSvgM"></div></div>
+        <div class="tl-ctrl" id="tlCtrlM"></div>
+        <div class="tl-sum" id="tlSumM"></div>
+        <div class="eyebrow" style="margin-top:16px">Curva de valor del flujo seleccionado</div>
+        <div class="tl-curve" id="tlCurve"></div>
+      </div>
+      <div style="min-width:0">
+        <div class="eyebrow">Cómo funciona, paso a paso</div>
+        <ol class="tl-how">
+          <li><b>Columnas.</b> Cada una es un movimiento de dinero en su fecha. Arriba (verde) entra en la parte desde la que miras; abajo (coral) sale. Gris discontinuo: aún no le has dado signo en la estación 3.</li>
+          <li><b>Fecha de valoración T.</b> La línea dorada vertical. Arrástrala (o usa el control «Fecha T»). Es la «fecha común» del enunciado.</li>
+          <li><b>Curvas.</b> Cada flujo viaja hasta T. Si T está a su derecha, se <b>capitaliza</b>: C · (1 + i)^(T − t). Si está a su izquierda, se <b>descuenta</b>: C · (1 + i)^−(t − T).</li>
+          <li><b>Suma en T.</b> Si al tipo del contrato la suma es cero, lo que entra y lo que sale valen lo mismo: equilibrio financiero (prestación = contraprestación). Esa igualdad es el planteamiento que escribes en el examen.</li>
+          <li><b>Mueve el tipo.</b> El tipo que hace la suma cero es el tipo efectivo de la operación para quien mira (TAE, coste o rentabilidad). El botón «Buscar el tipo que equilibra» lo encuentra.</li>
+          <li><b>Pulsa una columna.</b> Abajo aparece su curva de valor: compuesta (línea continua) y simple (discontinua). Verás que la simple da más antes de un periodo y menos después. Con «Llevar a la calculadora» rellenas el panel 3 con ese flujo.</li>
+          <li><b>Cuándo ves los números.</b> Hasta resolver la estación 7 se muestran las expresiones, no los resultados, para que el cálculo lo hagas tú.</li>
+        </ol>
+        <div class="eyebrow" style="margin-top:16px">Flujos valorados en T</div>
+        <div style="overflow-x:auto"><table class="tl-table" id="tlTable"></table></div>
+      </div>
+    </div>
+  </div>
+</div>
 <script>
 "use strict";
 /* ============ Utilidades ============ */
@@ -726,7 +788,7 @@ const EX = [
   enun:'Una empresa necesita <mark>30.000 €</mark> a <mark>4 años</mark>, con cuotas anuales constantes vencidas (francés). Oferta A: <mark>5 %</mark> sin comisión. Oferta B: <mark>4,6 %</mark> con <mark>comisión de apertura del 1,5 %</mark> (450 €) pagada al inicio. Oferta C: <mark>4,8 %</mark> con comisión del <mark>0,5 %</mark> (150 €). ¿Qué oferta tiene menor coste efectivo para la empresa?',
   parties:[{n:'Empresa', a:'Deudor'}, {n:'Banco', a:'Acreedor'}],
   persp:'la empresa (oferta B)',
-  flows:[{t:0, tl:'t = 0', amt:30000, c:'Recibe el préstamo', s:1}, {t:0.01, tl:'t = 0', amt:450, c:'Paga la comisión de apertura', s:-1}, {t:1, tl:'t = 1…4', amt:8381.88, c:'Cuota anual (× 4)', s:-1, rep:[1,2,3,4]}],
+  flows:[{t:0, tl:'t = 0', amt:30000, c:'Recibe el préstamo', s:1}, {t:0, tl:'t = 0', amt:450, c:'Paga la comisión de apertura', s:-1}, {t:1, tl:'t = 1…4', amt:8381.88, c:'Cuota anual (× 4)', s:-1, rep:[1,2,3,4]}],
   identificar:[['Comparar tres préstamos por su coste efectivo, incluyendo comisiones.',1,'Exacto: el enunciado fija el criterio (coste efectivo).'],
     ['Elegir la oferta con el tipo de interés más bajo.','criterio','El tipo nominal no incluye la comisión.'],
     ['Elegir la oferta con la cuota más baja.','cuota_coste','La cuota no es el coste.']],
@@ -780,7 +842,7 @@ function save(){ store.set({book:S.book, pats:S.pats, cfg:S.cfg, errs:S.errs.sli
 function newRun(i){
   exIdx = i; const ex = EX[i];
   run = {ex, step:0, phase:'plan', rec:{}, signs:{}, roles:{}, pred:null, done:false, seed:Date.now()%10000, hintLvl:{}, fb:null, checked:{}};
-  updateEnun(); updateTimeline(); setCalcPreset(false); renderCenter();
+  tlReset(); updateEnun(); updateTimeline(); renderCalc(); renderCenter();
 }
 function rec(k){ return run.rec[k] || (run.rec[k] = {tries:0, ok:false, hints:0, errs:[], revealed:false}); }
 function attempt(k, ok, err){
@@ -843,74 +905,166 @@ document.addEventListener('pointermove', e => {
   el.style.setProperty('--ly', (lx*5).toFixed(2)+'deg'); el.style.setProperty('--lx', (ly*-5).toFixed(2)+'deg');
 }, {passive:true});
 
-/* ============ Línea temporal 3D ============ */
-const TL = {ok:false};
-(function initTL(){
-  const wrap = $('#tlWrap'), cv = $('#tlCanvas');
-  if (typeof THREE === 'undefined'){ wrap.insertAdjacentHTML('beforeend','<div class="tl-fallback">La vista 3D no ha podido cargarse. Los flujos siguen en la tarjeta de la estación 3.</div>'); return; }
-  const renderer = new THREE.WebGLRenderer({canvas:cv, antialias:true, alpha:true});
-  renderer.setPixelRatio(Math.min(2, devicePixelRatio||1));
-  const scene = new THREE.Scene(); scene.fog = new THREE.Fog(0x060a14, 14, 30);
-  const cam = new THREE.PerspectiveCamera(38, 1, .1, 100);
-  scene.add(new THREE.AmbientLight(0x9fb0e0, .55));
-  const dl = new THREE.DirectionalLight(0xffffff, .9); dl.position.set(4,8,6); scene.add(dl);
-  const grid = new THREE.GridHelper(18, 18, 0x3a4a78, 0x1d2744); grid.material.transparent = true; grid.material.opacity = .55; scene.add(grid);
-  const axisMat = new THREE.LineBasicMaterial({color:0xe9b45c});
-  const axis = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-7.5,0,0), new THREE.Vector3(7.5,0,0)]), axisMat); scene.add(axis);
-  const dust = new THREE.BufferGeometry(); const N = 260, pos = new Float32Array(N*3);
-  for (let i=0;i<N;i++){ pos[i*3] = (Math.random()-.5)*22; pos[i*3+1] = (Math.random()-.3)*10; pos[i*3+2] = (Math.random()-.5)*14; }
-  dust.setAttribute('position', new THREE.BufferAttribute(pos,3));
-  scene.add(new THREE.Points(dust, new THREE.PointsMaterial({color:0xaabbe8, size:.05, transparent:true, opacity:.7})));
-  const group = new THREE.Group(); scene.add(group);
-  let orbit = {x:0, y:0, tx:0, ty:0}, drag = null;
-  wrap.addEventListener('pointermove', e => { const r = wrap.getBoundingClientRect(); orbit.tx = ((e.clientX-r.left)/r.width - .5); orbit.ty = ((e.clientY-r.top)/r.height - .5); if (drag !== null){ orbit.spin += (e.clientX - drag)/180; drag = e.clientX; } });
-  wrap.addEventListener('pointerdown', e => { drag = e.clientX; wrap.setPointerCapture(e.pointerId); wrap.style.cursor='grabbing'; });
-  wrap.addEventListener('pointerup', () => { drag = null; wrap.style.cursor='grab'; });
-  wrap.addEventListener('pointerleave', () => { orbit.tx = 0; orbit.ty = 0; });
-  orbit.spin = 0;
-  function resize(){ const w = wrap.clientWidth, h = wrap.clientHeight; renderer.setSize(w, h, false); cam.aspect = w/h; cam.updateProjectionMatrix(); }
-  new ResizeObserver(resize).observe(wrap); resize();
-  function label(text, color){
-    const c = document.createElement('canvas'); c.width = 512; c.height = 96; const g = c.getContext('2d');
-    g.font = '500 40px "IBM Plex Mono", monospace'; g.fillStyle = color; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 256, 48);
-    const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c), transparent:true, depthWrite:false}));
-    sp.scale.set(3.2, .6, 1); return sp;
+/* ============ Línea temporal 2D interactiva ============ */
+const TLCFG = {E1:{i:.05, mode:'sum'}, E2:{i:Math.pow(1.0025,12)-1, mode:'sum'}, E3:{i:.04, mode:'compare'}, E4:{i:.06, mode:'sum'}, E5:{i:.046, mode:'sum'}};
+const tl = {T:0, i:.05, law:'c', sel:null};
+function tlReset(){ const c = TLCFG[run.ex.id] || {i:.05}; tl.T = 0; tl.i = c.i; tl.law = 'c'; tl.sel = null; }
+const tlShow = () => !!run && (run.done || !!(run.rec.num && run.rec.num.ok));
+function tlSigned(){ return !!run && ((run.rec.dibujar && run.rec.dibujar.ok) || run.done); }
+function tlItems(){
+  const rev = tlSigned(); const out = [];
+  run.ex.flows.forEach((f, idx) => (f.rep || [f.t]).forEach(t => out.push({idx, t, amt:f.amt, c:f.c, fixed:!!f.fixed, s: f.fixed ? 0 : (rev ? f.s : (run.signs[idx] || 0))})));
+  return out;
+}
+function tlVal(C, t, T, i, law){ const d = T - t; if (law === 's') return d >= 0 ? C*(1 + i*d) : C/(1 + i*(-d)); return C*Math.pow(1+i, d); }
+function tlExpr(it){ const d = +(tl.T - it.t).toFixed(4); const b = fmt(1+tl.i, 4);
+  if (tl.law === 's') return d >= 0 ? `${fmt(it.amt)} · (1 + ${fmt(tl.i,4)}·${fmt(d,2)})` : `${fmt(it.amt)} / (1 + ${fmt(tl.i,4)}·${fmt(-d,2)})`;
+  return d === 0 ? `${fmt(it.amt)}` : `${fmt(it.amt)} · ${b}^${d > 0 ? '' : '−'}${fmt(Math.abs(d), 2)}`; }
+function tlSumAt(i, T){ return tlItems().filter(x => !x.fixed).reduce((a,x) => a + x.s*tlVal(x.amt, x.t, T, i, tl.law), 0); }
+function tlIRR(){ let lo = -0.5, hi = 1.5; const f = i => tlSumAt(i, 0); let flo = f(1e-6), fhi = f(hi); lo = 1e-6; if (flo*fhi > 0) return null;
+  for (let k=0;k<200;k++){ const m = (lo+hi)/2, fm = f(m); if (flo*fm <= 0){ hi = m; } else { lo = m; flo = fm; } } return (lo+hi)/2; }
+const short = a => a >= 1000 ? fmt(a/1000, a >= 100000 ? 0 : 1) + ' k' : fmt(a,0);
+function tlSVG(host, big){
+  const W = Math.max(280, host.clientWidth || 300), H = big ? 430 : 290;
+  const items = tlItems(); const maxT = Math.max(1, ...items.map(x => x.t));
+  const pL = big ? 64 : 30, pR = big ? 64 : 30, pT = 34, pB = 34;
+  const X = t => pL + (t/maxT)*(W - pL - pR); const Y0 = pT + (H - pT - pB)*0.5;
+  const maxA = Math.max(1, ...items.map(x => x.amt || 0)); const hMax = (H - pT - pB)*0.42;
+  const bh = a => a ? 16 + (hMax - 16)*Math.sqrt(a/maxA) : 0;
+  const groups = {}; items.forEach((it, k) => { const key = it.t.toFixed(2); (groups[key] = groups[key] || []).push(k); });
+  const bw = big ? 34 : 20; const xs = items.map((it,k) => { const g = groups[it.t.toFixed(2)]; const j = g.indexOf(k); return X(it.t) + (j - (g.length-1)/2)*(bw + 6); });
+  const xT = X(tl.T); const show = tlShow(); const fs = big ? 14 : 11.5;
+  let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gUp${big?'M':''}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#1f8f7a"/><stop offset="1" stop-color="#6ff0d2"/></linearGradient>
+    <linearGradient id="gDn${big?'M':''}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c2493c"/><stop offset="1" stop-color="#ffa092"/></linearGradient>
+    <filter id="glow${big?'M':''}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <marker id="arr${big?'M':''}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e9b45c"/></marker>
+  </defs>
+  <rect x="0" y="0" width="${W}" height="${Y0}" fill="rgba(79,209,181,.05)"/><rect x="0" y="${Y0}" width="${W}" height="${H-Y0}" fill="rgba(255,125,110,.05)"/>
+  <text x="10" y="18" fill="#4fd1b5" font-size="${fs-1}" font-family="IBM Plex Mono, monospace">ENTRA (+)</text>
+  <text x="10" y="${H-30}" fill="#ff7d6e" font-size="${fs-1}" font-family="IBM Plex Mono, monospace">SALE (−)</text>`;
+  for (let k=0; k<=Math.ceil(maxT); k++){ const xx = X(k); svg += `<line x1="${xx}" y1="${pT-6}" x2="${xx}" y2="${H-pB+6}" stroke="rgba(150,172,225,.16)" stroke-dasharray="3 5"/><text x="${xx}" y="${H-10}" text-anchor="middle" fill="#c8d0e4" font-size="${fs}" font-weight="600" font-family="IBM Plex Mono, monospace">t=${k}</text>`; }
+  svg += `<line x1="${pL-14}" y1="${Y0}" x2="${W-pR+18}" y2="${Y0}" stroke="#e9b45c" stroke-width="${big?5:4}" stroke-linecap="round" marker-end="url(#arr${big?'M':''})"/>`;
+  // curvas hacia T
+  items.forEach((it,k) => { if (it.fixed || !it.amt) return; const h = bh(it.amt), sg = it.s || 1; const x1 = xs[k], y1 = Y0 - sg*h;
+    if (Math.abs(x1 - xT) < 3) return; const cy = Y0 - sg*(h + (big?70:44)); const col = it.s > 0 ? '#4fd1b5' : it.s < 0 ? '#ff7d6e' : '#8f9bb8';
+    svg += `<path class="tl-arc" d="M${x1},${y1} Q${(x1+xT)/2},${cy} ${xT},${Y0 - sg*(big?14:10)}" stroke="${col}" stroke-width="${tl.sel===k ? (big?4.5:3.5) : (big?3:2.4)}" stroke-dasharray="7 4" opacity="${tl.sel==null || tl.sel===k ? .95 : .3}"/>`; });
+  // columnas
+  items.forEach((it,k) => { const x0 = xs[k]; if (it.fixed || !it.amt){ svg += `<circle cx="${x0}" cy="${Y0}" r="${big?8:6}" fill="#0b1226" stroke="#8f9bb8" stroke-width="2"/><text x="${x0}" y="${Y0-(big?16:12)}" text-anchor="middle" fill="#97a3bf" font-size="${fs-1}" font-family="IBM Plex Mono, monospace">sin pago</text>`; return; }
+    const h = bh(it.amt), sg = it.s; const y = sg < 0 ? Y0 : Y0 - h; const sel = tl.sel === k;
+    const fill = sg > 0 ? `url(#gUp${big?'M':''})` : sg < 0 ? `url(#gDn${big?'M':''})` : 'rgba(143,155,184,.18)';
+    svg += `<g class="bar" data-i="${k}"><rect x="${x0-bw/2}" y="${y}" width="${bw}" height="${h}" rx="${big?8:6}" fill="${fill}" ${sg ? `filter="url(#glow${big?'M':''})"` : 'stroke="#8f9bb8" stroke-dasharray="5 4" stroke-width="2"'} ${sel ? 'stroke="#fff" stroke-width="3"' : ''}/>`;
+    const ly = sg < 0 ? Y0 + h + (big?20:15) : Y0 - h - (big?10:7);
+    const txt = (sg > 0 ? '+' : sg < 0 ? '−' : '±') + (big ? fmt(it.amt) : short(it.amt));
+    svg += `<text x="${x0}" y="${ly}" text-anchor="middle" fill="${sg>0?'#6ff0d2':sg<0?'#ffa092':'#c8d0e4'}" font-size="${fs+ (big?1:0)}" font-weight="700" font-family="IBM Plex Mono, monospace" paint-order="stroke" stroke="#0b1226" stroke-width="4">${txt}</text><title>${esc(it.c)} · t = ${fmt(it.t,2)}</title></g>`; });
+  // marcador T
+  svg += `<g><line x1="${xT}" y1="${pT-8}" x2="${xT}" y2="${H-pB+8}" stroke="#e9b45c" stroke-width="${big?3.5:3}"/>
+    ${(() => { const lab = 'T = ' + fmt(tl.T,2); const bwid = lab.length*fs*0.68 + 18; const bx = Math.min(W-bwid-4, Math.max(4, xT-bwid/2)); return `<rect x="${bx}" y="2" width="${bwid}" height="${big?26:22}" rx="7" fill="#e9b45c"/><text x="${bx+bwid/2}" y="${big?19:16}" text-anchor="middle" fill="#1c1406" font-size="${fs}" font-weight="700" font-family="IBM Plex Mono, monospace">${lab}</text>`; })()}
+    <circle cx="${xT}" cy="${Y0}" r="${big?12:10}" fill="#e9b45c" stroke="#1c1406" stroke-width="3" style="cursor:ew-resize"/></g></svg>`;
+  host.innerHTML = svg; host._geo = {X, maxT, pL, pR, W, xs};
+}
+function tlCurve(host){
+  const items = tlItems(); const it = tl.sel != null ? items[tl.sel] : null;
+  if (!it || it.fixed){ host.innerHTML = `<p style="padding:14px;margin:0;color:var(--muted);font-size:13.5px">Pulsa una columna de la línea temporal para ver cómo cambia su valor según la fecha a la que la lleves.</p>`; return; }
+  const W = Math.max(280, host.clientWidth || 600), H = 230, pL = 70, pR = 20, pT = 18, pB = 34;
+  const maxT = Math.max(1, ...items.map(x => x.t)); const N = 80; const pts = [];
+  for (let n=0;n<=N;n++){ const T = maxT*n/N; pts.push([T, tlVal(it.amt, it.t, T, tl.i, 'c'), tlVal(it.amt, it.t, T, tl.i, 's')]); }
+  const vals = pts.flatMap(p => [p[1], p[2]]); const lo = Math.min(...vals), hi = Math.max(...vals); const span = (hi - lo) || 1;
+  const X = T => pL + T/maxT*(W - pL - pR), Y = v => pT + (1 - (v - lo)/span)*(H - pT - pB);
+  const path = k => pts.map((p,n) => (n ? 'L' : 'M') + X(p[0]).toFixed(1) + ',' + Y(p[k]).toFixed(1)).join(' ');
+  const vT = tlVal(it.amt, it.t, tl.T, tl.i, 'c'); const show = tlShow();
+  host.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+    <line x1="${pL}" y1="${H-pB}" x2="${W-pR}" y2="${H-pB}" stroke="rgba(150,172,225,.35)"/>
+    ${[0, Math.ceil(maxT)].concat(maxT > 2 ? [Math.round(maxT/2)] : []).map(k => `<text x="${X(k)}" y="${H-12}" text-anchor="middle" fill="#97a3bf" font-size="12" font-family="IBM Plex Mono, monospace">T=${k}</text>`).join('')}
+    <text x="${pL-8}" y="${Y(hi)+4}" text-anchor="end" fill="#97a3bf" font-size="11.5" font-family="IBM Plex Mono, monospace">${short(hi)}</text>
+    <text x="${pL-8}" y="${Y(lo)+4}" text-anchor="end" fill="#97a3bf" font-size="11.5" font-family="IBM Plex Mono, monospace">${short(lo)}</text>
+    <path d="${path(1)} L${X(maxT)},${H-pB} L${X(0)},${H-pB} Z" fill="rgba(233,180,92,.12)"/>
+    <path d="${path(2)}" fill="none" stroke="#b49cff" stroke-width="2.5" stroke-dasharray="6 5"/>
+    <path d="${path(1)}" fill="none" stroke="#e9b45c" stroke-width="3.5"/>
+    <line x1="${X(it.t)}" y1="${pT}" x2="${X(it.t)}" y2="${H-pB}" stroke="rgba(200,208,228,.4)" stroke-dasharray="3 4"/>
+    <text x="${X(it.t)+4}" y="${H-pB-6}" fill="#c8d0e4" font-size="11.5" font-family="IBM Plex Mono, monospace">fecha del flujo t=${fmt(it.t,2)}</text>
+    <line x1="${X(tl.T)}" y1="${pT}" x2="${X(tl.T)}" y2="${H-pB}" stroke="#e9b45c" stroke-width="2"/>
+    <circle cx="${X(tl.T)}" cy="${Y(vT)}" r="7" fill="#e9b45c" stroke="#1c1406" stroke-width="2"/>
+    <text x="${Math.min(W-pR-4, X(tl.T)+10)}" y="${Math.max(pT+12, Y(vT)-10)}" text-anchor="${X(tl.T) > W-180 ? 'end' : 'start'}" fill="#e9b45c" font-size="13" font-weight="700" font-family="IBM Plex Mono, monospace">${show ? fmt(vT) + ' €' : '? (estación 7)'}</text>
+    <text x="${pL+8}" y="${pT+10}" fill="#e9b45c" font-size="11.5" font-family="IBM Plex Mono, monospace">── compuesta</text>
+    <text x="${pL+8}" y="${pT+26}" fill="#b49cff" font-size="11.5" font-family="IBM Plex Mono, monospace">- - simple</text>
+  </svg>
+  <div class="btn-row" style="padding:0 12px 12px"><button class="btn" data-tl="calc">Llevar este flujo a la calculadora (panel 3)</button></div>`;
+  host._geo = {X, maxT, pL, pR, W};
+}
+function tlCtrlHTML(){
+  const maxT = run ? Math.max(1, ...tlItems().map(x => x.t)) : 1;
+  return `<label>Tipo de valoración i: <b>${fmt(tl.i*100, 3)} %</b><input type="range" data-tl="rate" min="0" max="12" step="0.01" value="${(tl.i*100).toFixed(2)}" aria-label="Tipo de valoración"></label>
+   <label>Fecha de valoración T: <b>${fmt(tl.T, 2)}</b><input type="range" data-tl="T" min="0" max="${maxT}" step="0.25" value="${tl.T}" aria-label="Fecha de valoración"></label>
+   <div class="seg" role="group" aria-label="Ley financiera"><button data-tl="law" data-v="c" aria-pressed="${tl.law==='c'}">Capitalización compuesta</button><button data-tl="law" data-v="s" aria-pressed="${tl.law==='s'}">Capitalización simple</button><button data-tl="reset">Volver al tipo del ejercicio</button></div>`;
+}
+function tlSumHTML(){
+  const items = tlItems().filter(x => !x.fixed && x.amt); const cfg = TLCFG[run.ex.id] || {mode:'sum'}; const show = tlShow();
+  if (items.some(x => !x.s)) return `<span class="lock">Falta dar signo a algún flujo (estación 3). Sin signos no se puede sumar: no sabemos qué entra y qué sale.</span>`;
+  if (cfg.mode === 'compare'){
+    const rows = run.ex.flows.map((f) => `<div>${esc(f.c)}: ${show ? `<b class="big">${fmt(tlVal(f.amt, f.t, tl.T, tl.i, tl.law))} €</b>` : `<span class="lock">${esc(fmt(f.amt))} llevado a T = ${fmt(tl.T,2)} → ? (estación 7)</span>`}</div>`).join('');
+    return `<div class="eyebrow" style="margin-bottom:6px">Alternativas: no se suman, se comparan en la misma fecha</div>${rows}<div style="margin-top:6px;color:var(--muted)">La que vale menos en T es la mejor para quien paga; la que vale más, para quien cobra. Mueve el tipo para ver dónde se cruzan.</div>`;
   }
-  TL.set = function(flows, signs, reveal){
-    while (group.children.length){ const o = group.children.pop(); o.geometry && o.geometry.dispose(); o.material && (o.material.map && o.material.map.dispose(), o.material.dispose()); }
-    const items = []; flows.forEach((f, idx) => (f.rep || [f.t]).forEach(t => items.push({f, idx, t})));
-    const maxT = Math.max(1, ...items.map(i => i.t)), maxA = Math.max(...flows.map(f => f.amt));
-    items.forEach(({f, idx, t}, n) => {
-      const x = -6.5 + (t/maxT)*13;
-      const sg = f.fixed ? 0 : (reveal ? f.s : (signs[idx] || 0));
-      const h = f.amt ? .5 + 3.6*Math.sqrt(f.amt/maxA) : .08;
-      const col = f.fixed ? 0x8f9bb8 : sg > 0 ? 0x4fd1b5 : sg < 0 ? 0xff7d6e : 0x8f9bb8;
-      const mat = new THREE.MeshStandardMaterial({color:col, emissive:col, emissiveIntensity:sg ? .35 : .1, transparent:true, opacity:sg ? .92 : .35, roughness:.4, metalness:.1, wireframe:!sg && !f.fixed});
-      const zOff = (f.t === 0.01 ? .9 : 0);
-      const m = new THREE.Mesh(new THREE.BoxGeometry(.55, 1, .55), mat);
-      m.userData = {h, s: sg || 1, x}; m.scale.y = .01; m.position.set(x + zOff*.4, 0, zOff); group.add(m);
-      if ((f.rep ? t === f.rep[0] : true) && f.amt){
-        const lb = label((sg>0?'+':sg<0?'−':'±') + fmt(f.amt), sg>0 ? '#4fd1b5' : sg<0 ? '#ff7d6e' : '#c8d0e4');
-        lb.position.set(x + zOff*.4, (sg<0 ? -1 : 1)*(h + .55), zOff); group.add(lb);
-      }
-      if (f.rep ? t === f.rep[0] : true){ const tl = label(f.tl, '#97a3bf'); tl.scale.set(2.4,.45,1); tl.position.set(x + zOff*.4, -.35*(sg<0?-1:1) , 1.4 + zOff); group.add(tl); }
-    });
-  };
-  function loop(){
-    orbit.x += (orbit.tx - orbit.x)*.07; orbit.y += (orbit.ty - orbit.y)*.07;
-    const ang = orbit.spin + orbit.x*.9 + (reduce ? 0 : Math.sin(performance.now()/5200)*.12);
-    cam.position.set(Math.sin(ang)*13, 4.2 - orbit.y*4, Math.cos(ang)*13); cam.lookAt(0, .3, 0);
-    group.children.forEach(o => { if (o.isMesh){ const u = o.userData; o.scale.y += (u.h - o.scale.y)*.12; o.position.y = u.s * o.scale.y/2; } });
-    renderer.render(scene, cam); requestAnimationFrame(loop);
-  }
-  TL.ok = true; loop();
-})();
+  let sum = tlSumAt(tl.i, tl.T); if (Math.abs(sum) < 0.005) sum = 0; const eq = Math.abs(sum) < 0.5;
+  const expr = items.map(x => (x.s > 0 ? '+ ' : '− ') + tlExpr(x)).join(' ');
+  if (!show) return `<div class="eyebrow" style="margin-bottom:6px">Planteamiento en T = ${fmt(tl.T,2)}</div><div class="mono" style="font-size:12.5px;overflow-wrap:anywhere">${esc(expr)} = 0 ?</div><div class="lock" style="margin-top:6px">Los resultados se muestran al resolver la estación 7. Hasta entonces, esta igualdad es tu planteamiento.</div>`;
+  return `<div class="eyebrow" style="margin-bottom:4px">Suma de todo lo que entra y sale, valorado en T = ${fmt(tl.T,2)}</div>
+    <div class="big ${eq ? 'ok' : 'no'}">${fmt(sum)} € ${eq ? '≈ 0 → equilibrio' : '→ no equilibra'}</div>
+    <div style="margin-top:4px;color:var(--muted)">${eq ? 'Al tipo ' + fmt(tl.i*100,3) + ' % lo que entra y lo que sale valen lo mismo: ese es el tipo efectivo para esta parte. Fíjate en que da igual la fecha T que elijas.' : 'A este tipo lo que entra y lo que sale no valen lo mismo. Busca el tipo que hace la suma cero: será el tipo efectivo de la operación.'}</div>
+    <div class="btn-row"><button class="btn" data-tl="irr">Buscar el tipo que equilibra</button></div>`;
+}
+function tlTableHTML(){
+  const items = tlItems(); const show = tlShow();
+  return `<tr><th>t</th><th>Flujo</th><th>Expresión en T</th><th class="n">Valor en T</th></tr>` + items.map((x,k) => x.fixed ? '' : `<tr class="${tl.sel===k?'sel':''}"><td>${fmt(x.t,2)}</td><td>${x.s>0?'+':x.s<0?'−':'±'}${fmt(x.amt)}</td><td>${esc(tlExpr(x))}</td><td class="n">${show ? (x.s<0?'−':'') + fmt(tlVal(x.amt,x.t,tl.T,tl.i,tl.law)) : '?'}</td></tr>`).join('');
+}
+function drawTimelines(){
+  if (!run) return;
+  tlSVG($('#tlSvg'), false); $('#tlCtrl').innerHTML = tlCtrlHTML(); $('#tlSum').innerHTML = tlSumHTML();
+  if (!$('#tlModal').hidden){ $('#tlMEx').textContent = run.ex.id + ' · ' + run.ex.title + ' · perspectiva: ' + run.ex.persp; tlSVG($('#tlSvgM'), true); $('#tlCtrlM').innerHTML = tlCtrlHTML(); $('#tlSumM').innerHTML = tlSumHTML(); $('#tlTable').innerHTML = tlTableHTML(); tlCurve($('#tlCurve')); }
+}
 function updateTimeline(){
   if (!run) return;
-  const reveal = !!(run.rec.dibujar && run.rec.dibujar.ok) || run.done;
-  TL.ok && TL.set(run.ex.flows, run.signs, reveal);
-  $('#tlPersp').textContent = 'Perspectiva: ' + run.ex.persp + (reveal ? ' · signos comprobados' : ' · asigna los signos en «Dibujar»');
+  const reveal = tlSigned();
+  $('#tlPersp').textContent = 'Perspectiva: ' + run.ex.persp + (reveal ? ' · signos comprobados' : ' · los signos se ponen en la estación 3');
+  drawTimelines();
 }
+function tlPointer(host, e, big){
+  const g = host._geo; if (!g) return; const r = host.getBoundingClientRect(); const x = e.clientX - r.left;
+  const T = Math.round(Math.max(0, Math.min(g.maxT, (x - g.pL)/(g.W - g.pL - g.pR)*g.maxT))*4)/4;
+  if (T !== tl.T){ tl.T = T; drawTimelines(); }
+}
+['#tlHost','#tlHostM','#tlCurve'].forEach(sel => { const host = $(sel); let drag = false;
+  host.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; const bar = e.target.closest('.bar');
+    if (bar){ tl.sel = +bar.dataset.i === tl.sel ? null : +bar.dataset.i; drawTimelines(); return; }
+    drag = true; host.setPointerCapture(e.pointerId); tlPointer(host, e); });
+  host.addEventListener('pointermove', e => { if (drag) tlPointer(host, e); });
+  host.addEventListener('pointerup', () => { drag = false; });
+});
+$('#tlHost')._geo = null;
+// los hosts guardan la geometría en su contenedor svg
+['#tlHost','#tlHostM'].forEach(sel => { const h = $(sel); Object.defineProperty(h, '_geo', {get(){ const inner = h.querySelector('[id^="tlSvg"]'); return inner && inner._geo; }, set(){}}); });
+document.addEventListener('input', e => { const t = e.target; if (!t.dataset || !t.dataset.tl) return;
+  if (t.dataset.tl === 'rate'){ tl.i = +t.value/100; if (calcMode === 'cap'){ CV.cap.i = +(+t.value).toFixed(2); renderCalc(); } }
+  if (t.dataset.tl === 'T') tl.T = +t.value;
+  drawTimelinesKeep(t);
+});
+function drawTimelinesKeep(t){ const which = t.closest('#tlCtrlM') ? '#tlCtrlM' : '#tlCtrl'; const k = t.dataset.tl; drawTimelines(); const n = document.querySelector(`${which} [data-tl="${k}"]`); n && n.focus(); }
+document.addEventListener('click', e => { const b = e.target.closest('[data-tl]'); if (!b || b.tagName === 'INPUT') return; const k = b.dataset.tl;
+  if (k === 'zoom'){ $('#tlModal').hidden = false; drawTimelines(); $('[data-tl="close"]').focus(); }
+  else if (k === 'close'){ $('#tlModal').hidden = true; }
+  else if (k === 'law'){ tl.law = b.dataset.v; drawTimelines(); }
+  else if (k === 'reset'){ tlReset(); drawTimelines(); }
+  else if (k === 'irr'){ const r = tlIRR(); if (r != null){ tl.i = r; drawTimelines(); } }
+  else if (k === 'calc'){ const it = tlItems()[tl.sel]; if (!it) return;
+    if (!tlShow() && run && !run.done && mode === 'train') rec('num').hints++;
+    calcMode = 'cap'; CV.cap = {C:it.amt, i:+(tl.i*100).toFixed(4), t:+Math.abs(tl.T - it.t).toFixed(4), dir: tl.T >= it.t ? 'cap' : 'desc'}; renderCalc();
+    $('#tlModal').hidden = true; const cp = document.querySelector('[data-panel="3"]'); cp.scrollIntoView({behavior: reduce ? 'auto' : 'smooth', block:'center'}); cp.classList.remove('flash'); void cp.offsetWidth; cp.classList.add('flash'); }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#tlModal').hidden) $('#tlModal').hidden = true; });
+$('#tlModal').addEventListener('click', e => { if (e.target.id === 'tlModal') $('#tlModal').hidden = true; });
+new ResizeObserver(() => drawTimelines()).observe($('#tlHost'));
+new ResizeObserver(() => { if (!$('#tlModal').hidden) drawTimelines(); }).observe($('#tlHostM'));
 
 /* ============ Enunciado ============ */
 function renderPicker(){
@@ -949,7 +1103,8 @@ function calcOut(){
   $('#calcOut').innerHTML = `<div class="big">${big}</div><div class="formula">${esc(formula)}</div><div class="meaning">${esc(meaning)}</div>`;
 }
 $('#calcTabs').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; calcMode = b.dataset.c; renderCalc(); });
-$('#calcFields').addEventListener('input', e => { const k = e.target.dataset.k; if (!k) return; CV[calcMode][k] = e.target.tagName === 'SELECT' ? e.target.value : parseNum(e.target.value); calcOut(); });
+$('#calcFields').addEventListener('input', e => { const k = e.target.dataset.k; if (!k) return; CV[calcMode][k] = e.target.tagName === 'SELECT' ? e.target.value : parseNum(e.target.value); calcOut();
+  if (calcMode === 'cap' && k === 'i' && Number.isFinite(CV.cap.i) && CV.cap.i >= 0 && CV.cap.i <= 50){ tl.i = CV.cap.i/100; drawTimelines(); } });
 $('#calcFields').addEventListener('change', e => { const k = e.target.dataset.k; if (!k) return; CV[calcMode][k] = e.target.tagName === 'SELECT' ? e.target.value : parseNum(e.target.value); calcOut(); });
 function setCalcPreset(show){ const p = run.ex.preset; Object.assign(CV[p.c], p.v); if (show){ calcMode = p.c; } renderCalc(); }
 $('#calcPreset').addEventListener('click', () => {
