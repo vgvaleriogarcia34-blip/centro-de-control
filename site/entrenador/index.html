@@ -362,6 +362,15 @@ textarea.big{width:100%; box-sizing:border-box; min-height:150px; background:rgb
 .selrow select{background:rgba(5,10,22,.7); border:1px solid var(--line-2); border-radius:9px; padding:8px 10px; max-width:100%}
 .boxes{display:flex; gap:6px; flex-wrap:wrap; margin:6px 0 12px}
 .boxes span{font:500 12px/1 var(--f-mono); padding:6px 9px; border-radius:8px; border:1px solid var(--line)}
+.term{all:unset; cursor:help; border-bottom:1.5px dotted var(--brass); color:inherit}
+.term:hover,.term:focus-visible{color:var(--brass); outline:none}
+#glossTip{position:fixed; z-index:60; max-width:300px; padding:10px 12px; border-radius:10px; background:var(--card-2,#17223f); border:1px solid var(--brass); color:var(--fg); font-size:13.5px; line-height:1.45; box-shadow:0 10px 30px rgba(0,0,0,.45)}
+#glossTip b{color:var(--brass); display:block; margin-bottom:2px}
+.llano{margin-top:10px; padding:12px 14px; border-radius:12px; border-left:3px solid var(--brass); background:rgba(233,180,92,.08); font-size:14.5px; line-height:1.55}
+.llano .eyebrow{color:var(--brass); margin-bottom:4px}
+.glos-list{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:8px; margin-top:10px; font-size:13px}
+.glos-list div{padding:8px 10px; border:1px solid var(--line); border-radius:10px}
+.glos-list b{color:var(--brass)}
 .model{margin-top:12px; padding:12px 14px; border-radius:12px; border-left:3px solid var(--cobro); background:rgba(5,10,22,.55); font-size:14px}
 .nofin{display:flex; gap:8px; align-items:flex-start; margin-top:10px; font-size:12.5px; color:var(--muted)}
 .nofin input{margin-top:3px; accent-color:var(--brass)}
@@ -1643,22 +1652,107 @@ let tq = null;
 function nextTeo(){ const items = LIB.filter(e => e.tipo === 'teoria' || (e.tipo === 'criterio' && e.solucion == null)); const box = id => S.teo[id] || 1;
   const minBox = Math.min(...items.map(e => box(e.id))); const pool = items.filter(e => box(e.id) <= minBox + 1 && e.id !== (tq && tq.it.id));
   tq = {it: pool[Math.floor(Math.random()*pool.length)], shown:false, txt:''}; }
+/* Diccionario técnico → lenguaje de empresa: los tecnicismos se pueden tocar para ver su traducción */
+const GLOS = [
+ ['capital financiero','Un importe con su fecha: cuánto dinero y cuándo.'],
+ ['cuantía','El importe en euros.'],
+ ['ley financiera','La regla para llevar dinero de una fecha a otra, como un tipo de cambio entre euros de hoy y de mañana.'],
+ ['ley de capitalización','La regla que hace crecer el dinero hacia el futuro sumándole intereses.'],
+ ['capitalización simple','Intereses que no generan intereses: crecen siempre lo mismo cada periodo.'],
+ ['capitalización compuesta','Los intereses se suman a la deuda y generan más intereses (bola de nieve).'],
+ ['capitalizar','Hacer crecer un importe hacia el futuro sumándole intereses.'],
+ ['prestación','Lo que pone una de las partes (por ejemplo, el dinero que presta el banco).'],
+ ['contraprestación','Lo que devuelve la otra parte (por ejemplo, tus cuotas).'],
+ ['equilibrio financiero','El trato es justo: lo que se da y lo que se devuelve valen lo mismo en la misma fecha.'],
+ ['montante','Lo que tienes al final: el capital más los intereses.'],
+ ['valor actual','Lo que vale hoy un dinero que se cobrará o pagará más adelante.'],
+ ['valor final','Lo que valdrá en la fecha final un dinero de antes.'],
+ ['valor capital','Lo que valen, todos juntos, los pagos de una serie llevados a una misma fecha.'],
+ ['tantos equivalentes','Tipos de distinta frecuencia (anual, mensual…) que dejan el mismo saldo final.'],
+ ['tanto nominal','La cifra comercial que anuncia el banco: el tipo de cada periodo multiplicado por los periodos del año.'],
+ ['tanto efectivo','El tipo real que pagas o ganas de verdad, con todo incluido.'],
+ ['tanto de descuento','El porcentaje que el banco aplica sobre el importe total del documento para quedarse su parte.'],
+ ['tanto','El tipo de interés: el precio del dinero en %.'],
+ ['TAE','Tasa anual equivalente: el precio real y anual de la operación, para comparar ofertas.'],
+ ['descuento comercial','Cuando el banco te adelanta un cobro futuro y se queda una parte calculada sobre el importe total.'],
+ ['descuento','Lo que se queda el banco por adelantarte un cobro; o, en general, traer dinero futuro a hoy.'],
+ ['nominal','El importe escrito en la factura, letra o pagaré: lo que se cobrará al vencer.'],
+ ['efectivo','El dinero que realmente te llega a la cuenta.'],
+ ['efecto','Un documento de cobro a plazo: letra, pagaré o recibo.'],
+ ['letra de resaca','La letra nueva que emites al cliente que no pagó, para recuperar el impagado y todos los gastos.'],
+ ['librador','Quien emite la letra y tiene derecho a cobrarla.'],
+ ['vencimiento medio','La fecha única en la que pagar la suma de varios pagos sin que nadie gane ni pierda.'],
+ ['vencimiento común','La fecha en la que un pago único, de importe dado, sustituye a varios.'],
+ ['vencimiento','La fecha en la que hay que pagar.'],
+ ['sustitución de capitales','Cambiar varios pagos por uno solo (o por otros) sin que nadie gane ni pierda.'],
+ ['método hamburgués','La forma de calcular los intereses de una cuenta: saldo × días de cada tramo.'],
+ ['fecha valor','La fecha desde la que un movimiento cuenta para los intereses (no siempre es el día del apunte).'],
+ ['números','Saldo × días: la «cantidad de dinero-tiempo» que genera intereses.'],
+ ['interés recíproco','El mismo tipo tanto si tienes saldo a favor como si debes.'],
+ ['no recíproco','Un tipo si tienes saldo a favor y otro (más alto) si debes.'],
+ ['renta','Una serie de pagos o cobros periódicos: cuotas, alquileres, nóminas…'],
+ ['término amortizativo','La cuota total que pagas cada periodo (intereses + devolución de deuda).'],
+ ['cuota de amortización','La parte de la cuota que devuelve deuda (no la de intereses).'],
+ ['amortización','Devolver la deuda poco a poco.'],
+ ['términos','Cada uno de los pagos de la serie (cada cuota).'],
+ ['pospagable','Se paga al final de cada periodo (como una nómina).'],
+ ['prepagable','Se paga al principio de cada periodo (como un alquiler).'],
+ ['inmediata','Los pagos empiezan ya, en el primer periodo.'],
+ ['diferida','Los pagos empiezan más tarde (hay un tiempo de espera).'],
+ ['anticipada','Se valora en una fecha posterior a que terminen los pagos.'],
+ ['perpetua','Los pagos no se acaban nunca.'],
+ ['temporal','Los pagos tienen fin.'],
+ ['fraccionada','Pagos varias veces al año (mensual, trimestral…).'],
+ ['progresión aritmética','Cada pago sube (o baja) la misma cantidad en euros.'],
+ ['progresión geométrica','Cada pago sube (o baja) el mismo porcentaje.'],
+ ['razón','Lo que cambia cada paso: los euros que se suman o el número por el que se multiplica.'],
+ ['capital pendiente','Lo que todavía debes.'],
+ ['método francés','Préstamo de cuota fija (el típico hipotecario).'],
+ ['método lineal','Préstamo en el que devuelves la misma cantidad de deuda cada periodo.'],
+ ['prospectivo','Mirando hacia delante: lo que valen hoy las cuotas que faltan.'],
+ ['retrospectivo','Mirando hacia atrás: lo prestado con intereses menos lo ya pagado.'],
+ ['carencia','Periodo de gracia al empezar el préstamo.'],
+ ['prestatario','Quien pide el préstamo y lo devuelve.'],
+ ['prestamista','Quien presta el dinero (normalmente el banco).'],
+ ['acreedor','Quien tiene derecho a cobrar.'],
+ ['deudor','Quien tiene que pagar.'],
+ ['compensación','La comisión que cobra el banco si devuelves antes de tiempo.'],
+ ['recurrencia','Una cuenta que se repite igual en cada periodo, a partir del anterior.'],
+ ['demuestra','Explica paso a paso de dónde sale, sin saltos.'],
+ ['deduce','Llega a la fórmula paso a paso desde algo que ya conoces.'],
+ ['subestimación de capitales futuros','A igual importe, se prefiere cobrar antes.'],
+];
+const GLOS_RE = new RegExp('(?<![\\p{L}\\d])(' + GLOS.map(g => g[0]).sort((a,b) => b.length - a.length).map(t => t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|') + ')(?![\\p{L}\\d])', 'giu');
+const GLOS_IX = Object.fromEntries(GLOS.map((g,i) => [g[0].toLowerCase(), i]));
+function glossify(t){ const used = new Set(); return esc(t).replace(GLOS_RE, m => { const i = GLOS_IX[m.toLowerCase()]; if (i == null || used.has(i)) return m; used.add(i); return `<button type="button" class="term" data-g="${i}" aria-label="${m}: ver qué significa">${m}</button>`; }); }
+function glossTip(btn){ let tip = $('#glossTip'); if (!tip){ tip = document.createElement('div'); tip.id = 'glossTip'; tip.setAttribute('role','tooltip'); document.body.appendChild(tip); }
+  const g = GLOS[+btn.dataset.g]; tip.innerHTML = `<b>${esc(g[0])}</b>${esc(g[1])}`; tip.hidden = false;
+  const r = btn.getBoundingClientRect(), w = Math.min(300, innerWidth - 32); tip.style.maxWidth = w + 'px';
+  tip.style.left = Math.max(16, Math.min(r.left, innerWidth - w - 16)) + 'px'; const h = tip.offsetHeight; tip.style.top = (r.bottom + 8 + h > innerHeight ? r.top - h - 8 : r.bottom + 8) + 'px'; }
+document.addEventListener('click', e => { const b = e.target.closest('.term'); if (b){ e.preventDefault(); glossTip(b); return; } const tip = $('#glossTip'); if (tip) tip.hidden = true; });
+addEventListener('scroll', () => { const tip = $('#glossTip'); if (tip) tip.hidden = true; }, {passive:true});
+const llanoBox = it => it.llano ? `<div class="llano"><div class="eyebrow">Lo mismo en lenguaje de empresa</div>${esc(it.llano)}</div>` : '';
 function renderTeo(c){
   if (!LIB){ c.innerHTML = `<section class="float card"><p class="sub">Cargando…</p></section>`; loadLib().then(() => renderCenter()); return; }
   if (!tq) nextTeo(); const items = LIB.filter(e => e.tipo === 'teoria' || (e.tipo === 'criterio' && e.solucion == null));
   const cnt = [1,2,3,4,5].map(b => items.filter(e => (S.teo[e.id] || 1) === b).length);
   const it = tq.it;
   c.innerHTML = `<section class="float card" style="--d:.55"><div class="eyebrow">Teoría activa · ${esc(it.tema)} · ${items.length} preguntas</div>
-    <h2>${esc(it.enunciado)}</h2><p class="sub">La teoría se corrige primero: si no llegas al 40 %, no te corrigen la práctica. Escribe la respuesta de memoria y después compárala.</p>
+    <h2>${glossify(it.enunciado)}</h2>
+    ${it.pregunta_llana ? (tq.tr ? `<div class="llano"><div class="eyebrow">Lo que te están preguntando, sin tecnicismos</div>${esc(it.pregunta_llana)}</div>` : `<div class="btn-row"><button class="btn" data-ta="tr">Tradúcemelo a lenguaje de empresa</button></div>`) : ''}
+    <p class="sub">Las palabras subrayadas se pueden tocar para ver qué significan. La teoría se corrige primero: si no llegas al 40 %, no te corrigen la práctica. Escribe la respuesta de memoria, con tus palabras si hace falta, y después compárala.</p>
     <div class="boxes">${cnt.map((n,i) => `<span style="border-color:${['var(--pago)','var(--warn)','var(--line-2)','var(--oc)','var(--cobro)'][i]}">Caja ${i+1}: ${n}</span>`).join('')}</div>
     <label for="teoIn" class="sr">Tu respuesta</label><textarea id="teoIn" class="big" placeholder="Escribe la definición o la demostración con tus palabras…" ${tq.shown ? 'disabled' : ''}>${esc(tq.txt)}</textarea>
-    ${tq.shown ? `<div class="model"><b>Respuesta modelo:</b> ${esc(it.pasos[0])}<div style="margin-top:6px;color:var(--muted)">Clave: ${esc(it.patron)}</div></div>
+    ${tq.shown ? `<div class="model"><b>Respuesta modelo (como se escribe en el examen):</b> ${glossify(it.pasos[0])}<div style="margin-top:6px;color:var(--muted)">Clave: ${esc(it.patron)}</div></div>${llanoBox(it)}
+      ${it.llano ? `<p class="howto">Para memorizarla: primero entiende la versión de empresa; después, sin mirar, vuelve a decirla con las palabras técnicas. Esa traducción de ida y vuelta es lo que se queda.</p>` : ''}
       <p class="sub" style="margin-top:12px">¿Cómo te ha salido comparada con la modelo?</p>
       <div class="btn-row"><button class="btn" data-ta="0">No la sabía</button><button class="btn" data-ta="1">A medias</button><button class="btn primary" data-ta="2">La sabía</button></div>`
       : `<div class="btn-row"><button class="btn primary" data-ta="show">Ver la respuesta modelo</button></div>`}
-    <p class="howto">Caja 1 = repasar ya; caja 5 = dominada. «No la sabía» la devuelve a la caja 1; «La sabía» la sube una caja. Así repasas más lo que no sabes.</p></section>`;
+    <p class="howto">Caja 1 = repasar ya; caja 5 = dominada. «No la sabía» la devuelve a la caja 1; «La sabía» la sube una caja. Así repasas más lo que no sabes.</p>
+    <details style="margin-top:12px"><summary>Diccionario: de lo técnico a lo de empresa (${GLOS.length} palabras)</summary><div class="glos-list">${GLOS.map(g => `<div><b>${esc(g[0])}</b><br>${esc(g[1])}</div>`).join('')}</div></details></section>`;
 }
 $('#center').addEventListener('click', e => { if (mode !== 'teo' || !tq) return; const b = e.target.closest('[data-ta]'); if (!b) return; const a = b.dataset.ta;
+  if (a === 'tr'){ tq.txt = $('#teoIn').value; tq.tr = true; renderCenter(); return; }
   if (a === 'show'){ tq.txt = $('#teoIn').value; if (tq.txt.trim().length < 10){ $('#teoIn').focus(); $('#teoIn').placeholder = 'Escribe primero algo, aunque sea incompleto: recordar es lo que fija la teoría.'; return; } tq.shown = true; renderCenter(); return; }
   const cur = S.teo[tq.it.id] || 1; S.teo[tq.it.id] = a === '0' ? 1 : a === '1' ? Math.max(1, Math.min(5, cur)) : Math.min(5, cur + 1); save(); nextTeo(); renderCenter(); });
 
@@ -1684,7 +1778,7 @@ function renderExam(c){
     return; }
   if (xm.done) return renderExamResult(c);
   const min = Math.floor((Date.now() - xm.start)/60000);
-  if (xm.i === 0){ c.innerHTML = `<section class="float card"><div class="eyebrow">${esc(PRUEBAS[xm.k].n)} · Teoría · ${min} min</div><h2>${esc(xm.t.enunciado)}</h2><p class="sub">Escribe la respuesta como en el examen. Al final la compararás con la modelo y te puntuarás con honestidad.</p>
+  if (xm.i === 0){ c.innerHTML = `<section class="float card"><div class="eyebrow">${esc(PRUEBAS[xm.k].n)} · Teoría · ${min} min</div><h2>${glossify(xm.t.enunciado)}</h2><p class="sub">Escribe la respuesta como en el examen. Al final la compararás con la modelo y te puntuarás con honestidad.</p>
       <label for="xmTeo" class="sr">Respuesta</label><textarea id="xmTeo" class="big">${esc(xm.teoTxt)}</textarea><div class="card-foot"><span></span><button class="btn primary" data-xa="nx">Pasar a los ejercicios</button></div></section>`; return; }
   const j = xm.i - 1, ex = xm.items[j], a = xm.ans[j] = xm.ans[j] || {}, o = xm.opts[j];
   const block = (k, title) => `<h3 style="font-size:15px;margin:14px 0 8px">${title}</h3><div class="opts">${o[k].map((x,n) => `<button class="opt" data-xk="${k}" data-xn="${n}" aria-pressed="${a[k+'n']===n}" style="${a[k+'n']===n ? 'border-color:var(--brass);background:rgba(233,180,92,.12)' : ''}"><span class="k">${'ABC'[n]}</span>${esc(x[0])}</button>`).join('')}</div>`;
@@ -1698,7 +1792,7 @@ function renderExamResult(c){
   const scores = xm.items.map((_,j) => xmScore(j)); const prac = scores.reduce((a,b) => a+b, 0)/scores.length;
   if (xm.teoScore == null){
     c.innerHTML = `<section class="float card"><div class="eyebrow">Autocorrección de la teoría</div><h2>${esc(xm.t.enunciado)}</h2>
-      <div class="compare"><div><b>Tu respuesta</b>${esc(xm.teoTxt || '(en blanco)')}</div><div><b>Respuesta modelo</b>${esc(xm.t.pasos[0])}</div></div>
+      <div class="compare"><div><b>Tu respuesta</b>${esc(xm.teoTxt || '(en blanco)')}</div><div><b>Respuesta modelo</b>${glossify(xm.t.pasos[0])}</div></div>${llanoBox(xm.t)}
       <p class="sub" style="margin-top:12px">¿Qué nota le pondrías? Sé estricto: la profesora lo será.</p>
       <div class="btn-row">${[0,3,5,7,10].map(v => `<button class="btn" data-xt="${v}">${v}</button>`).join('')}</div></section>`; return; }
   const minOk = xm.teoScore >= 4 && scores.every(x => x >= 4); const nota = xm.teoScore*0.3 + prac*0.7; const ap = minOk && nota >= 5;

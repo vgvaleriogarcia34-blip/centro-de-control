@@ -680,10 +680,70 @@ TEORIA = [
  (T12,"Amortización anticipada: opciones y compensación.","Tras pagar el término k, se entrega X: el pendiente pasa a C_k − X. Se puede mantener el plazo (baja el término) o el término (baja el plazo). La compensación es un porcentaje de X que cobra el prestamista.","Elegir según liquidez o ahorro de intereses."),
  (T12,"Tantos efectivos de un préstamo: prestatario, prestamista y TAE.","Prestatario: iguala lo recibido neto de todos sus gastos con los términos. Prestamista: lo entregado menos lo que cobra (comisiones) con los términos. TAE: según normativa, incluye los gastos que percibe la entidad.","Cada parte tiene su propio tanto efectivo."),
 ]
+# Traducción de cada pregunta de teoría a lenguaje de empresa: (lo que te preguntan, explicado sin tecnicismos)
+LLANO = [
+ ("¿Por qué 1.000 € hoy y 1.000 € dentro de un año no son lo mismo, y qué hace falta para compararlos?",
+  "En la empresa, cada cobro o pago tiene dos datos: cuánto y cuándo. Que un cliente te pague 1.000 € hoy vale más que 1.000 € dentro de un año, porque el dinero de hoy ya lo puedes usar. Para comparar cobros de fechas distintas hay que llevarlos todos al mismo día con un tipo de interés pactado."),
+ ("¿Cuál es la regla que convierte el dinero de una fecha en su equivalente en otra, y qué tiene que cumplir?",
+  "Es como un tipo de cambio entre euros de hoy y euros de mañana. Si la regla sirve para hacer crecer el dinero, tiene que cumplir tres cosas: nunca da un resultado negativo, el mismo día no cambia nada (multiplica por 1) y cuanto más tiempo pasa, más crece."),
+ ("En cualquier trato financiero, ¿qué pone cada parte y cuándo está equilibrado el trato?",
+  "La prestación es lo que pone una parte (el banco te da 10.000 €) y la contraprestación es lo que devuelve la otra (tus cuotas). El trato es justo, está «equilibrado», cuando las dos cosas valen lo mismo llevadas al mismo día con el tipo pactado. Todo ejercicio se resuelve con esa igualdad: lo que entra vale lo que sale."),
+ ("Con interés simple, ¿por qué el tipo mensual es simplemente el anual entre 12?",
+  "En interés simple los intereses no generan nuevos intereses, así que un 6 % anual es exactamente un 0,5 % cada mes: doce meses al 0,5 % suman un 6 %. Dos tipos son «equivalentes» si, con el mismo dinero y el mismo plazo, te dejan el mismo saldo final."),
+ ("Con interés compuesto, ¿cómo paso de un tipo anual a uno mensual o trimestral sin ganar ni perder dinero?",
+  "En compuesta, los intereses de cada mes se suman a la deuda y generan más intereses. Por eso no basta con dividir entre 12: el tipo mensual tiene que ser algo menor, para que acumulado durante 12 meses dé lo mismo que el anual. El tipo «nominal» es la cifra comercial que anuncia el banco (el mensual por 12). El que manda para calcular es el efectivo."),
+ ("¿Qué sistema da más dinero, el interés simple o el compuesto, y de qué depende?",
+  "Depende del plazo. Por debajo de un año, el simple da un poco más; justo al año dan lo mismo; a partir del año gana el compuesto, y cada vez por más (crece como una bola de nieve). Por eso las operaciones cortas (descontar facturas, cuentas) suelen ir en simple y las largas (préstamos, inversiones) en compuesta."),
+ ("Cuando el banco te adelanta el cobro de una factura o pagaré, ¿cuánto se queda y qué interés te cobra de verdad?",
+  "El banco calcula su parte sobre el importe total del documento (el nominal), no sobre lo que te da: descuento = nominal × tipo × tiempo, y tú recibes el resto (el efectivo). Como cobra sobre una cifra mayor que la que realmente te adelanta, el interés real que pagas es algo más alto que el tipo de descuento anunciado."),
+ ("Si juntas varias facturas en un único pago por la suma de todas, ¿por qué la fecha de ese pago no depende del tipo de interés?",
+  "La fecha única sale de ponderar cada fecha por el importe de su factura, como una nota media ponderada: las facturas grandes tiran más de la fecha. En descuento comercial el tipo aparece igual a los dos lados de la igualdad y se cancela, así que da lo mismo un 4 % que un 8 %."),
+ ("Si cambias varios pagos por uno solo, ¿qué te piden en cada caso: la fecha o el importe?",
+  "Al renegociar varios pagos con un proveedor caben tres preguntas. Sustitución: ya sabes el día y buscas cuánto pagar. Vencimiento común: ya sabes cuánto vas a pagar y buscas qué día. Vencimiento medio: pagas justo la suma de todo y buscas qué día. Lo primero es ver qué dato te falta."),
+ ("Cuando descuentas un pagaré, ¿cuánto te cuesta de verdad la operación con todo incluido?",
+  "La TAE es el precio real anual de la operación. Compara el dinero neto que te llega a la cuenta (después del descuento, las comisiones y los gastos del banco) con lo que tendrás que devolver, y lo expresa como un tipo anual. Sirve para comparar ofertas de bancos distintos. Según la normativa, los gastos que cobran terceros no entran en la TAE."),
+ ("Si un cliente no paga una letra que ya habías descontado, ¿cómo recuperas el dinero y por qué le reclamas más de lo que debía?",
+  "El banco te carga en cuenta la letra impagada más sus gastos. Para no perder dinero, emites una letra nueva al cliente (la «resaca») y la vuelves a descontar. Como al descontarla el banco vuelve a quedarse su parte, la letra nueva tiene que ser mayor, para que lo que te llegue cubra exactamente todo el cargo. Se calcula al revés: desde lo que necesitas cobrar hasta el importe de la letra."),
+ ("¿Cómo calcula el banco los intereses de una cuenta con muchos movimientos?",
+  "Ordena los movimientos por la fecha en que cuentan (fecha valor) y mira qué saldo hubo en cada tramo y cuántos días duró. Multiplica saldo × días (esos son los «números»), los suma y aplica el tipo. Es como un alquiler por días: cada saldo paga solo mientras está en la cuenta. Los saldos a tu favor y en tu contra se cuentan por separado."),
+ ("¿Qué tipos de cuenta corriente hay según el interés que aplican?",
+  "Recíproca: el mismo tipo tanto si tienes dinero como si debes. No recíproca: un tipo bajo si tienes saldo a favor y otro más alto si te quedas en descubierto (lo normal en una empresa). Variable: el tipo cambia durante el periodo. Primero mira si el saldo es positivo o negativo para saber qué tipo toca."),
+ ("¿Qué es una renta en finanzas, cuánto vale en conjunto y de qué tipos hay?",
+  "Una renta es cualquier serie de pagos o cobros periódicos: las cuotas de un préstamo, un alquiler, una nómina, un plan de ahorro. Su «valor» en una fecha es lo que valen todos esos pagos juntos llevados a ese día. Se clasifican con preguntas sencillas: ¿cuota fija o cambiante?, ¿tiene fin o es para siempre?, ¿se paga al principio o al final de cada periodo?, ¿empieza ya o más tarde?, ¿una vez al año o varias?"),
+ ("¿Cuánto valen hoy, todas juntas, varias cuotas iguales que se pagan al final de cada periodo, y de dónde sale la fórmula?",
+  "Cada cuota futura vale hoy algo menos: la del año 1 se divide una vez entre (1 + i), la del año 2 dos veces, y así. Sumarlas todas es sumar una serie en la que cada término es el anterior entre (1 + i), y la fórmula de esa suma es c · a_n¬i. En la práctica, es el dinero que necesitarías hoy para poder pagar todas esas cuotas."),
+ ("¿Por qué pagar al principio de cada periodo vale más que pagar al final, y cómo se pasa del valor de hoy al valor final?",
+  "Pagar al principio de cada mes (como un alquiler) adelanta cada cuota un periodo, así que cada una vale (1 + i) veces más que si se pagara al final. Y el valor final de toda la serie es su valor de hoy dejado crecer hasta el final. No son fórmulas nuevas: es la misma serie movida en el tiempo."),
+ ("¿Cuánto vale hoy un cobro fijo que se recibe para siempre?",
+  "Piensa en un local alquilado que da 12.000 € al año para siempre. Aunque son infinitos cobros, los muy lejanos casi no valen nada hoy y la suma da una cifra finita: cobro ÷ tipo. Al 4 %, 12.000 / 0,04 = 300.000 €, que es el capital que, invertido al 4 %, te daría esa renta sin tocarlo nunca."),
+ ("¿Qué diferencia hay entre una serie de pagos que empieza más tarde y otra que valoras cuando ya ha terminado?",
+  "Diferida: los pagos empiezan más tarde, como un préstamo con dos años de gracia o una pensión que empieza a los 65. Anticipada: los pagos ya acabaron y te piden cuánto valen en una fecha posterior, como un plan de ahorro terminado que dejas crecer unos años más. Diferir mueve el inicio de los pagos; anticipar mueve el día en que los valoras."),
+ ("¿Cuánto vale hoy una serie de pagos que sube la misma cantidad cada año?",
+  "Por ejemplo, un alquiler que empieza en 10.000 € y sube 500 € fijos cada año. Se resuelve como una cuota fija más una serie de «escalones» de 500 € que se van sumando, y la fórmula junta las dos partes."),
+ ("¿Cuánto vale hoy una serie de pagos que sube un porcentaje fijo cada año, y cuándo tiene sentido que dure para siempre?",
+  "Por ejemplo, un sueldo o un alquiler que sube un 2 % al año (q = 1,02). Si los pagos crecen más despacio que el tipo de interés, la serie vale una cifra finita aunque dure para siempre. Si crecen igual o más deprisa que el interés, la serie infinita no tiene precio: vale infinito. Lo que manda es comparar el crecimiento con el tipo."),
+ ("En cualquier préstamo, ¿qué cuentas se repiten en cada cuota?",
+  "En cada periodo la deuda genera intereses (deuda × tipo). La cuota se reparte en una parte que paga esos intereses y otra que devuelve deuda (la amortización), y la deuda nueva es la anterior menos lo devuelto. Al final, todo lo devuelto suma lo prestado, y todas las cuotas llevadas a hoy valen lo prestado. Vale para cualquier préstamo."),
+ ("¿Cómo se calcula cuánto debes todavía a mitad de un préstamo?",
+  "Hay dos maneras de mirar lo mismo. Hacia delante: lo que debes es lo que valen hoy las cuotas que te quedan. Hacia atrás: lo que te prestaron, con sus intereses hasta hoy, menos lo que ya has pagado, también con sus intereses. Tienen que dar lo mismo, así que una sirve para comprobar la otra."),
+ ("En un préstamo en el que devuelves la misma cantidad de deuda cada año, ¿por qué la cuota baja siempre lo mismo?",
+  "Si cada año devuelves la misma parte de deuda (por ejemplo, 10.000 €), la deuda baja 10.000 € al año y los intereses bajan 10.000 × tipo al año. Como la cuota es devolución más intereses, la cuota baja esa misma cantidad fija cada año. Al principio pagas más y al final menos."),
+ ("En el préstamo de cuota fija (el típico de una hipoteca), ¿por qué cada año devuelves algo más de deuda?",
+  "La cuota es siempre la misma. Como la deuda baja, cada año pagas menos intereses, y lo que sobra de la cuota se dedica a devolver deuda. Por eso la parte de deuda que devuelves crece cada año al ritmo del tipo de interés (× (1 + i)). Al principio casi todo son intereses; al final casi todo es devolución."),
+ ("Si el banco te da un periodo de gracia al empezar el préstamo, ¿qué pasa con la deuda y con las cuotas posteriores?",
+  "Carencia parcial: durante la gracia solo pagas intereses, así que la deuda ni sube ni baja. Carencia total: no pagas nada, los intereses se suman a la deuda y esta crece. Después, toda la deuda se devuelve en menos cuotas, que serán más altas. La carencia da aire a la caja al principio, pero no regala nada: los pagos se mueven, no desaparecen."),
+ ("Si a mitad del préstamo devuelves una parte por adelantado, ¿qué opciones tienes y qué te cuesta?",
+  "Lo que adelantas se resta de lo que debes en ese momento, no de lo que te prestaron al principio. Luego eliges: pagar menos cada mes con el mismo plazo (más liquidez) o pagar lo mismo y acabar antes (más ahorro de intereses). El banco puede cobrarte una comisión, que es un porcentaje de lo que adelantas."),
+ ("¿Cuánto le cuesta de verdad el préstamo a quien lo pide y cuánto le rinde de verdad al banco?",
+  "Cada parte calcula su propio tipo real con su propio dinero. Al cliente le cuesta más, porque recibe menos dinero neto (le quitan comisiones y además paga notaría, registro…) y aun así paga las mismas cuotas. Al banco le rinde menos que eso, porque solo se queda las comisiones: los gastos de notaría se los llevan terceros. La TAE oficial incluye lo que cobra el banco."),
+]
+assert len(LLANO) == len(TEORIA)
+
 def teoria_items():
-    for tema, q, a, pat in TEORIA:
+    for (tema, q, a, pat), (ql, al) in zip(TEORIA, LLANO):
         add(tema, "Teoría y demostraciones", 2, q, "Responde y, si procede, demuestra.", None, "", "Respuesta teórica", [a], pat,
-            "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.", {}, tipo="teoria")
+            "Recitar la fórmula sin justificarla: la guía exige un 40 % en teoría antes de corregir la práctica.", {}, tipo="teoria",
+            extra={"pregunta_llana": ql, "llano": al})
 
 # ---------------- Criterio sin cálculo ----------------
 CRIT = [

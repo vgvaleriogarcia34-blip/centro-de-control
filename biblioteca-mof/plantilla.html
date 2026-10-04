@@ -72,7 +72,7 @@ function card(e){
   <h3>${esc(e.familia)}</h3><p>${esc(e.enunciado)}</p><p class="q">${esc(e.pregunta)}</p>
   <div class="tools">${e.solucion!=null ? `<label class="sr" for="in_${e.id}" hidden>Tu resultado</label><input id="in_${e.id}" inputmode="decimal" placeholder="Tu resultado (${esc(e.unidad.split(' ')[0])})"><button class="btn" data-check="${e.id}">Comprobar</button>` : ''}<button class="btn" data-show="${e.id}">Ver planteamiento y solución</button><span class="res" id="r_${e.id}"></span></div>
   <div class="detail" id="d_${e.id}" hidden><span class="k">Planteamiento</span>${esc(e.planteamiento)}<span class="k">Pasos</span><ol>${e.pasos.map(p=>`<li>${esc(p)}</li>`).join('')}</ol>${e.solucion!=null?`<span class="k">Solución</span><b>${fmt(e.solucion, e.unidad.startsWith('%')||e.unidad.startsWith('años')||e.unidad.startsWith('térm')?4:2)} ${esc(e.unidad)}</b>`:''}
-  <span class="k">Partes</span>${Object.entries(e.partes||{}).map(([k,v])=>`${esc(k.replace(/_/g,' '))}: ${esc(v)}`).join(' · ')||'—'}<span class="k">Patrón</span>${esc(e.patron)}<span class="k">Error típico</span>${esc(e.error_tipico)}</div></article>`;
+  <span class="k">Partes</span>${Object.entries(e.partes||{}).map(([k,v])=>`${esc(k.replace(/_/g,' '))}: ${esc(v)}`).join(' · ')||'—'}${e.llano?`<span class="k">En lenguaje de empresa</span><i>${esc(e.pregunta_llana)}</i><br>${esc(e.llano)}`:''}<span class="k">Patrón</span>${esc(e.patron)}<span class="k">Error típico</span>${esc(e.error_tipico)}</div></article>`;
 }
 function apply(){
   const q = $('#q').value.trim().toLowerCase(), t = $('#fTema').value, n = $('#fNivel').value, ty = $('#fTipo').value;
