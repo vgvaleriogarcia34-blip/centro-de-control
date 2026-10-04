@@ -340,6 +340,31 @@ textarea.big{width:100%; box-sizing:border-box; min-height:150px; background:rgb
 @media (max-width:640px){.compare{grid-template-columns:minmax(0,1fr)}}
 .compare div{padding:10px 12px; border-radius:10px; border:1px solid var(--line); background:rgba(5,10,22,.45); font-size:13.5px}
 .compare b{display:block; font:500 10.5px/1.3 var(--f-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:4px}
+/* Práctica de criterio, teoría y examen */
+.ready{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:6px 0 4px}
+@media (max-width:640px){.ready{grid-template-columns:minmax(0,1fr)}}
+.ready div{border:1px solid var(--line); border-radius:12px; padding:10px 12px; background:rgba(5,10,22,.5)}
+.ready b{display:block; font:600 22px/1.1 var(--f-mono); color:var(--brass)}
+.ready span{font-size:12px; color:var(--muted)}
+.ready .meter{height:7px; border-radius:4px; background:rgba(255,255,255,.08); margin-top:6px; overflow:hidden}
+.ready .meter i{display:block; height:100%; background:var(--cobro)}
+.chips{display:flex; gap:6px; flex-wrap:wrap; margin:4px 0 14px}
+.chip{font:500 11.5px/1 var(--f-mono); padding:6px 9px; border-radius:99px; border:1px solid var(--line-2); color:var(--muted)}
+.chip.now{border-color:var(--brass); color:var(--fg); background:rgba(233,180,92,.14)}
+.chip.ok{border-color:var(--cobro); color:var(--cobro)} .chip.bad{border-color:var(--pago); color:var(--pago)}
+.exbox{padding:14px; border-radius:12px; border:1px solid var(--line-2); background:rgba(5,10,22,.55); margin-bottom:14px}
+.exbox .q{color:var(--brass); margin-top:8px; font-weight:500}
+.statrow{display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; margin-top:10px}
+@media (max-width:640px){.statrow{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.statrow div{border:1px solid var(--line); border-radius:10px; padding:8px; text-align:center}
+.statrow b{display:block; font:600 18px/1.1 var(--f-mono)} .statrow span{font-size:11.5px; color:var(--muted)}
+.selrow{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:12px}
+.selrow select{background:rgba(5,10,22,.7); border:1px solid var(--line-2); border-radius:9px; padding:8px 10px; max-width:100%}
+.boxes{display:flex; gap:6px; flex-wrap:wrap; margin:6px 0 12px}
+.boxes span{font:500 12px/1 var(--f-mono); padding:6px 9px; border-radius:8px; border:1px solid var(--line)}
+.model{margin-top:12px; padding:12px 14px; border-radius:12px; border-left:3px solid var(--cobro); background:rgba(5,10,22,.55); font-size:14px}
+.nofin{display:flex; gap:8px; align-items:flex-start; margin-top:10px; font-size:12.5px; color:var(--muted)}
+.nofin input{margin-top:3px; accent-color:var(--brass)}
 footer{margin-top:34px; color:var(--faint); font-size:12.5px; max-width:90ch}
 </style>
 
@@ -356,7 +381,10 @@ footer{margin-top:34px; color:var(--faint); font-size:12.5px; max-width:90ch}
       <span class="pill" id="pillAI"><span class="dot"></span><span id="aiTxt">Tutor: comprobando…</span></span>
     </div>
     <nav class="modes" aria-label="Modo de trabajo">
+      <button data-mode="prac" aria-pressed="false">Práctica de criterio</button>
       <button data-mode="train" aria-pressed="true">Entrenamiento guiado</button>
+      <button data-mode="teo" aria-pressed="false">Teoría activa</button>
+      <button data-mode="exam" aria-pressed="false">Examen por prueba</button>
       <button data-mode="diag" aria-pressed="false">Diagnóstico</button>
       <button data-mode="abc" aria-pressed="false">Comparación A/B/C</button>
       <button data-mode="corr" aria-pressed="false">Corrección de mi solución</button>
@@ -416,6 +444,7 @@ footer{margin-top:34px; color:var(--faint); font-size:12.5px; max-width:90ch}
         <div class="fields" id="calcFields"></div>
         <div class="calc-out" id="calcOut"></div>
         <div class="btn-row"><button class="btn" id="calcPreset">Cargar datos del ejercicio</button></div>
+        <label class="nofin" for="noFin"><input type="checkbox" id="noFin" checked> <span><b style="color:var(--fg)">Modo calculadora no financiera.</b> Como en el examen: la calculadora te escribe la fórmula con tus números, pero no te da el resultado hasta que hayas escrito el tuyo.</span></label>
       </section>
     </div>
 
@@ -1100,6 +1129,7 @@ function calcOut(){
   if (calcMode === 'cuota'){ const i = v.i/100; if (ok(v.C)&&ok(i)&&v.n>0){ const a = cuota(v.C,i,v.n); big = fmt(a)+' €'; formula = `a = ${fmt(v.C)} · ${fmt(i,4)} / (1 − (1 + ${fmt(i,4)})^−${v.n}) = ${fmt(a)}`; meaning = `Cuota constante cuyo valor actual iguala el capital. Total pagado: ${fmt(a*v.n)} €; intereses: ${fmt(a*v.n - v.C)} €.`; } }
   if (calcMode === 'efec'){ const j = v.j/100; if (ok(j)&&v.m>0){ const r = Math.pow(1+j/v.m, v.m)-1; big = fmt(r*100,4)+' %'; formula = `i = (1 + ${fmt(j,4)}/${v.m})^${v.m} − 1 = ${fmt(r,6)}`; meaning = `Tipo periódico: ${fmt(j/v.m*100,4)} %. El efectivo anual mide lo que rinde o cuesta de verdad un año.`; } }
   if (calcMode === 'irr'){ const i = v.i/100, f = v.f/100; if (ok(v.C)&&ok(i)&&ok(f)&&v.n>0){ const a = cuota(v.C,i,v.n), neto = v.C*(1-f), r = costeEf(neto, a, v.n); big = fmt(r*100,4)+' %'; formula = `${fmt(neto)} = ${fmt(a)} · (1 − (1 + r)^−${v.n}) / r  →  r = ${fmt(r*100,4)} %`; meaning = `Cuota: ${fmt(a)} €. Recibes neto ${fmt(neto)} € y devuelves cuotas calculadas sobre ${fmt(v.C)} €: r es el coste efectivo para el deudor.`; } }
+  if (calcLocked()) big = '— <span style="font-size:13px;color:var(--muted)">(haz la cuenta tú; se muestra al comprobar tu resultado)</span>';
   $('#calcOut').innerHTML = `<div class="big">${big}</div><div class="formula">${esc(formula)}</div><div class="meaning">${esc(meaning)}</div>`;
 }
 $('#calcTabs').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; calcMode = b.dataset.c; renderCalc(); });
@@ -1135,11 +1165,16 @@ function fbHtml(){
   const f = run.fb; return `<div class="fb ${f.kind}" role="status">${f.tag ? `<span class="tag">${esc(f.tag)}</span>` : ''}${f.html}</div>`;
 }
 function renderCenter(){
+  const libMode = ['prac','teo','exam'].includes(mode);
+  ['1','2'].forEach(n => { const el = document.querySelector(`[data-panel="${n}"]`); if (el) el.hidden = libMode; });
   renderMap(); setPanels();
   const c = $('#center');
   if (mode === 'diag') return renderDiag(c);
   if (mode === 'abc') return renderABC(c);
   if (mode === 'corr') return renderCorr(c);
+  if (mode === 'prac') return renderPrac(c);
+  if (mode === 'teo') return renderTeo(c);
+  if (mode === 'exam') return renderExam(c);
   if (run.done) return renderSummary(c);
   const st = STEPS[run.step], ex = run.ex, k = st.k === 'calcular' ? run.phase : st.k;
   const r = run.rec[k] || {}; const solved = r.ok || (mode === 'sim' && r.tries > 0);
@@ -1416,6 +1451,211 @@ $('#center').addEventListener('click', async e => {
 });
 $('#center').addEventListener('input', e => { if (e.target.id === 'corrIn'){ S.corrDraft = e.target.value; } });
 
+/* ============ Biblioteca: práctica de criterio, teoría activa y examen por prueba ============ */
+let LIB = null, LIBMETA = null, libErr = '';
+function loadLib(){ if (LIB) return Promise.resolve(LIB);
+  return fetch('ejercicios.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(d => { LIB = d.ejercicios; LIBMETA = d.meta; return LIB; })
+    .catch(e => { libErr = 'No se ha podido cargar la biblioteca de ejercicios (' + e.message + ').'; LIB = []; return LIB; }); }
+const BLOQ = t => ({'T01':1,'T02':1,'T03':1,'T04':2,'T05':2,'T06':3,'T07':3,'T08':3,'T09':3,'T10-11':4,'T12':4})[t.split(' ')[0]] || 0;
+const PRUEBAS = {pi1:{n:'1.ª prueba intermedia', b:[1,2], peso:'30 %'}, pi2:{n:'2.ª prueba intermedia', b:[3], peso:'15 %'}, fin:{n:'Examen final', b:[3,4], peso:'55 %'}, all:{n:'Todo el temario', b:[1,2,3,4]}};
+const PST = [{k:'q', n:'Qué te piden'}, {k:'r', n:'Quién es quién'}, {k:'l', n:'Ley o criterio'}, {k:'p', n:'Planteamiento'}, {k:'c', n:'Cálculo'}];
+let noFin = true;
+$('#noFin').addEventListener('change', e => { noFin = e.target.checked; calcOut(); });
+function calcLocked(){ if (!noFin) return false;
+  if ((mode === 'train' || mode === 'sim') && run) return !(run.done || (run.rec.num && run.rec.num.ok));
+  if (mode === 'prac' && pr) return !pr.done;
+  if (mode === 'exam' && xm) return !xm.done;
+  return false; }
+S.prac = S.prac || {fam:{}}; S.teo = S.teo || {};
+save = function(){ store.set({book:S.book, pats:S.pats, cfg:S.cfg, errs:S.errs.slice(-200), prac:S.prac, teo:S.teo, pruebas:S.pruebas||[]}); };
+function rng(seed){ let x = seed % 2147483647; if (x <= 0) x += 2147483646; return () => (x = x * 16807 % 2147483647) / 2147483647; }
+function pickN(arr, n, r){ const a = arr.slice(); for (let i=a.length-1;i>0;i--){ const j = Math.floor(r()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a.slice(0,n); }
+function roleQ(ex){ const P = ex.partes || {};
+  if (P.acreedor && P.deudor) return {q:'¿Quién tiene derecho a cobrar en esta operación (acreedor)?', ok:P.acreedor, alt:[P.deudor, 'Nadie: no hay deuda entre las partes']};
+  if (P.anticipa_dinero && P.cede_el_cobro) return {q:'¿Quién adelanta el dinero hoy?', ok:P.anticipa_dinero, alt:[P.cede_el_cobro, 'Nadie: solo se aplaza un pago']};
+  if (P.cobra && P.paga) return {q:'¿Quién cobra en esta operación?', ok:P.cobra, alt:[P.paga, 'Los dos cobran lo mismo']};
+  if (P.acreedor) return {q:'¿Quién tiene derecho a cobrar (acreedor)?', ok:P.acreedor, alt:['la otra parte de la operación', 'Nadie: no hay deuda']};
+  if (P.deudor) return {q:'¿Quién tiene que pagar (deudor)?', ok:P.deudor, alt:['la entidad que presta', 'Nadie: no hay deuda']};
+  return null; }
+function famStats(f){ return (S.prac.fam[f] = S.prac.fam[f] || {n:0, hist:[]}); }
+function famMastered(f){ const h = (S.prac.fam[f] || {hist:[]}).hist.slice(-3); return h.length === 3 && h.every(x => x.q && x.l && x.p && x.c !== false); }
+function famErrRate(f){ const h = (S.prac.fam[f] || {hist:[]}).hist.slice(-5); if (!h.length) return null; return h.filter(x => !(x.q && x.l && x.p && x.c !== false)).length / h.length; }
+function libFams(blocks){ return [...new Set(LIB.filter(e => e.mag && blocks.includes(BLOQ(e.tema))).map(e => e.familia))]; }
+function readiness(blocks){ const fs = libFams(blocks); return fs.length ? fs.filter(famMastered).length / fs.length : 0; }
+function critAcc(){ const all = Object.values(S.prac.fam).flatMap(f => f.hist).slice(-60); const st = {}; PST.forEach(p => { const v = all.filter(h => h[p.k] !== undefined); st[p.k] = v.length ? v.filter(h => h[p.k]).length / v.length : null; }); return {st, n: all.length}; }
+let pr = null, prFilter = 'pi1';
+function nextPrac(){
+  const blocks = PRUEBAS[prFilter].b; const fams = libFams(blocks); const r = rng(Date.now());
+  const last = S.prac.lastFam; const w = fams.map(f => { if (f === last) return 0; const er = famErrRate(f); return er === null ? 3 : famMastered(f) ? 0.4 : 1 + 4*er; });
+  let tot = w.reduce((a,b) => a+b, 0), x = r()*tot, fam = fams[0]; for (let i=0;i<fams.length;i++){ x -= w[i]; if (x <= 0){ fam = fams[i]; break; } }
+  const pool = LIB.filter(e => e.familia === fam && e.mag); const seen = new Set((S.prac.seen || []).slice(-300));
+  const cand = pool.filter(e => !seen.has(e.id)); const ex = (cand.length ? cand : pool)[Math.floor(r()*(cand.length ? cand.length : pool.length))];
+  S.prac.lastFam = fam; S.prac.seen = (S.prac.seen || []).concat(ex.id).slice(-400);
+  const rr = rng(parseInt(ex.id.slice(4)) * 7919 + 13);
+  const mags = pickN(LIBMETA.magnitudes.filter(m => m !== ex.mag), 2, rr);
+  const leyes = pickN(LIBMETA.leyes.filter(m => m !== ex.ley), 2, rr);
+  const bl = BLOQ(ex.tema); const others = [...new Set(LIB.filter(e => e.mag && BLOQ(e.tema) === bl && e.familia !== ex.familia && e.planteamiento !== ex.planteamiento).map(e => e.planteamiento))];
+  const plans = pickN(others, 2, rr); const role = roleQ(ex);
+  const opts = { q: pickN([[ex.mag,1], ...mags.map(m => [m,0])], 3, rr), l: pickN([[ex.ley,1], ...leyes.map(m => [m,0])], 3, rr), p: pickN([[ex.planteamiento,1], ...plans.map(m => [m,0])], 3, rr) };
+  if (role) opts.r = pickN([[role.ok,1], ...role.alt.map(a => [a,0])], 3, rr);
+  const stations = PST.map(p => p.k).filter(k => k !== 'r' || role).filter(k => k !== 'c' || typeof ex.solucion === 'number');
+  pr = {ex, role, opts, stations, i:0, rec:{}, fb:null, hints:0, done:false};
+}
+function prOptHtml(k){ const o = pr.opts[k]; const r = pr.rec[k] || {}; return `<div class="opts">${o.map((x,n) => { const tried = (r.tried||[]).includes(n); const cls = tried ? (x[1] ? 'ok' : 'bad') : '';
+  return `<button class="opt ${cls}" data-pk="${k}" data-pn="${n}" ${r.ok || tried ? 'disabled' : ''}><span class="k">${'ABC'[n]}</span>${esc(x[0])}</button>`; }).join('')}</div>`; }
+function readyHtml(){
+  const c = critAcc();
+  return `<div class="ready">${['pi1','pi2','fin'].map(k => { const v = readiness(PRUEBAS[k].b); return `<div><span>${PRUEBAS[k].n} (${PRUEBAS[k].peso})</span><b>${Math.round(v*100)} %</b><span>familias dominadas</span><div class="meter"><i style="width:${v*100}%"></i></div></div>`; }).join('')}</div>
+  <div class="statrow">${PST.map(p => { const v = c.st[p.k]; return `<div><b style="color:${v == null ? 'var(--muted)' : v >= .8 ? 'var(--cobro)' : v >= .5 ? 'var(--warn)' : 'var(--pago)'}">${v == null ? '—' : Math.round(v*100) + ' %'}</b><span>${p.n}</span></div>`; }).join('')}</div>
+  <p class="howto">Aciertos a la primera en los últimos ${c.n} ejercicios. «Qué te piden», «Ley o criterio» y «Planteamiento» miden el criterio. Una familia cuenta como dominada cuando aciertas las tres, más el cálculo, en tres ejercicios seguidos de esa familia.</p>`;
+}
+function renderPrac(c){
+  if (!LIB){ c.innerHTML = `<section class="float card"><p class="sub">Cargando la biblioteca…</p></section>`; loadLib().then(() => renderCenter()); return; }
+  if (!LIB.length){ c.innerHTML = `<section class="float card"><h2>Biblioteca no disponible</h2><p class="sub">${esc(libErr)}</p></section>`; return; }
+  if (!pr) nextPrac();
+  const ex = pr.ex, k = pr.stations[pr.i], st = PST.find(p => p.k === k);
+  const chips = pr.stations.map((s,n) => { const r = pr.rec[s]; const cls = n === pr.i && !pr.done ? 'now' : r ? (r.first ? 'ok' : 'bad') : ''; return `<span class="chip ${cls}">${n+1} · ${PST.find(p => p.k === s).n}</span>`; }).join('');
+  let body = '', q = '';
+  if (pr.done){
+    const okAll = pr.stations.every(s => pr.rec[s] && pr.rec[s].first);
+    body = `<div class="fb ${okAll ? 'ok' : 'bad'}"><span class="tag">${okAll ? 'Criterio impecable' : 'Revisa'}</span>${esc(ex.patron)}</div>
+      <div class="model"><b>Error típico en este tipo de ejercicio:</b> ${esc(ex.error_tipico)}<ol style="margin:8px 0 0;padding-left:18px">${ex.pasos.map(x => `<li class="mono" style="font-size:12.5px">${esc(x)}</li>`).join('')}</ol></div>
+      <div class="card-foot"><span class="help-meter">Pistas usadas: ${pr.hints}</span><button class="btn primary" data-pa="next">Siguiente ejercicio</button></div>`;
+  } else if (k === 'c'){
+    q = ex.pregunta;
+    body = `<div class="numin"><label for="prNum" class="sr">Resultado</label><input id="prNum" inputmode="decimal" placeholder="Tu resultado (${esc(ex.unidad.split(' ')[0])})" ${pr.rec.c && pr.rec.c.ok ? 'disabled' : ''}><span class="unit">${esc(ex.unidad.split(' ')[0] || '')}</span><button class="btn primary" data-pa="num">Comprobar</button></div>
+      <div class="btn-row"><button class="btn" data-pa="hint" ${pr.hints >= ex.pasos.length ? 'disabled' : ''}>Ver el siguiente paso (${pr.hints}/${ex.pasos.length})</button><button class="btn ghost" data-pa="skip">No sé hacerlo: ver solución</button></div>`;
+  } else {
+    q = {q:'¿Qué magnitud te piden calcular o decidir?', r: pr.role && pr.role.q, l:'¿Qué ley o criterio gobierna este ejercicio?', p:'¿Qué planteamiento corresponde?'}[k];
+    body = prOptHtml(k);
+  }
+  c.innerHTML = `<section class="float card" style="--d:.55">
+    <div class="card-head"><div class="eyebrow">Práctica de criterio · ${esc(PRUEBAS[prFilter].n)} · bloque ${BLOQ(ex.tema)} · ${esc(ex.id)}</div></div>
+    <div class="selrow"><label for="prSel" class="eyebrow">Preparar</label><select id="prSel">${Object.entries(PRUEBAS).map(([v,o]) => `<option value="${v}" ${v===prFilter?'selected':''}>${o.n}${o.peso ? ' · ' + o.peso : ''}</option>`).join('')}</select></div>
+    ${readyHtml()}
+    <div class="chips" style="margin-top:14px">${chips}</div>
+    <div class="exbox"><div>${esc(ex.enunciado)}</div><div class="q">${esc(ex.pregunta)}</div></div>
+    ${pr.done ? '' : `<h2 style="font-size:20px">${esc(q)}</h2><p class="sub" style="margin:4px 0 12px">${k === 'c' ? 'Calcula con tu calculadora no financiera; la del panel 3 te enseña la fórmula con tus números.' : 'Elige antes de calcular nada: aquí se decide el ejercicio.'}</p>`}
+    ${body}${pr.done ? '' : fbHtml2()}
+  </section>`;
+}
+function fbHtml2(){ if (!pr.fb) return ''; const f = pr.fb; return `<div class="fb ${f.kind}" role="status">${f.tag ? `<span class="tag">${esc(f.tag)}</span>` : ''}${f.html}</div>${f.next ? `<div class="card-foot"><span></span><button class="btn primary" data-pa="adv">Siguiente pregunta</button></div>` : ''}`; }
+const PWHY = {q:'Si no sabes qué magnitud te piden, cualquier cálculo posterior responde a otra pregunta.', r:'La parte que mira decide los signos y qué es coste o rentabilidad.', l:'La ley decide la fórmula: simple, compuesta, descuento comercial o renta no son intercambiables.', p:'El planteamiento es lo que más puntúa: con él bien, un error de cuenta no hunde el ejercicio.'};
+function prChoose(k, n){
+  const r = pr.rec[k] = pr.rec[k] || {tries:0, tried:[]}; const o = pr.opts[k][n]; r.tries++; r.tried.push(n);
+  if (r.tries === 1) r.first = !!o[1];
+  if (o[1]){ r.ok = true; pr.fb = {kind:'ok', tag:'Correcto', html: esc(PWHY[k]), next:true}; }
+  else pr.fb = {kind:'bad', tag:'No', html: esc(k === 'l' ? 'Busca en el enunciado la señal: «simple», «compuesto», «descuento», «términos periódicos», «préstamo»… ' : k === 'q' ? 'Lee la pregunta final: ¿pide un valor hoy, un valor futuro, un tipo, un plazo, una cuota o una decisión? ' : k === 'p' ? 'Ese planteamiento corresponde a otro tipo de ejercicio. ' : 'Mira quién entrega el dinero primero. ') + esc(PWHY[k])};
+  renderCenter();
+}
+function prFinish(){ pr.done = true; pr.fb = null;
+  const h = {t:Date.now()}; pr.stations.forEach(s => { h[s] = !!(pr.rec[s] && pr.rec[s].first); }); if (pr.stations.includes('c') && pr.rec.c && pr.rec.c.skip) h.c = false;
+  const f = famStats(pr.ex.familia); f.n++; f.hist.push(h); f.hist = f.hist.slice(-12);
+  pr.stations.filter(s => !h[s]).forEach(s => S.errs.push({ex:pr.ex.id, k:'prac-'+s, err:{q:'comprension', r:'perspectiva', l:'criterio', p:'planteamiento', c:'calculo'}[s], at:Date.now()}));
+  save(); calcOut(); renderCenter(); }
+$('#center').addEventListener('click', e => {
+  if (mode !== 'prac' || !pr) return; const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.pk){ prChoose(b.dataset.pk, +b.dataset.pn); return; }
+  const a = b.dataset.pa; if (!a) return;
+  if (a === 'adv'){ pr.fb = null; pr.i++; if (pr.i >= pr.stations.length) prFinish(); else renderCenter(); }
+  else if (a === 'next'){ nextPrac(); calcOut(); renderCenter(); }
+  else if (a === 'hint'){ pr.hints++; pr.fb = {kind:'hint', tag:'Paso ' + pr.hints, html: pr.ex.pasos.slice(0, pr.hints).map(esc).join('<br>')}; renderCenter(); }
+  else if (a === 'skip'){ const r = pr.rec.c = pr.rec.c || {tries:0}; r.first = false; r.skip = true; prFinish(); }
+  else if (a === 'num'){ const v = parseNum($('#prNum').value); const ex = pr.ex; if (!Number.isFinite(v)){ pr.fb = {kind:'hint', tag:'Formato', html:'Escribe un número.'}; renderCenter(); return; }
+    const r = pr.rec.c = pr.rec.c || {tries:0}; r.tries++; const tol = Math.max(0.01, Math.abs(ex.solucion)*0.0005); const ok = Math.abs(v - ex.solucion) <= tol;
+    if (r.tries === 1) r.first = ok && pr.hints === 0;
+    if (ok){ r.ok = true; prFinish(); } else { pr.fb = {kind:'bad', tag:'Cálculo', html: Math.abs(v/ex.solucion - 1) > .2 ? 'Lejos del resultado: revisa la base (360/365), el número de periodos o si el tipo está en la unidad correcta.' : 'Cerca: revisa redondeos intermedios; calcula con todos los decimales y redondea al final.'}; renderCenter(); } }
+});
+$('#center').addEventListener('change', e => { if (e.target.id === 'prSel'){ prFilter = e.target.value; pr = null; renderCenter(); } });
+$('#center').addEventListener('keydown', e => { if (mode === 'prac' && e.key === 'Enter' && e.target.id === 'prNum'){ e.preventDefault(); $('[data-pa="num"]').click(); } });
+
+/* Teoría activa: recuerdo escrito y repaso por cajas */
+let tq = null;
+function nextTeo(){ const items = LIB.filter(e => e.tipo === 'teoria' || (e.tipo === 'criterio' && e.solucion == null)); const box = id => S.teo[id] || 1;
+  const minBox = Math.min(...items.map(e => box(e.id))); const pool = items.filter(e => box(e.id) <= minBox + 1 && e.id !== (tq && tq.it.id));
+  tq = {it: pool[Math.floor(Math.random()*pool.length)], shown:false, txt:''}; }
+function renderTeo(c){
+  if (!LIB){ c.innerHTML = `<section class="float card"><p class="sub">Cargando…</p></section>`; loadLib().then(() => renderCenter()); return; }
+  if (!tq) nextTeo(); const items = LIB.filter(e => e.tipo === 'teoria' || (e.tipo === 'criterio' && e.solucion == null));
+  const cnt = [1,2,3,4,5].map(b => items.filter(e => (S.teo[e.id] || 1) === b).length);
+  const it = tq.it;
+  c.innerHTML = `<section class="float card" style="--d:.55"><div class="eyebrow">Teoría activa · ${esc(it.tema)} · ${items.length} preguntas</div>
+    <h2>${esc(it.enunciado)}</h2><p class="sub">La teoría se corrige primero: si no llegas al 40 %, no te corrigen la práctica. Escribe la respuesta de memoria y después compárala.</p>
+    <div class="boxes">${cnt.map((n,i) => `<span style="border-color:${['var(--pago)','var(--warn)','var(--line-2)','var(--oc)','var(--cobro)'][i]}">Caja ${i+1}: ${n}</span>`).join('')}</div>
+    <label for="teoIn" class="sr">Tu respuesta</label><textarea id="teoIn" class="big" placeholder="Escribe la definición o la demostración con tus palabras…" ${tq.shown ? 'disabled' : ''}>${esc(tq.txt)}</textarea>
+    ${tq.shown ? `<div class="model"><b>Respuesta modelo:</b> ${esc(it.pasos[0])}<div style="margin-top:6px;color:var(--muted)">Clave: ${esc(it.patron)}</div></div>
+      <p class="sub" style="margin-top:12px">¿Cómo te ha salido comparada con la modelo?</p>
+      <div class="btn-row"><button class="btn" data-ta="0">No la sabía</button><button class="btn" data-ta="1">A medias</button><button class="btn primary" data-ta="2">La sabía</button></div>`
+      : `<div class="btn-row"><button class="btn primary" data-ta="show">Ver la respuesta modelo</button></div>`}
+    <p class="howto">Caja 1 = repasar ya; caja 5 = dominada. «No la sabía» la devuelve a la caja 1; «La sabía» la sube una caja. Así repasas más lo que no sabes.</p></section>`;
+}
+$('#center').addEventListener('click', e => { if (mode !== 'teo' || !tq) return; const b = e.target.closest('[data-ta]'); if (!b) return; const a = b.dataset.ta;
+  if (a === 'show'){ tq.txt = $('#teoIn').value; if (tq.txt.trim().length < 10){ $('#teoIn').focus(); $('#teoIn').placeholder = 'Escribe primero algo, aunque sea incompleto: recordar es lo que fija la teoría.'; return; } tq.shown = true; renderCenter(); return; }
+  const cur = S.teo[tq.it.id] || 1; S.teo[tq.it.id] = a === '0' ? 1 : a === '1' ? Math.max(1, Math.min(5, cur)) : Math.min(5, cur + 1); save(); nextTeo(); renderCenter(); });
+
+/* Examen por prueba: regla del 40 % por ejercicio */
+let xm = null, xmSel = 'pi1';
+function buildExam(k){ const P = PRUEBAS[k]; const r = rng(Date.now()); const n = k === 'fin' ? 4 : 3;
+  const fams = pickN(libFams(P.b), n, r); const items = fams.map(f => { const pool = LIB.filter(e => e.familia === f && e.mag && typeof e.solucion === 'number'); return pool[Math.floor(r()*pool.length)]; });
+  const teo = LIB.filter(e => e.tipo === 'teoria' && P.b.includes(BLOQ(e.tema))); const t = teo[Math.floor(r()*teo.length)];
+  xm = {k, t, items, i:-1, ans:[], teoTxt:'', teoScore:null, done:false, start:Date.now()};
+  xm.opts = items.map(ex => { const rr = rng(parseInt(ex.id.slice(4))*31 + 7); const bl = BLOQ(ex.tema);
+    const others = [...new Set(LIB.filter(e => e.mag && BLOQ(e.tema) === bl && e.familia !== ex.familia && e.planteamiento !== ex.planteamiento).map(e => e.planteamiento))];
+    return { q: pickN([[ex.mag,1], ...pickN(LIBMETA.magnitudes.filter(m => m !== ex.mag), 2, rr).map(m => [m,0])], 3, rr), l: pickN([[ex.ley,1], ...pickN(LIBMETA.leyes.filter(m => m !== ex.ley), 2, rr).map(m => [m,0])], 3, rr), p: pickN([[ex.planteamiento,1], ...pickN(others, 2, rr).map(m => [m,0])], 3, rr) }; });
+}
+function xmScore(j){ const a = xm.ans[j] || {}; const ex = xm.items[j]; let s = 0; if (a.q) s += 1; if (a.l) s += 2; if (a.p) s += 3;
+  if (Number.isFinite(a.v) && Math.abs(a.v - ex.solucion) <= Math.max(0.01, Math.abs(ex.solucion)*0.0005)) s += 4; return s; }
+function renderExam(c){
+  if (!LIB){ c.innerHTML = `<section class="float card"><p class="sub">Cargando…</p></section>`; loadLib().then(() => renderCenter()); return; }
+  if (!xm || xm.i === -1 && !xm.started){
+    c.innerHTML = `<section class="float card" style="--d:.55"><div class="eyebrow">Examen por prueba · guía 2026/27</div><h2>Simulacro con las reglas reales</h2>
+      <p class="sub">Una pregunta de teoría y ${xmSel === 'fin' ? 'cuatro' : 'tres'} ejercicios del bloque que toca. Sin pistas ni corrección hasta el final. Para aprobar: al menos un 40 % en teoría, al menos un 40 % en cada ejercicio y un 5 de nota. En cada ejercicio: qué piden (1 punto), ley o criterio (2), planteamiento (3) y resultado (4). Teoría y práctica pesan 30 % y 70 %: es una ponderación supuesta, confírmala con tu profesora.</p>
+      <div class="selrow"><label for="xmSel" class="eyebrow">Prueba</label><select id="xmSel">${['pi1','pi2','fin'].map(v => `<option value="${v}" ${v===xmSel?'selected':''}>${PRUEBAS[v].n} · bloques ${PRUEBAS[v].b.join(' y ')} · ${PRUEBAS[v].peso}</option>`).join('')}</select><button class="btn primary" data-xa="start">Empezar el simulacro</button></div>
+      ${(S.pruebas||[]).length ? `<div class="eyebrow" style="margin-top:12px">Tus simulacros</div><div class="rubric">${S.pruebas.slice(-6).reverse().map(x => `<div class="rb"><span>${esc(PRUEBAS[x.k].n)} · ${dstr(x.at)}</span><span class="mono" style="color:${x.ap ? 'var(--cobro)' : 'var(--pago)'}">${x.ap ? 'Aprobado' : 'Suspenso'}</span><span class="v">${fmt(x.nota,1)}</span></div>`).join('')}</div>` : ''}</section>`;
+    return; }
+  if (xm.done) return renderExamResult(c);
+  const min = Math.floor((Date.now() - xm.start)/60000);
+  if (xm.i === 0){ c.innerHTML = `<section class="float card"><div class="eyebrow">${esc(PRUEBAS[xm.k].n)} · Teoría · ${min} min</div><h2>${esc(xm.t.enunciado)}</h2><p class="sub">Escribe la respuesta como en el examen. Al final la compararás con la modelo y te puntuarás con honestidad.</p>
+      <label for="xmTeo" class="sr">Respuesta</label><textarea id="xmTeo" class="big">${esc(xm.teoTxt)}</textarea><div class="card-foot"><span></span><button class="btn primary" data-xa="nx">Pasar a los ejercicios</button></div></section>`; return; }
+  const j = xm.i - 1, ex = xm.items[j], a = xm.ans[j] = xm.ans[j] || {}, o = xm.opts[j];
+  const block = (k, title) => `<h3 style="font-size:15px;margin:14px 0 8px">${title}</h3><div class="opts">${o[k].map((x,n) => `<button class="opt" data-xk="${k}" data-xn="${n}" aria-pressed="${a[k+'n']===n}" style="${a[k+'n']===n ? 'border-color:var(--brass);background:rgba(233,180,92,.12)' : ''}"><span class="k">${'ABC'[n]}</span>${esc(x[0])}</button>`).join('')}</div>`;
+  c.innerHTML = `<section class="float card"><div class="eyebrow">${esc(PRUEBAS[xm.k].n)} · Ejercicio ${j+1} de ${xm.items.length} · ${min} min</div>
+    <div class="exbox"><div>${esc(ex.enunciado)}</div><div class="q">${esc(ex.pregunta)}</div></div>
+    ${block('q','1 · ¿Qué te piden?')}${block('l','2 · ¿Qué ley o criterio?')}${block('p','3 · ¿Qué planteamiento?')}
+    <h3 style="font-size:15px;margin:14px 0 8px">4 · Resultado</h3><div class="numin"><label for="xmNum" class="sr">Resultado</label><input id="xmNum" inputmode="decimal" value="${a.vs ? esc(a.vs) : ''}" placeholder="Tu resultado"><span class="unit">${esc(ex.unidad.split(' ')[0] || '')}</span></div>
+    <div class="card-foot"><button class="btn ghost" data-xa="pv" ${j === 0 ? '' : ''}>Anterior</button><button class="btn primary" data-xa="nx">${j === xm.items.length-1 ? 'Entregar' : 'Siguiente ejercicio'}</button></div></section>`;
+}
+function renderExamResult(c){
+  const scores = xm.items.map((_,j) => xmScore(j)); const prac = scores.reduce((a,b) => a+b, 0)/scores.length;
+  if (xm.teoScore == null){
+    c.innerHTML = `<section class="float card"><div class="eyebrow">Autocorrección de la teoría</div><h2>${esc(xm.t.enunciado)}</h2>
+      <div class="compare"><div><b>Tu respuesta</b>${esc(xm.teoTxt || '(en blanco)')}</div><div><b>Respuesta modelo</b>${esc(xm.t.pasos[0])}</div></div>
+      <p class="sub" style="margin-top:12px">¿Qué nota le pondrías? Sé estricto: la profesora lo será.</p>
+      <div class="btn-row">${[0,3,5,7,10].map(v => `<button class="btn" data-xt="${v}">${v}</button>`).join('')}</div></section>`; return; }
+  const minOk = xm.teoScore >= 4 && scores.every(x => x >= 4); const nota = xm.teoScore*0.3 + prac*0.7; const ap = minOk && nota >= 5;
+  c.innerHTML = `<section class="float card"><div class="eyebrow">${esc(PRUEBAS[xm.k].n)} · resultado</div><h2>${ap ? 'Aprobado' : 'Suspenso'} · ${fmt(nota,1)} / 10</h2>
+    <p class="sub">${minOk ? 'Superas el 40 % en teoría y en todos los ejercicios.' : 'No llegas al 40 % en ' + [xm.teoScore < 4 ? 'teoría (y entonces la práctica no se corrige)' : '', ...scores.map((s,j) => s < 4 ? 'el ejercicio ' + (j+1) : '').filter(Boolean)].filter(Boolean).join(', ') + '.'}</p>
+    <div class="rubric"><div class="rb"><span>Teoría</span><span class="bar"><i style="width:${xm.teoScore*10}%"></i></span><span class="v">${xm.teoScore}/10</span></div>
+    ${scores.map((s,j) => { const a = xm.ans[j] || {}; const ex = xm.items[j]; return `<div class="rb"><span>Ejercicio ${j+1}: ${a.q ? '✓' : '✗'} qué piden · ${a.l ? '✓' : '✗'} criterio · ${a.p ? '✓' : '✗'} planteamiento · ${Number.isFinite(a.v) && Math.abs(a.v-ex.solucion) <= Math.max(0.01, Math.abs(ex.solucion)*0.0005) ? '✓' : '✗'} resultado</span><span class="bar"><i style="width:${s*10}%;background:${s>=4?'var(--cobro)':'var(--pago)'}"></i></span><span class="v">${s}/10</span></div>`; }).join('')}</div>
+    ${xm.items.map((ex,j) => `<details style="margin-top:10px"><summary>Solución del ejercicio ${j+1} (${esc(ex.familia)})</summary><div class="model">${esc(ex.planteamiento)}<ol style="margin:6px 0 0;padding-left:18px">${ex.pasos.map(x => `<li class="mono" style="font-size:12.5px">${esc(x)}</li>`).join('')}</ol></div></details>`).join('')}
+    <div class="card-foot"><button class="btn" data-xa="again">Otro simulacro</button><button class="btn primary" data-xa="toprac">Practicar lo que he fallado</button></div></section>`;
+  if (!xm.logged){ xm.logged = true; S.pruebas = (S.pruebas || []).concat({k:xm.k, at:Date.now(), nota, ap}); 
+    xm.items.forEach((ex,j) => { const a = xm.ans[j] || {}; const f = famStats(ex.familia); f.hist.push({t:Date.now(), q:!!a.q, l:!!a.l, p:!!a.p, c: Number.isFinite(a.v) && Math.abs(a.v-ex.solucion) <= Math.max(0.01, Math.abs(ex.solucion)*0.0005)}); f.hist = f.hist.slice(-12); });
+    save(); }
+}
+function xmSaveCur(){ if (!xm || xm.done) return; if (xm.i === 0){ const t = $('#xmTeo'); if (t) xm.teoTxt = t.value; } else if (xm.i > 0){ const n = $('#xmNum'); if (n){ const a = xm.ans[xm.i-1] = xm.ans[xm.i-1] || {}; a.vs = n.value; a.v = parseNum(n.value); } } }
+$('#center').addEventListener('click', e => { if (mode !== 'exam') return; const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.xk){ const j = xm.i - 1; const a = xm.ans[j] = xm.ans[j] || {}; xmSaveCur(); a[b.dataset.xk + 'n'] = +b.dataset.xn; a[b.dataset.xk] = !!xm.opts[j][b.dataset.xk][+b.dataset.xn][1]; renderCenter(); return; }
+  if (b.dataset.xt){ xm.teoScore = +b.dataset.xt; renderCenter(); return; }
+  const a = b.dataset.xa; if (!a) return;
+  if (a === 'start'){ buildExam(xmSel); xm.started = true; xm.i = 0; renderCenter(); }
+  else if (a === 'nx'){ xmSaveCur(); if (xm.i >= xm.items.length){ xm.done = true; calcOut(); } else xm.i++; if (xm.i > xm.items.length){ xm.done = true; } renderCenter(); }
+  else if (a === 'pv'){ xmSaveCur(); xm.i = Math.max(0, xm.i - 1); renderCenter(); }
+  else if (a === 'again'){ xm = null; renderCenter(); }
+  else if (a === 'toprac'){ prFilter = xm.k; pr = null; setMode('prac'); }
+});
+$('#center').addEventListener('change', e => { if (e.target.id === 'xmSel') xmSel = e.target.value; });
+
 /* ============ Modos ============ */
 function setMode(m){
   mode = m; $$('nav.modes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === m));
@@ -1466,6 +1706,8 @@ function ficha(){
     'Errores detectados: ' + (errsSorted.map(([k,n]) => ERR[k].n + ' ×' + n).join('; ') || 'ninguno registrado'),
     'Nivel de ayuda necesario: ' + nivel,
     'Próximo ejercicio recomendado: ' + next + (nextEx ? ' (' + nextEx.title + ')' : '') + (errsSorted.length ? ', para reparar «' + ERR[errsSorted[0][0]].n + '»' : ''),
+    'Preparación (familias dominadas): 1.ª prueba ' + (LIB ? Math.round(readiness([1,2])*100) + ' %' : 'sin datos') + ' · 2.ª prueba ' + (LIB ? Math.round(readiness([3])*100) + ' %' : 'sin datos') + ' · final ' + (LIB ? Math.round(readiness([3,4])*100) + ' %' : 'sin datos'),
+    'Simulacros: ' + ((S.pruebas||[]).length ? S.pruebas.slice(-5).map(x => PRUEBAS[x.k].n + ' ' + fmt(x.nota,1) + (x.ap ? ' (aprobado)' : ' (suspenso)')).join('; ') : 'ninguno'),
     'Convenciones académicas confirmadas: ' + conv
   ];
   return lines.join('\n');

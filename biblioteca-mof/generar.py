@@ -714,17 +714,59 @@ for fn, k in FAMS:
 criterio_items()
 teoria_items()
 
+
+# ======== Metadatos de criterio por familia (para la práctica de criterio) ========
+M_VF, M_VA, M_TIPO, M_TIEMPO, M_EFECT, M_TAE, M_CAP, M_FECHA, M_SALDO, M_TERM, M_N, M_DEC, M_COSTE = (
+ "Montante o valor final", "Valor actual", "Un tipo de interés o tanto equivalente", "Un tiempo o plazo", "El efectivo líquido de un descuento",
+ "Un coste o una rentabilidad efectiva", "La cuantía de un capital que sustituye a otros", "Una fecha de vencimiento", "El saldo y los intereses de una cuenta",
+ "El término (cuota) de una renta o de un préstamo", "Un número de términos", "Una decisión entre alternativas", "El coste de un periodo (intereses y comisiones)")
+L_SIM, L_COM, L_DCO, L_REN, L_AMO, L_HAM, L_TIR, L_CMP = (
+ "Capitalización simple: el interés es proporcional al tiempo", "Capitalización compuesta: los intereses generan intereses",
+ "Descuento comercial: el descuento se calcula sobre el nominal", "Valor de una renta: suma de términos valorados en compuesta",
+ "Equivalencia del préstamo: capital = valor actual de los términos", "Método hamburgués: números = saldo × días",
+ "Tanto efectivo: el tipo que iguala lo recibido con lo pagado", "Comparar las alternativas en una fecha común con la ley dada")
+FAMMETA = {
+ "Capitalización simple: montante": (M_VF, L_SIM), "Capitalización simple: despejar el tiempo": (M_TIEMPO, L_SIM),
+ "Capitalización simple: despejar el tipo": (M_TIPO, L_SIM), "Capitalización simple: tantos de distinta frecuencia": (M_TIPO, L_SIM),
+ "Capitalización compuesta: montante": (M_VF, L_COM), "Descuento compuesto: valor actual": (M_VA, L_COM),
+ "Descuento comercial frente a racional": (M_EFECT, L_DCO), "Tantos equivalentes: nominal y efectivo": (M_TIPO, L_COM),
+ "Criterio: ¿qué ley favorece al acreedor?": (M_DEC, L_CMP), "Capital único equivalente": (M_CAP, L_COM),
+ "Elegir entre dos formas de pago según la parte": (M_DEC, L_CMP), "Prórroga de vencimientos": (M_CAP, L_DCO),
+ "Vencimiento común": (M_FECHA, L_COM), "Vencimiento medio (descuento comercial)": (M_FECHA, L_DCO),
+ "Descuento de letras persiana": (M_EFECT, L_DCO), "Efecto impagado y letra de resaca": (M_CAP, L_DCO),
+ "Negociación de un efecto y coste efectivo": (M_EFECT, L_DCO), "Remesa de efectos": (M_EFECT, L_DCO),
+ "Cuenta de crédito: coste del periodo y TAE": (M_COSTE, L_SIM), "Cuenta remunerada: rentabilidad efectiva": (M_TAE, L_TIR),
+ "Liquidación de cuenta corriente (método hamburgués)": (M_SALDO, L_HAM), "Valor capital de una renta de términos distintos": (M_VA, L_COM),
+ "Criterio: premio en un pago o en renta": (M_DEC, L_REN), "Despejar el término de una renta": (M_TERM, L_REN),
+ "Número de términos de una renta": (M_N, L_REN), "Renta anticipada p periodos": (M_VF, L_REN),
+ "Renta constante con tanto de valoración variable": (M_VA, L_REN), "Renta constante pospagable: valor actual": (M_VA, L_REN),
+ "Renta constante pospagable: valor final": (M_VF, L_REN), "Renta constante prepagable: valor actual": (M_VA, L_REN),
+ "Renta constante prepagable: valor final": (M_VF, L_REN), "Renta diferida": (M_VA, L_REN),
+ "Renta fraccionada con tipo efectivo anual": (M_VA, L_REN), "Renta perpetua": (M_VA, L_REN),
+ "Aritmética con cuantía fraccionada (Cm, d)": (M_VA, L_REN), "Renta en progresión aritmética perpetua": (M_VA, L_REN),
+ "Renta en progresión aritmética temporal": (M_VA, L_REN), "Geométrica con cuantía fraccionada (Cm, q)": (M_VA, L_REN),
+ "Renta en progresión geométrica perpetua": (M_VA, L_REN), "Renta en progresión geométrica temporal": (M_VA, L_REN),
+ "Préstamo con cuotas de amortización constantes": (M_TERM, L_AMO), "Préstamo francés anual: cuota y primera fila": (M_TERM, L_AMO),
+ "Préstamo francés mensual: cuota, descomposición, pendiente y amortizado": (M_TERM, L_AMO),
+ "Amortización anticipada parcial y compensación": (M_TERM, L_AMO), "Amortización con carencia parcial": (M_TERM, L_AMO),
+ "Amortización con carencia total": (M_TERM, L_AMO), "Préstamo a interés variable: revisión del término": (M_TERM, L_AMO),
+ "Tantos efectivos: prestatario y prestamista": (M_TAE, L_TIR),
+}
+
 # deduplicar por enunciado y numerar
 seen=set(); final=[]
 for o in OUT:
     h = hashlib.md5(o["enunciado"].encode()).hexdigest()
     if h in seen: continue
     seen.add(h); final.append(o)
-for n,o in enumerate(final,1): o["id"] = f"MOF-{n:03d}"
+for n,o in enumerate(final,1):
+    o["id"] = f"MOF-{n:03d}"
+    if o["familia"] in FAMMETA: o["mag"], o["ley"] = FAMMETA[o["familia"]]
+    elif o["tipo"] in ("calculo","criterio") and o["solucion"] is not None: raise SystemExit("Sin metadatos: " + o["familia"])
 meta = {"titulo":"Biblioteca de ejercicios MOF — temario de la guía docente UM 2026/27 (asignatura 2346, 1.º ADE)",
         "estado":"Ejercicios originales verificados, organizados por los 12 temas de la guía 2026/27. Convenciones pendientes de confirmar con la guía vigente y los materiales del Aula Virtual.",
         "convenciones":"Cada enunciado declara su base (360 o 365) y su ley. Redondeo a 2 decimales al presentar; cálculo interno sin redondear.",
-        "total":len(final)}
+        "total":len(final), "magnitudes":[M_VF,M_VA,M_TIPO,M_TIEMPO,M_EFECT,M_TAE,M_CAP,M_FECHA,M_SALDO,M_TERM,M_N,M_DEC,M_COSTE], "leyes":[L_SIM,L_COM,L_DCO,L_REN,L_AMO,L_HAM,L_TIR,L_CMP]}
 json.dump({"meta":meta,"ejercicios":final}, open("ejercicios.json","w"), ensure_ascii=False, indent=1)
 from collections import Counter
 print(len(final)); print(Counter(o["tema"] for o in final))
