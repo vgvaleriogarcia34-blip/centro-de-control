@@ -259,6 +259,57 @@ textarea.big{width:100%; box-sizing:border-box; min-height:150px; background:rgb
 
 .diag-profile{display:grid; gap:10px; margin-top:12px}
 .sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
+/* Mapa del recorrido */
+.map{margin:0 0 26px; padding:20px 22px}
+.map-head h2{font-size:clamp(22px,2.4vw,30px)}
+.map-head p{color:var(--muted); margin:6px 0 0; max-width:70ch; font-size:14px}
+.phases{display:grid; grid-template-columns:2fr 3fr 2fr 1fr; gap:10px; margin-top:18px}
+.phase{border-top:2px solid var(--line-2); padding-top:8px}
+.phase .ph-name{font:600 11px/1.2 var(--f-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
+.phase .ph-goal{font-size:12.5px; color:var(--faint); margin-top:2px}
+.phase[data-ph="1"]{border-color:#6ec3ff} .phase[data-ph="2"]{border-color:var(--brass)} .phase[data-ph="3"]{border-color:var(--ob)} .phase[data-ph="4"]{border-color:var(--cobro)}
+.stations{display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:10px; margin-top:12px; position:relative}
+.stations::before{content:""; position:absolute; left:4%; right:4%; top:24px; height:2px; background:linear-gradient(90deg,#6ec3ff,var(--brass),var(--ob),var(--cobro)); opacity:.35}
+.st{position:relative; border:1px solid var(--line); background:rgba(5,10,22,.6); border-radius:14px; padding:10px; text-align:left; display:flex; flex-direction:column; gap:6px; transition:transform .25s, border-color .25s, background .25s; min-width:0}
+.st:hover{transform:translateY(-3px); border-color:var(--line-2)}
+.st .num{width:28px; height:28px; border-radius:50%; display:grid; place-items:center; font:600 12px/1 var(--f-mono); background:var(--void-2); border:1px solid var(--line-2); color:var(--muted)}
+.st .nm{font:600 14px/1.2 var(--f-display)} .st .qq{font-size:12px; color:var(--muted); line-height:1.35}
+.st .tool{font:500 10.5px/1.2 var(--f-mono); color:var(--faint); margin-top:auto}
+.st.done .num{background:rgba(79,209,181,.16); border-color:var(--cobro); color:var(--cobro)}
+.st.now{border-color:var(--brass); background:rgba(233,180,92,.09); box-shadow:0 0 0 4px rgba(233,180,92,.12)}
+.st.now .num{background:var(--brass); color:var(--brass-ink); border-color:var(--brass)}
+.st.sel{outline:2px dashed var(--line-2); outline-offset:3px}
+@media (max-width:1100px){.stations{grid-template-columns:repeat(4,minmax(0,1fr))} .stations::before{display:none} .phases{display:none}}
+@media (max-width:520px){.stations{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.st-detail{margin-top:16px; display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; padding:14px; border-radius:14px; background:rgba(5,10,22,.5); border:1px solid var(--line)}
+@media (max-width:1100px){.st-detail{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.st-detail{grid-template-columns:minmax(0,1fr)}}
+.st-detail h3{grid-column:1/-1; font-size:17px}
+.st-detail .k{font:500 10.5px/1.3 var(--f-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:4px}
+.st-detail p{margin:0; font-size:13.5px}
+.st-detail .exam .k{color:var(--brass)}
+.objections{margin-top:16px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px}
+@media (max-width:760px){.objections{grid-template-columns:minmax(0,1fr)}}
+.objections details{border:1px solid var(--line); border-radius:12px; padding:10px 14px; background:rgba(5,10,22,.4)}
+.objections summary{cursor:pointer; font-weight:500; list-style:none} .objections summary::-webkit-details-marker{display:none}
+.objections summary::before{content:"«"; color:var(--brass)} .objections summary::after{content:"»  ▾"; color:var(--brass)}
+.objections details p{margin:8px 0 0; font-size:14px; color:var(--muted)}
+.objections details[open]{border-color:var(--line-2)}
+.pnum{display:inline-grid; place-items:center; width:22px; height:22px; border-radius:6px; background:var(--void-2); border:1px solid var(--line-2); font:600 12px/1 var(--f-mono); color:var(--brass); margin-right:6px; vertical-align:1px}
+.uses{font:500 11.5px/1.4 var(--f-mono); color:var(--faint); margin-top:4px}
+.float[data-panel].now, .book[data-panel].now .book-page{border-color:var(--brass); box-shadow:0 0 0 2px rgba(233,180,92,.4), 0 40px 70px -30px rgba(0,0,0,.75)}
+.nowtag{display:none; font:600 10.5px/1 var(--f-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--brass-ink); background:var(--brass); padding:4px 7px; border-radius:6px; margin-left:8px; vertical-align:2px}
+.now .nowtag{display:inline-block}
+.howto{font-size:12.5px; color:var(--muted); margin-top:8px; line-height:1.45}
+.where{display:flex; gap:8px; flex-wrap:wrap; margin:-6px 0 14px}
+.where span{font:500 11.5px/1.3 var(--f-mono); color:var(--muted); border:1px solid var(--line); border-radius:8px; padding:5px 8px}
+.where span b{color:var(--brass); font-weight:600}
+.own textarea{width:100%; box-sizing:border-box; min-height:74px; background:rgba(5,10,22,.6); border:1px solid var(--line-2); border-radius:10px; padding:10px 12px; resize:vertical}
+.own .tpl{font:12px/1.4 var(--f-mono); color:var(--faint); margin:6px 0 0}
+.compare{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:12px}
+@media (max-width:640px){.compare{grid-template-columns:minmax(0,1fr)}}
+.compare div{padding:10px 12px; border-radius:10px; border:1px solid var(--line); background:rgba(5,10,22,.45); font-size:13.5px}
+.compare b{display:block; font:500 10.5px/1.3 var(--f-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:4px}
 footer{margin-top:34px; color:var(--faint); font-size:12.5px; max-width:90ch}
 </style>
 
@@ -268,7 +319,7 @@ footer{margin-top:34px; color:var(--faint); font-size:12.5px; max-width:90ch}
     <div class="brand">
       <div class="eyebrow">Matemáticas de las Operaciones Financieras · 1.º ADE</div>
       <h1>Del enunciado al <em>criterio</em>,<br>del resultado a la <em>decisión</em></h1>
-      <p>Cada ejercicio pasa por ocho preguntas: qué operación es, quién paga y quién cobra, qué se mueve y cuándo, qué falta, con qué se compara, qué esperas, cómo se calcula y qué demuestra. Calcular es solo una de ellas.</p>
+      <p>Ocho preguntas, siempre en el mismo orden y para cualquier ejercicio. Las cinco primeras deciden qué fórmula escribes; la sexta y la séptima comprueban que el número tiene sentido; la última dice qué puedes afirmar. Calcular es solo una de las ocho.</p>
     </div>
     <div class="status">
       <span class="pill" id="pillProv"><span class="dot"></span><span id="provTxt">Temario: guía UM 2026/27</span></span>
@@ -283,25 +334,47 @@ footer{margin-top:34px; color:var(--faint); font-size:12.5px; max-width:90ch}
     </nav>
   </header>
 
+  <section class="float map" id="mapa" style="--d:.5;--bd:-3s" aria-labelledby="hMapa">
+    <div class="map-head">
+      <div class="eyebrow">Mapa del recorrido · estás en la estación <span id="mapNow">1</span> de 8</div>
+      <h2 id="hMapa">Del enunciado a la decisión, en ocho estaciones</h2>
+      <p>Pulsa una estación para ver qué haces en ella, qué te llevas, en qué panel de la mesa se trabaja y para qué te sirve en el examen. Los paneles de abajo están numerados y se iluminan cuando toca usarlos.</p>
+    </div>
+    <div class="phases" aria-hidden="true">
+      <div class="phase" data-ph="1"><div class="ph-name">Leer</div><div class="ph-goal">Qué piden y quién es quién</div></div>
+      <div class="phase" data-ph="2"><div class="ph-name">Plantear</div><div class="ph-goal">Flujos, datos y criterio: deciden la fórmula</div></div>
+      <div class="phase" data-ph="3"><div class="ph-name">Resolver y comprobar</div><div class="ph-goal">Predicción, método y número</div></div>
+      <div class="phase" data-ph="4"><div class="ph-name">Concluir</div><div class="ph-goal">Qué afirmas</div></div>
+    </div>
+    <div class="stations" id="stations"></div>
+    <div class="st-detail" id="stDetail" aria-live="polite"></div>
+    <div class="eyebrow" style="margin-top:18px">Lo que suele pensar quien empieza</div>
+    <div class="objections" id="objections"></div>
+  </section>
+
   <div class="layout">
     <div class="col">
-      <section class="float" style="--d:1.25;--bd:-1s" aria-labelledby="hEnun">
+      <section class="float" data-panel="1" style="--d:1.25;--bd:-1s" aria-labelledby="hEnun">
         <div class="eyebrow">Mesa de operación</div>
-        <h2 id="hEnun" style="font-size:20px;margin-top:4px">Enunciado</h2>
+        <h2 id="hEnun" style="font-size:20px;margin-top:4px"><span class="pnum">1</span>Enunciado<span class="nowtag">Ahora</span></h2>
+        <div class="uses">Se usa en las estaciones 1, 2 y 4. Elige aquí el ejercicio.</div>
         <div class="ex-picker" id="exPicker"></div>
         <div class="enun" id="enun"></div>
         <div class="parties" id="parties"></div>
       </section>
-      <section class="float" style="--d:1.6;--bd:-4s" aria-labelledby="hTl">
-        <div class="eyebrow">Dibujar</div>
-        <h2 id="hTl" style="font-size:20px;margin-top:4px">Línea temporal de flujos</h2>
+      <section class="float" data-panel="2" style="--d:1.6;--bd:-4s" aria-labelledby="hTl">
+        <div class="eyebrow">Mesa de operación</div>
+        <h2 id="hTl" style="font-size:20px;margin-top:4px"><span class="pnum">2</span>Línea temporal<span class="nowtag">Ahora</span></h2>
+        <div class="uses">Se dibuja en la estación 3 y se usa para comparar en la 5.</div>
         <div class="tl-wrap" id="tlWrap"><canvas id="tlCanvas" aria-label="Línea temporal tridimensional de cobros y pagos"></canvas></div>
-        <div class="tl-legend"><span><i class="sw" style="background:var(--cobro)"></i>Cobro (+)</span><span><i class="sw" style="background:var(--pago)"></i>Pago (−)</span><span><i class="sw" style="background:#8f9bb8;opacity:.6"></i>Sin signo</span></div>
+        <div class="howto"><b>Cómo leerla.</b> Cada columna es un movimiento de dinero; el eje dorado es el tiempo, de izquierda a derecha. Hacia arriba, dinero que entra a la parte desde la que miras; hacia abajo, dinero que sale. Arrastra para girarla. Aquí no se edita: los signos se ponen en la tarjeta de la estación 3 y la línea se redibuja sola.</div>
+        <div class="tl-legend" aria-label="Clave de colores"><span><i class="sw" style="background:var(--cobro)"></i>entra (+)</span><span><i class="sw" style="background:var(--pago)"></i>sale (−)</span><span><i class="sw" style="background:#8f9bb8;opacity:.6"></i>aún sin signo</span></div>
         <div class="tl-legend" id="tlPersp" style="margin-top:4px"></div>
       </section>
-      <section class="float" style="--d:1.1;--bd:-6s" aria-labelledby="hCalc">
-        <div class="eyebrow">Calcular</div>
-        <h2 id="hCalc" style="font-size:20px;margin-top:4px">Calculadora financiera</h2>
+      <section class="float" data-panel="3" style="--d:1.1;--bd:-6s" aria-labelledby="hCalc">
+        <div class="eyebrow">Mesa de operación</div>
+        <h2 id="hCalc" style="font-size:20px;margin-top:4px"><span class="pnum">3</span>Calculadora<span class="nowtag">Ahora</span></h2>
+        <div class="uses">Se usa en la estación 7, y se abre sola en la pestaña que necesita tu ejercicio. Cada pestaña es una fórmula de la asignatura: escribe la fórmula con tus números y explica qué mide el resultado.</div>
         <div class="calc-tabs" id="calcTabs">
           <button data-c="cap" aria-pressed="true">Capitalizar · descontar</button>
           <button data-c="cuota" aria-pressed="false">Cuota francés</button>
@@ -317,8 +390,9 @@ footer{margin-top:34px; color:var(--faint); font-size:12.5px; max-width:90ch}
     <div class="col col-center" id="center"></div>
 
     <div class="col book-col">
-      <section class="book" aria-labelledby="hBook">
-        <div class="eyebrow" style="margin:0 0 8px 22px">Libro paralelo</div>
+      <section class="book" data-panel="4" aria-labelledby="hBook">
+        <div class="eyebrow" style="margin:0 0 4px 22px"><span class="pnum">4</span>Cuaderno<span class="nowtag">Ahora</span></div>
+        <div class="uses" style="margin:0 0 10px 22px">Se escribe solo al cerrar la estación 8: rúbrica, errores con su causa y qué mirar la próxima vez.</div>
         <h2 id="hBook" class="sr">Cuaderno de criterio</h2>
         <div class="book-tabs" id="bookTabs">
           <button data-b="entry" aria-pressed="true">Entrada</button>
@@ -439,6 +513,48 @@ const STEPS = [
   {k:'calcular', n:'Calcular', q:'¿Qué método corresponde?'},
   {k:'decidir', n:'Decidir', q:'¿Qué demuestra el resultado y qué no?'}
 ];
+const SINFO = [
+ {ph:1, tool:'1 Enunciado', hace:'Lees el enunciado y escribes en una frase qué tienes que entregar. Después eliges la lectura que coincide.', obt:'El tipo de operación y la lista exacta de lo que piden.', donde:'Panel 1 y la tarjeta de la estación', exam:'Cada apartado puntúa por separado. Contestar a una pregunta parecida, pero distinta, vale cero aunque el cálculo esté bien.', lleva:'Sabiendo qué operación es, puedes decir quién es quién (estación 2).'},
+ {ph:1, tool:'1 Enunciado', hace:'Decides quién entrega el dinero y quién lo devuelve: acreedor o deudor.', obt:'La perspectiva desde la que pondrás los signos.', donde:'Panel 1 (las partes están bajo el enunciado) y la tarjeta', exam:'El coste de uno es la rentabilidad del otro. Si te equivocas de parte, inviertes signos, TAE y conclusión.', lleva:'Con la perspectiva fijada, cada flujo tiene un signo (estación 3).'},
+ {ph:2, tool:'2 Línea temporal', hace:'Das signo + o − a cada movimiento de dinero en su fecha.', obt:'El diagrama temporal: el planteamiento dibujado.', donde:'La tarjeta; el panel 2 se dibuja a la vez', exam:'La ecuación de equivalencia sale de este dibujo. El planteamiento puntúa aunque el número final falle.', lleva:'Con los flujos a la vista, revisas qué datos sirven y cuáles faltan (estación 4).'},
+ {ph:2, tool:'1 Enunciado', hace:'Separas lo que dice el enunciado, lo que se deduce y lo que estarías inventando.', obt:'Datos listos para usar: tipo convertido, base 360/365, ley financiera.', donde:'Panel 1 y la tarjeta', exam:'Evita los fallos más caros: usar un nominal como efectivo, mezclar bases o añadir un dato que nadie dio.', lleva:'Con datos limpios, eliges con qué medida comparar (estación 5).'},
+ {ph:2, tool:'2 Línea temporal', hace:'Eliges la medida que hace comparables las alternativas: fecha común, tipo efectivo o coste con gastos.', obt:'El criterio de decisión, que decide la fórmula.', donde:'La tarjeta; el panel 2 muestra en qué fechas están los capitales', exam:'Es la diferencia entre «sé fórmulas» y «sé cuál usar». En el examen nadie te dice la fórmula.', lleva:'Antes de calcular, predices qué debería salir (estación 6).'},
+ {ph:3, tool:'solo la tarjeta', hace:'Dices hacia dónde debe ir el resultado: mayor o menor, más o menos coste.', obt:'Un control propio para detectar errores de cálculo.', donde:'La tarjeta de la estación', exam:'Si el número contradice tu predicción, revisas antes de entregar. Es tu corrector interno con calculadora no financiera.', lleva:'Ahora sí, el método y el número (estación 7).'},
+ {ph:3, tool:'3 Calculadora', hace:'Eliges la expresión que corresponde y calculas.', obt:'El resultado con su planteamiento escrito.', donde:'La tarjeta y el panel 3, que se abre en la pestaña de tu ejercicio', exam:'Fórmula justificada y cálculo comprobado: los puntos de planteamiento y de cálculo.', lleva:'Con el número, decides qué puedes afirmar (estación 8).'},
+ {ph:4, tool:'4 Cuaderno', hace:'Eliges la conclusión que responde a lo pedido sin afirmar de más, y separas la lectura académica de la económica.', obt:'La respuesta exacta y cuándo dejaría de ser válida.', donde:'La tarjeta; al cerrar se escribe la página del panel 4', exam:'La interpretación también puntúa. Además, el cuaderno te dice en qué estación fallas más.', lleva:'Al siguiente ejercicio, con el error anotado para no repetirlo.'}
+];
+const OBJ = [
+ ['En clase lo hacemos de otra manera.', 'Y lo seguirás haciendo así: usas las fórmulas y la notación de tu profesora. Las ocho estaciones no son otro método; son lo que hace antes y después de la fórmula quien resuelve bien, aunque no lo diga en voz alta.'],
+ ['Esto es perder tiempo; yo voy directo a la fórmula.', 'En el examen hace falta un 40 % en cada ejercicio práctico. Un planteamiento mal elegido hunde el ejercicio entero. Las estaciones 1 a 5 llevan un par de minutos y deciden qué fórmula escribes.'],
+ ['Yo ya sé calcular.', 'Entonces la estación 7 te llevará segundos. El entrenador mide dónde fallas (comprensión, perspectiva, fechas, criterio o cálculo) y el cuaderno te lo enseña. Si siempre fallas en el mismo sitio, lo verás.'],
+ ['¿Para qué la lectura económica si no la piden?', 'Va aparte y nunca cambia tu respuesta académica. Sirve para que el resultado tenga sentido y para cazar absurdos, como una TAE menor que el tipo nominal habiendo comisiones.']
+];
+let mapSel = null;
+function renderMap(){
+  const m = $('#mapa'); if (!m) return;
+  m.hidden = !(mode === 'train' || mode === 'sim'); if (m.hidden || !run) return;
+  const cur = run.done ? 8 : run.step;
+  $('#mapNow').textContent = run.done ? '8 (ejercicio cerrado)' : (run.step + 1);
+  const sel = mapSel == null ? Math.min(cur, 7) : mapSel;
+  $('#stations').innerHTML = STEPS.map((s,i) => { const done = stepKeyDone(i);
+    return `<button class="st ${done ? 'done' : ''} ${i === cur ? 'now' : ''} ${i === sel ? 'sel' : ''}" data-st="${i}" aria-pressed="${i===sel}"><span class="num">${done ? '✓' : i+1}</span><span class="nm">${s.n}</span><span class="qq">${esc(s.q)}</span><span class="tool">Panel: ${esc(SINFO[i].tool)}</span></button>`; }).join('');
+  const d = SINFO[sel], s = STEPS[sel];
+  $('#stDetail').innerHTML = `<h3>${sel+1} · ${s.n}: ${esc(s.q)}</h3>
+    <div><span class="k">Qué haces</span><p>${esc(d.hace)}</p></div>
+    <div><span class="k">Qué te llevas</span><p>${esc(d.obt)}</p></div>
+    <div><span class="k">Dónde</span><p>${esc(d.donde)}.</p></div>
+    <div class="exam"><span class="k">Por qué te sirve en el examen</span><p>${esc(d.exam)}</p></div>
+    <div><span class="k">Te lleva a</span><p>${esc(d.lleva)}</p></div>`;
+  if (!$('#objections').children.length) $('#objections').innerHTML = OBJ.map(([q,a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('');
+}
+$('#stations').addEventListener('click', e => { const b = e.target.closest('[data-st]'); if (!b) return; const i = +b.dataset.st;
+  if (mode !== 'sim' && !run.done && (i <= run.step || stepKeyDone(i))){ gotoStep(i); } else { mapSel = i; renderMap(); } });
+function setPanels(){
+  $$('[data-panel]').forEach(el => el.classList.remove('now'));
+  if (!run || !(mode === 'train' || mode === 'sim')) return;
+  const map = run.done ? ['4'] : {identificar:['1'], situar:['1'], dibujar:['2'], interpretar:['1'], elegir:['2'], anticipar:[], calcular: run.phase === 'num' ? ['3'] : [], decidir:['4']}[STEPS[run.step].k];
+  map.forEach(n => { const el = document.querySelector(`[data-panel="${n}"]`); el && el.classList.add('now'); });
+}
 const COMP = {obj:{n:'Objetivo y participantes',max:1}, flujos:{n:'Flujos y fechas',max:2}, criterio:{n:'Criterio',max:2}, plan:{n:'Planteamiento',max:2}, calc:{n:'Cálculo y comprobación',max:2}, interp:{n:'Interpretación',max:1}};
 const KEYW = {identificar:['obj',.5], situar:['obj',.5], dibujar:['flujos',1.4], interpretar:['flujos',.6], elegir:['criterio',1.4], anticipar:['criterio',.6], plan:['plan',2], num:['calc',2], decidir:['interp',1]};
 const GH = {
@@ -731,7 +847,7 @@ document.addEventListener('pointermove', e => {
 const TL = {ok:false};
 (function initTL(){
   const wrap = $('#tlWrap'), cv = $('#tlCanvas');
-  if (typeof THREE === 'undefined'){ wrap.insertAdjacentHTML('beforeend','<div class="tl-fallback">La vista 3D no ha podido cargarse. Los flujos siguen en la tarjeta «Dibujar».</div>'); return; }
+  if (typeof THREE === 'undefined'){ wrap.insertAdjacentHTML('beforeend','<div class="tl-fallback">La vista 3D no ha podido cargarse. Los flujos siguen en la tarjeta de la estación 3.</div>'); return; }
   const renderer = new THREE.WebGLRenderer({canvas:cv, antialias:true, alpha:true});
   renderer.setPixelRatio(Math.min(2, devicePixelRatio||1));
   const scene = new THREE.Scene(); scene.fog = new THREE.Fog(0x060a14, 14, 30);
@@ -864,6 +980,7 @@ function fbHtml(){
   const f = run.fb; return `<div class="fb ${f.kind}" role="status">${f.tag ? `<span class="tag">${esc(f.tag)}</span>` : ''}${f.html}</div>`;
 }
 function renderCenter(){
+  renderMap(); setPanels();
   const c = $('#center');
   if (mode === 'diag') return renderDiag(c);
   if (mode === 'abc') return renderABC(c);
@@ -872,7 +989,14 @@ function renderCenter(){
   const st = STEPS[run.step], ex = run.ex, k = st.k === 'calcular' ? run.phase : st.k;
   const r = run.rec[k] || {}; const solved = r.ok || (mode === 'sim' && r.tries > 0);
   let body = '', sub = '';
-  if (st.k === 'identificar'){ sub = 'Explica primero con tus palabras qué te preguntan; después elige la descripción que coincide.'; body = optList('identificar', ex.identificar, solved); }
+  if (st.k === 'identificar'){
+    const own = run.own || ''; const ready = run.ownOk || solved;
+    sub = 'Antes de mirar opciones, escribe en una frase qué tienes que entregar. «Qué te preguntan» quiere decir qué resultado o qué decisión pide el enunciado, no qué fórmula usarás.';
+    body = `<div class="own"><label for="ownIn" class="eyebrow" style="display:block;margin-bottom:6px">Con tus palabras</label><textarea id="ownIn" placeholder="Me piden … para poder decir …" ${ready ? 'disabled' : ''}>${esc(own)}</textarea>
+      <p class="tpl">Plantilla: «Me piden [qué calcular o decidir] de [qué operación] para [qué parte]».</p>
+      ${ready ? '' : `<div class="btn-row"><button class="btn primary" data-act="ownGo">Ya lo he escrito: ver las lecturas</button></div>`}</div>
+      ${ready ? `<p class="sub" style="margin:16px 0 10px">Tres lecturas posibles de <b>este</b> enunciado. Solo una coincide con lo que pide; las otras dos son confusiones habituales.</p>${optList('identificar', ex.identificar, solved)}` : ''}
+      ${solved && own ? `<div class="compare"><div><b>Tu frase</b>${esc(own)}</div><div><b>Lectura correcta</b>${esc(ex.identificar.find(o => o[1] === 1)[0])}</div></div>` : ''}`; }
   else if (st.k === 'situar'){ sub = 'Asigna un papel a cada parte. Acreedor es quien tiene derecho a cobrar; deudor, quien tiene que pagar.';
     body = `<div class="roles">${ex.parties.map((p,i) => { const v = run.roles[i]; const chk = run.checked.situar; const cls = chk && mode!=='sim' ? (v === p.a ? 'right' : 'wrong') : '';
       return `<div class="role ${cls}"><b>${esc(p.n)}</b><div class="seg">${['Acreedor','Deudor'].map(a => `<button data-role="${i}" data-v="${a}" aria-pressed="${v===a}" ${solved?'disabled':''}>${a}</button>`).join('')}</div></div>`; }).join('')}</div>
@@ -894,14 +1018,17 @@ function renderCenter(){
   const hl = run.hintLvl[k] || 0; const maxH = k === 'num' ? ex.num.hints.length : GH[k] ? GH[k].length : 0;
   const nextLbl = run.step === STEPS.length-1 ? 'Cerrar ejercicio y escribir en el cuaderno' : (st.k === 'calcular' && run.phase === 'plan' ? 'Pasar al cálculo' : 'Siguiente paso');
   const phaseTag = st.k === 'calcular' ? (run.phase === 'plan' ? ' · planteamiento' : ' · cálculo') : '';
-  c.innerHTML = `${renderRail()}
+  const SI = SINFO[run.step];
+  const whereHtml = `<div class="where"><span>Fase: <b>${['','Leer','Plantear','Resolver y comprobar','Concluir'][SI.ph]}</b></span><span>Dónde: <b>${esc(SI.donde)}</b></span><span>Te llevas: <b>${esc(SI.obt)}</b></span></div>`;
+  c.innerHTML = `
   <div class="deck">
     ${run.step < 7 ? `<div class="ghost-card g2" aria-hidden="true">${run.step+3 <= 8 ? (run.step+3)+' · '+STEPS[Math.min(7,run.step+2)].n : ''}</div><div class="ghost-card" aria-hidden="true">${run.step+2} · ${STEPS[run.step+1].n}</div>` : ''}
     <section class="float card" style="--d:.55;--bd:-2s" aria-live="polite">
-      <div class="card-head"><div class="eyebrow">Paso ${run.step+1} de 8${phaseTag} · ${esc(ex.id)} · ${mode === 'sim' ? 'Simulacro: sin pistas ni corrección hasta el final' : 'Entrenamiento guiado'}</div>
+      <div class="card-head"><div class="eyebrow">Estación ${run.step+1} de 8 · ${STEPS[run.step].n}${phaseTag} · ${esc(ex.id)} · ${mode === 'sim' ? 'Simulacro: sin pistas ni corrección hasta el final' : 'Entrenamiento guiado'}</div>
       ${hints ? `<span class="help-meter">Ayuda usada: ${hl}/${maxH}</span>` : ''}</div>
       <h2>${esc(st.k === 'calcular' && run.phase === 'num' ? '¿Cuánto da?' : st.q)}</h2>
       <p class="sub">${sub}</p>
+      ${whereHtml}
       ${body}
       ${fbHtml()}
       <div class="card-foot">
@@ -911,7 +1038,7 @@ function renderCenter(){
     </section>
   </div>`;
 }
-function gotoStep(i){ run.step = i; run.fb = null; if (STEPS[i].k === 'calcular') run.phase = run.rec.plan && run.rec.plan.ok ? 'num' : 'plan'; renderCenter(); }
+function gotoStep(i){ mapSel = null; run.step = i; run.fb = null; if (STEPS[i].k === 'calcular') run.phase = run.rec.plan && run.rec.plan.ok ? 'num' : 'plan'; renderCenter(); }
 $('#center').addEventListener('click', e => {
   const t = e.target.closest('button'); if (!t || !run) return;
   if (t.dataset.go){ gotoStep(+t.dataset.go); return; }
@@ -919,6 +1046,7 @@ $('#center').addEventListener('click', e => {
   if (t.dataset.role !== undefined){ run.roles[t.dataset.role] = t.dataset.v; run.checked.situar = false; renderCenter(); return; }
   if (t.dataset.sign !== undefined){ run.signs[t.dataset.sign] = +t.dataset.v; run.checked.dibujar = false; updateTimeline(); renderCenter(); return; }
   const act = t.dataset.act; if (!act) return;
+  if (act === 'ownGo'){ const v = ($('#ownIn').value || '').trim(); run.own = v; if (v.length < 15){ run.fb = {kind:'hint', tag:'Falta tu frase', html:'Escribe al menos una frase corta. No tiene que ser perfecta: sirve para comparar tu lectura con la correcta.'}; renderCenter(); return; } run.ownOk = true; run.fb = null; renderCenter(); return; }
   if (act === 'checkRoles') checkRoles();
   else if (act === 'checkSigns') checkSigns();
   else if (act === 'checkNum') checkNum();
@@ -929,7 +1057,7 @@ $('#center').addEventListener('click', e => {
   else if (act === 'again'){ newRun(exIdx); }
 });
 $('#center').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'numIn'){ e.preventDefault(); checkNum(); } });
-$('#center').addEventListener('input', e => { if (e.target.id === 'numIn') run.numVal = e.target.value; });
+$('#center').addEventListener('input', e => { if (e.target.id === 'numIn') run.numVal = e.target.value; if (e.target.id === 'ownIn') run.own = e.target.value; });
 
 function optSet(k){ const st = STEPS[run.step]; if (k === 'plan') return run.ex.plan.o; if (k === 'identificar') return run.ex.identificar; if (k === 'decidir') return run.ex.decidir; return run.ex[k].o; }
 function chooseOpt(k, oi){
@@ -987,7 +1115,7 @@ function giveHint(){
 }
 function nextStep(silent){
   const st = STEPS[run.step];
-  if (st.k === 'calcular' && run.phase === 'plan'){ run.phase = 'num'; run.fb = null; renderCenter(); return; }
+  if (st.k === 'calcular' && run.phase === 'plan'){ run.phase = 'num'; run.fb = null; calcMode = run.ex.preset.c; renderCalc(); renderCenter(); return; }
   if (run.step < STEPS.length - 1){ run.step++; run.fb = null; if (STEPS[run.step].k === 'calcular') run.phase = 'plan'; renderCenter(); return; }
   finishRun();
 }
@@ -1006,7 +1134,7 @@ function renderSummary(c){
   const ex = run.ex, rb = rubric();
   const rows = STEPS.map((s,i) => { const ks = s.k === 'calcular' ? ['plan','num'] : [s.k]; return ks.map(k => { const r = run.rec[k] || {tries:0, ok:false, errs:[]};
       return `<div class="rb"><span>${i+1} · ${s.n}${s.k==='calcular' ? (k==='plan'?' (método)':' (número)') : ''}</span><span class="mono" style="color:${r.ok ? 'var(--cobro)' : 'var(--pago)'}">${r.ok ? (r.tries === 1 ? 'a la primera' : r.tries+' intentos') : 'no resuelto'}</span><span class="v">${r.errs.length ? esc(ERR[r.errs[0]].n.split(' ')[0]) : ''}</span></div>`; }).join(''); }).join('');
-  c.innerHTML = `${renderRail()}<section class="float card" style="--d:.55">
+  c.innerHTML = `<section class="float card" style="--d:.55">
     <div class="eyebrow">${esc(ex.id)} · ${mode === 'sim' ? 'Simulacro corregido' : 'Ejercicio cerrado'} · registrado en el cuaderno</div>
     <h2>${esc(ex.title)}: ${fmt(rb.total,1)} / 10</h2>
     <p class="sub">Rúbrica diagnóstica provisional. Se ajustará a la de tu profesor cuando la tengamos.</p>
