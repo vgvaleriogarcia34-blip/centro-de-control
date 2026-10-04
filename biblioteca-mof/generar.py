@@ -35,9 +35,11 @@ def add(tema, familia, nivel, enun, pregunta, sol, unidad, plan, pasos, patron, 
                     solucion=sol, unidad=unidad, planteamiento=plan, pasos=pasos, patron=patron,
                     error_tipico=error, partes=partes, criterio=criterio, **(extra or {})))
 
-T2, T3, T4, T5, T6, T7, T8, TP = ("T2 Leyes financieras", "T3 Equivalencia de capitales", "T4 Descuento bancario",
-    "T5 Cuentas corrientes", "T6-T7 Rentas constantes", "T7 Rentas fraccionadas y perpetuas", "T8 Rentas variables",
-    "Ampliación: préstamos (confirmar si entra)")
+T1 = "T01 Conceptos básicos"; T2 = "T02 Leyes financieras"; T3 = "T03 Unificación de capitales"
+T4 = "T04 Operaciones activas a corto plazo"; T5 = "T05 Operaciones pasivas a corto plazo"
+T6 = "T07 Rentas discretas constantes"; T7 = T6; T8 = "T08 Rentas en progresión aritmética"; T9 = "T09 Rentas en progresión geométrica"
+T6I = "T06 Introducción a las rentas"; T11 = "T10-11 Amortización: cuotas constantes y francés"; T12 = "T12 Amortización: carencia, variable, anticipada, tantos efectivos"
+TP = T11
 
 # ---------------- T2 ----------------
 def cs_montante():
@@ -262,11 +264,12 @@ def cuenta_credito():
     cnd = R.choice([.001,.0015,.002]); cap_ = R.choice([.0025,.005])
     Id = disp*i*dias/365; Cnd = (L-disp)*cnd; Ca = L*cap_; tot = Id + Cnd + Ca
     a = act()
-    add(T5,"Cuenta de crédito: coste del periodo",2,
+    add(T5,"Cuenta de crédito: coste del periodo y TAE",2,
         f"{cap(a)} tiene una póliza de crédito con límite de {f(L)} €. Durante {dias} días ha dispuesto en promedio {f(disp)} €. Interés deudor {pct(i)} anual (base 365); comisión sobre saldo medio no dispuesto {pct(cnd,2)} trimestral sobre el periodo; comisión de apertura {pct(cap_,2)} del límite cargada en este periodo.",
         "¿Cuánto paga en el periodo? ¿Qué parte se debe a no usar todo el crédito?", round(tot,2),"€",
         "Intereses = dispuesto · i · d/365; comisión no dispuesto = (L − dispuesto) · c",
-        [f"Intereses: {f(Id)} €", f"No dispuesto: {f(L-disp)} € · {f(cnd,4)} = {f(Cnd)} €", f"Apertura: {f(Ca)} €", f"Total: {f(tot)} €"],
+        [f"Intereses: {f(Id)} €", f"No dispuesto: {f(L-disp)} € · {f(cnd,4)} = {f(Cnd)} €", f"Apertura: {f(Ca)} €", f"Total: {f(tot)} €",
+         f"TAE (convención simplificada sobre el dispuesto medio): (1 + {f(tot)}/{f(disp)})^(365/{dias}) − 1 = {pct((1+tot/disp)**(365/dias)-1,3)}"],
         "En una póliza también se paga por la disponibilidad: el crédito no usado tiene coste.",
         "Calcular intereses sobre el límite en lugar de sobre lo dispuesto.", {"deudor": cap(a), "acreedor": "el banco"})
 
@@ -365,7 +368,7 @@ def renta_geom():
     if abs(q-(1+i))<1e-9: return
     va = c*(1-(q/(1+i))**n)/(1+i-q); assert close(va, sum(c*q**(t-1)*(1+i)**-t for t in range(1,n+1)))
     a = act()
-    add(T8,"Renta variable en progresión geométrica",2,
+    add(T9,"Renta en progresión geométrica temporal",2,
         f"{cap(a)} prevé unos ingresos de {f(c)} € el primer año (al final), que {'crecerán' if q>1 else 'disminuirán'} un {pct(abs(q-1),0)} anual acumulativo durante {n} años. Tipo de valoración: {pct(i)}.",
         "¿Qué valor actual tienen esos ingresos?", round(va,2),"€", "V₀ = c · [1 − (q/(1 + i))^n] / (1 + i − q)",
         [f"q = {f(q,2)}", f"V₀ = {f(va)} €"],
@@ -377,7 +380,7 @@ def renta_arit():
     if c + h*(n-1) <= 0: return
     va = (c + h/i + n*h)*a_n(i,n) - n*h/i; assert close(va, sum((c+h*(t-1))*(1+i)**-t for t in range(1,n+1)))
     a = act()
-    add(T8,"Renta variable en progresión aritmética",2,
+    add(T8,"Renta en progresión aritmética temporal",2,
         f"{cap(a)} pagará un alquiler de {f(c)} € al final del primer año, que {'aumentará' if h>0 else 'bajará'} {f(abs(h))} € cada año durante {n} años. Tipo: {pct(i)}.",
         "¿Cuál es el valor actual de los pagos?", round(va,2),"€", "V₀ = (c + h/i + n·h) · a_n|i − n·h/i",
         [f"a_{n}|i = {f(a_n(i,n),6)}", f"V₀ = {f(va)} €"],
@@ -389,13 +392,262 @@ def prestamo_frances():
     C = R.randrange(10000, 200000, 5000); i = R.choice([.03,.04,.05,.06]); n = R.choice([4,5,8,10,15]); a = act()
     cu = C*i/(1-(1+i)**-n); I1 = C*i; A1 = cu - I1; S1 = C - A1
     assert close(brute_va(cu,i,range(1,n+1)), C)
-    add(TP,"Préstamo francés: cuota y primera fila",2,
+    add(T11,"Préstamo francés anual: cuota y primera fila",2,
         f"{cap(a)} obtiene un préstamo de {f(C)} € al {pct(i)} efectivo anual, amortizable en {n} cuotas anuales constantes vencidas.",
         "Calcula la cuota y la primera fila del cuadro de amortización.", round(cu,2),"€",
         "a = C · i / (1 − (1 + i)^−n); I₁ = C·i; A₁ = a − I₁",
         [f"a = {f(cu)} €", f"I₁ = {f(I1)} €; A₁ = {f(A1)} €; saldo = {f(S1)} €"],
         "En el francés la cuota es constante, los intereses bajan y la amortización sube.",
         "Confundir cuota con amortización de capital.", {"deudor": cap(a), "acreedor": "el banco"})
+
+
+# ======== Familias añadidas tras leer la guía docente 2022/23 ========
+def simple_tantos_eq():
+    i = R.choice([.04,.05,.06,.08]); m = R.choice([2,4,12]); C = R.randrange(2000,40000,500); k = R.choice([3,5,7,9]) if m==12 else R.choice([1,2,3])
+    im = i/m; Cn = C*(1+im*k); assert close(Cn, C*(1+i*k/m))
+    nm={2:"semestres",4:"trimestres",12:"meses"}
+    add(T2,"Capitalización simple: tantos de distinta frecuencia",1,
+        f"Un depósito de {f(C)} € se remunera al {pct(i)} simple anual. El banco liquida con el tanto equivalente por {nm[m][:-1] if m!=12 else 'mes'}.",
+        f"¿Cuál es el tanto equivalente y qué montante se obtiene a los {k} {nm[m]}?", round(Cn,2),"€",
+        "En simple, i_m = i / m (tantos proporcionales)", [f"i_{m} = {pct(im,4)}", f"Cₙ = {f(C)} · (1 + {f(im,6)} · {k}) = {f(Cn)} €"],
+        "En capitalización simple los tantos equivalentes son proporcionales; en compuesta no.",
+        "Usar (1 + i)^(1/m) − 1, que es la equivalencia en compuesta.", {"acreedor":"el depositante","deudor":"el banco"})
+
+def prorroga():
+    N = R.randrange(2000,30000,100); t1 = R.choice([30,45,60]); t2 = t1 + R.choice([30,60,90]); d = R.choice([.05,.06,.07,.08])
+    N2 = N*(1-d*t1/360)/(1-d*t2/360); assert close(N2*(1-d*t2/360), N*(1-d*t1/360))
+    a = act()
+    add(T3,"Prórroga de vencimientos",2,
+        f"{cap(a)} debe pagar {f(N)} € dentro de {t1} días, pero pide a su acreedor aplazar el pago hasta dentro de {t2} días. Se acuerda la equivalencia con descuento comercial al {pct(d)} (año comercial).",
+        "¿Qué nominal debe tener el nuevo pago?", round(N2,2),"€", "N₂ · (1 − d·t₂/360) = N · (1 − d·t₁/360)",
+        [f"Valor hoy de la deuda original: {f(N*(1-d*t1/360))} €", f"N₂ = {f(N*(1-d*t1/360))} / (1 − {f(d,4)}·{t2}/360) = {f(N2)} €"],
+        "Prorrogar no es gratis: el nuevo nominal es mayor porque el acreedor espera más.",
+        "Sumar al nominal el interés de los días de prórroga calculado sobre el nominal (no coincide en descuento comercial).",
+        {"deudor":cap(a),"acreedor":"el acreedor"})
+
+def persiana():
+    N = R.randrange(500,5000,50); n = R.choice([4,5,6,8,10,12]); p = R.choice([30]); d = R.choice([.05,.06,.07]); com = R.choice([.004,.005]); cmin = R.choice([2,3,4])
+    E = sum(N - N*d*(k*p)/360 - max(N*com,cmin) for k in range(1,n+1))
+    Ef = n*N - N*d*p*n*(n+1)/2/360 - n*max(N*com,cmin); assert close(E, Ef)
+    a = act()
+    add(T4,"Descuento de letras persiana",2,
+        f"{cap(a)} ha vendido a plazos y recibe {n} letras de {f(N)} € cada una, con vencimientos mensuales (cada 30 días, la primera dentro de 30). Las descuenta hoy: tanto {pct(d)} (año comercial), comisión {pct(com,2)} con mínimo {f(cmin)} € por letra.",
+        "¿Qué efectivo obtiene?", round(E,2),"€", "E = n·N − N·d·p·(1 + 2 + … + n)/360 − n·comisión",
+        [f"Σ días = 30 · {n}·{n+1}/2 = {30*n*(n+1)//2}", f"Descuento total: {f(N*d*p*n*(n+1)/2/360)} €", f"Comisiones: {n} · {f(max(N*com,cmin))} € = {f(n*max(N*com,cmin))} €", f"E = {f(E)} €"],
+        "En una persiana los plazos forman una progresión aritmética: el descuento total se calcula con la suma de la progresión.",
+        "Descontar todas las letras al plazo de la última o de la primera.", {"cede_el_cobro":cap(a),"anticipa_dinero":"el banco"})
+
+def resaca():
+    N = R.randrange(1000,20000,100); cd = R.choice([.005,.01]); g = R.choice([6,9,12,15]); t = R.choice([15,20,30]); d = R.choice([.06,.07,.08]); c = R.choice([.004,.005])
+    cargo = N + N*cd + g; Nr = cargo/(1 - d*t/360 - c)
+    assert close(Nr - Nr*d*t/360 - Nr*c, cargo)
+    a = act()
+    add(T4,"Efecto impagado y letra de resaca",3,
+        f"Un efecto de {f(N)} € descontado por {a} resulta impagado. El banco le carga el nominal, una comisión de devolución del {pct(cd,1)} y {f(g)} € de gastos. El librador gira una letra de resaca a {t} días sobre el cliente, que el banco descuenta al {pct(d)} (año comercial) con comisión del {pct(c,1)}.",
+        "¿Qué nominal debe tener la letra de resaca para que su efectivo cubra exactamente el cargo?", round(Nr,2),"€",
+        "Nᵣ · (1 − d·t/360 − c) = cargo", [f"Cargo = {f(N)} + {f(N*cd)} + {f(g)} = {f(cargo)} €", f"Nᵣ = {f(cargo)} / (1 − {f(d*t/360,6)} − {f(c,4)}) = {f(Nr)} €"],
+        "El impago se traslada al deudor original con todos sus costes: la resaca se calcula 'hacia atrás' desde el efectivo que hay que cubrir.",
+        "Tomar como nominal el cargo sin descontar los costes de la nueva letra.", {"acreedor":cap(a),"deudor":"el cliente que no pagó"})
+
+def remunerada():
+    S = R.randrange(5000,80000,1000); dias = R.choice([90,91,180,182,365]); i = R.choice([.005,.01,.015,.02]); ret = .19; K = R.choice([0,6,12,18])
+    I = S*i*dias/365; neto = I*(1-ret) - K; r = (1+neto/S)**(365/dias)-1
+    assert close(S*(1+r)**(dias/365), S+neto)
+    a = act()
+    add(T5,"Cuenta remunerada: rentabilidad efectiva",2,
+        f"{cap(a)} mantiene un saldo constante de {f(S)} € durante {dias} días en una cuenta remunerada al {pct(i)} anual (base 365). Se practica una retención del 19 % sobre los intereses" + (f" y el banco cobra {f(K)} € de comisión de mantenimiento." if K else "."),
+        "¿Qué rentabilidad efectiva anual obtiene?", round(r*100,4),"%",
+        "r = (1 + rendimiento neto / saldo)^(365/d) − 1", [f"Intereses brutos: {f(I)} €", f"Neto: {f(I)}·0,81" + (f" − {f(K)}" if K else "") + f" = {f(neto)} €", f"r = {pct(r,4)}"],
+        "La rentabilidad de quien deposita se mide con lo que realmente cobra: retenciones y comisiones la reducen.",
+        "Dar el tipo nominal de la cuenta como rentabilidad.", {"acreedor":cap(a),"deudor":"el banco"})
+
+def renta_general():
+    k = R.choice([3,4,5]); terms = [(R.randrange(500,8000,100), t) for t in sorted(R.sample(range(1,9),k))]; i = R.choice([.03,.04,.05]); T = R.choice([0, max(t for _,t in terms)])
+    V = sum(c*(1+i)**(T-t) for c,t in terms); assert close(V*(1+i)**-T, sum(c*(1+i)**-t for c,t in terms))
+    lista = "; ".join(f"{f(c)} € en t = {t}" for c,t in terms)
+    add(T6I,"Valor capital de una renta de términos distintos",1,
+        f"Una inversión genera estos cobros (años): {lista}. Tipo de valoración {pct(i)} efectivo anual compuesto.",
+        f"Calcula el valor capital de la renta en t = {T}.", round(V,2),"€", "V_T = Σ cₛ · (1 + i)^(T − tₛ)",
+        [f"{f(c)} · {f(1+i,4)}^{T-t} = {f(c*(1+i)**(T-t))}" for c,t in terms] + [f"V_{T} = {f(V)} €"],
+        "Una renta es un conjunto de capitales; su valor es la suma de todos valorados en el mismo punto.",
+        "Valorar cada término en un punto distinto.", {"acreedor":"el inversor"})
+
+def renta_anticipada():
+    c = R.randrange(500,8000,100); i = R.choice([.03,.04,.05]); n = R.choice([5,6,8,10]); p = R.choice([2,3,4])
+    V = c*s_n(i,n)*(1+i)**p; assert close(V, sum(c*(1+i)**(n+p-t) for t in range(1,n+1)))
+    a = act()
+    add(T7,"Renta anticipada p periodos",2,
+        f"{cap(a)} ingresa {f(c)} € al final de cada año durante {n} años en un fondo al {pct(i)}. Deja el saldo invertido {p} años más tras el último ingreso.",
+        f"¿Qué capital tendrá {p} años después del último ingreso?", round(V,2),"€", "V = c · s_n|i · (1 + i)^p",
+        [f"c · s_{n}|i = {f(c*s_n(i,n))} €", f"V = {f(V)} €"],
+        "Anticipar la renta p periodos es valorarla p periodos después de su final.",
+        "Confundir renta anticipada con prepagable.", {"acreedor":cap(a),"deudor":"el fondo"})
+
+def renta_tanto_var():
+    c = R.randrange(1000,9000,250); n = R.choice([6,8,10]); k = R.choice([2,3,4]); i1, i2 = R.sample([.02,.03,.04,.05,.06],2)
+    V = c*a_n(i1,k) + c*a_n(i2,n-k)*(1+i1)**-k
+    brute = sum(c*((1+i1)**-t if t<=k else (1+i1)**-k*(1+i2)**-(t-k)) for t in range(1,n+1)); assert close(V, brute)
+    add(T7,"Renta constante con tanto de valoración variable",3,
+        f"Una renta de {n} términos anuales vencidos de {f(c)} € se valora al {pct(i1)} durante los {k} primeros años y al {pct(i2)} los restantes.",
+        "¿Cuál es su valor actual?", round(V,2),"€", "V₀ = c · a_k|i₁ + c · a_(n−k)|i₂ · (1 + i₁)^−k",
+        [f"Tramo 1: {f(c*a_n(i1,k))} €", f"Tramo 2 en t = {k}: {f(c*a_n(i2,n-k))} €, descontado: {f(c*a_n(i2,n-k)*(1+i1)**-k)} €", f"V₀ = {f(V)} €"],
+        "Cuando el tipo cambia, cada tramo se descuenta con el tipo de su periodo hasta la fecha de valoración.",
+        "Descontar el segundo tramo con i₂ hasta el origen.", {})
+
+def arit_perpetua():
+    c = R.randrange(1000,6000,250); h = R.choice([50,100,150,200]); i = R.choice([.04,.05,.06])
+    V = c/i + h/i**2; brute = sum((c+h*(t-1))*(1+i)**-t for t in range(1,6000)); assert close(V, brute, 1e-5)
+    add(T8,"Renta en progresión aritmética perpetua",2,
+        f"Un inmueble genera un alquiler de {f(c)} € al final del primer año, que aumenta {f(h)} € cada año indefinidamente. Tipo de valoración {pct(i)}.",
+        "¿Qué valor actual tiene el alquiler?", round(V,2),"€", "V₀ = c/i + h/i²",
+        [f"c/i = {f(c/i)} €", f"h/i² = {f(h/i**2)} €", f"V₀ = {f(V)} €"],
+        "Una perpetuidad creciente aritméticamente sigue teniendo valor finito porque el descuento es geométrico.",
+        "Olvidar el término h/i².", {"acreedor":"el propietario","deudor":"el inquilino"})
+
+def arit_fracc():
+    Cm = R.randrange(200,1500,50); d = R.choice([10,20,25,50]); m = R.choice([4,12]); n = R.choice([3,4,5]); i = R.choice([.03,.04,.05])
+    im = (1+i)**(1/m)-1; brute = sum((Cm+d*(y))*(1+im)**-(y*m+j) for y in range(n) for j in range(1,m+1))
+    S = s_n(im,m); c, h = Cm*S, d*S; V = (c + h/i + n*h)*a_n(i,n) - n*h/i; assert close(V, brute)
+    nm={4:"trimestrales",12:"mensuales"}
+    add(T8,"Aritmética con cuantía fraccionada (Cm, d)",3,
+        f"Se pagarán cuotas {nm[m]} vencidas de {f(Cm)} € durante el primer año; cada año siguiente la cuota {nm[m][:-1]} aumenta {f(d)} €. Duración {n} años; tipo {pct(i)} efectivo anual.",
+        "¿Cuál es el valor actual?", round(V,2),"€", f"Término anual equivalente: Cₖ · s_{m}|i_{m}; luego renta aritmética anual con c = Cm·s, h = d·s",
+        [f"i_{m} = {pct(im,5)}; s_{m}|i_{m} = {f(S,6)}", f"c = {f(c)} €; h = {f(h)} €", f"V₀ = {f(V)} €"],
+        "Primero se convierte cada año en un término anual equivalente; después se aplica la progresión anual.",
+        "Aplicar la razón d a cada término fraccionado dentro del mismo año.", {})
+
+def geom_perpetua():
+    c = R.randrange(1000,8000,250); g = R.choice([.01,.015,.02,.025]); i = R.choice([.04,.05,.06]); q = 1+g
+    V = c/(1+i-q); brute = sum(c*q**(t-1)*(1+i)**-t for t in range(1,8000)); assert close(V, brute, 1e-5)
+    add(T9,"Renta en progresión geométrica perpetua",2,
+        f"Un dividendo de {f(c)} € al final del primer año crecerá un {pct(g,1)} anual acumulativo indefinidamente. Tipo de valoración {pct(i)}.",
+        "¿Qué valor actual tiene?", round(V,2),"€", "V₀ = c / (1 + i − q), válida si q < 1 + i",
+        [f"q = {f(q,3)}", f"V₀ = {f(c)} / {f(1+i-q,4)} = {f(V)} €"],
+        "La perpetuidad geométrica solo tiene valor finito si el crecimiento es menor que el tipo.",
+        "Aplicarla con q ≥ 1 + i.", {"acreedor":"el accionista"})
+
+def geom_fracc():
+    Cm = R.randrange(200,1500,50); q = R.choice([1.02,1.03,1.05]); m = R.choice([4,12]); n = R.choice([3,4,5]); i = R.choice([.03,.04,.05])
+    if abs(q-1-i) < 1e-9: return
+    im = (1+i)**(1/m)-1; brute = sum(Cm*q**y*(1+im)**-(y*m+j) for y in range(n) for j in range(1,m+1))
+    S = s_n(im,m); c = Cm*S; V = c*(1-(q/(1+i))**n)/(1+i-q); assert close(V, brute)
+    nm={4:"trimestrales",12:"mensuales"}
+    add(T9,"Geométrica con cuantía fraccionada (Cm, q)",3,
+        f"Una empresa pagará cuotas {nm[m]} vencidas de {f(Cm)} € el primer año; cada año las cuotas crecen un {pct(q-1,0)}. Duración {n} años; tipo {pct(i)} efectivo anual.",
+        "¿Cuál es el valor actual?", round(V,2),"€", "c = Cm · s_m|i_m; V₀ = c · [1 − (q/(1+i))^n] / (1 + i − q)",
+        [f"i_{m} = {pct(im,5)}; c = {f(c)} €", f"V₀ = {f(V)} €"],
+        "El crecimiento es anual: dentro de cada año los términos fraccionados son iguales.",
+        "Hacer crecer cada término fraccionado.", {})
+
+def schedule(C, rates, cuotas):
+    s = C; rows=[]
+    for k,(i,a) in enumerate(zip(rates,cuotas),1):
+        I = s*i; A = a - I; s -= A; rows.append((k,a,I,A,s))
+    return rows
+
+def amort_constante():
+    C = R.randrange(12000,150000,6000); n = R.choice([4,5,6,8,10]); i = R.choice([.04,.05,.06]); k = R.randint(2,n)
+    A = C/n; ak = A + (C-(k-1)*A)*i; Ck = C - k*A; It = sum((C-(t-1)*A)*i for t in range(1,n+1))
+    rows = schedule(C,[i]*n,[A+(C-(t-1)*A)*i for t in range(1,n+1)]); assert close(rows[k-1][1], ak) and close(rows[k-1][4], Ck) and abs(rows[-1][4])<1e-6
+    a = act()
+    add(T11,"Préstamo con cuotas de amortización constantes",2,
+        f"{cap(a)} recibe {f(C)} € al {pct(i)} anual, a devolver en {n} años con cuotas de amortización constantes (método lineal).",
+        f"Calcula el término amortizativo del año {k}, el capital pendiente tras pagarlo y el total de intereses.", round(ak,2),"€",
+        "A = C/n; aₖ = A + Cₖ₋₁ · i; Cₖ = C − k·A", [f"A = {f(A)} €", f"C_{k-1} = {f(C-(k-1)*A)} €; I_{k} = {f((C-(k-1)*A)*i)} €", f"a_{k} = {f(ak)} €; C_{k} = {f(Ck)} €", f"Intereses totales: {f(It)} €"],
+        "En el método lineal los términos decrecen: la amortización es fija y los intereses bajan.",
+        "Confundir cuota de amortización (A) con término amortizativo (a).", {"deudor":cap(a),"acreedor":"el banco"})
+
+def frances_mensual():
+    C = R.randrange(20000,200000,5000); y = R.choice([5,6,8,10,12,15]); j = R.choice([.024,.03,.036,.042,.048,.06]); i = j/12; n = 12*y
+    a = C/a_n(i,n); k = R.randint(13, n-12); Ckm1 = a*a_n(i,n-k+1); Ik = Ckm1*i; Ak = a-Ik
+    ys = R.randint(2,y-1); Cys = a*a_n(i,n-12*(ys-1)); tm = R.randint(12, n-6); A1 = a - C*i; mt = A1*s_n(i,tm)
+    rows = schedule(C,[i]*n,[a]*n); assert close(rows[k-1][2], Ik) and close(rows[12*(ys-1)-1][4], Cys) and close(C-rows[tm-1][4], mt)
+    a_ = act()
+    add(T11,"Préstamo francés mensual: cuota, descomposición, pendiente y amortizado",3,
+        f"Una entidad concede a {a_} un préstamo de {f(C)} € a {y} años, al {pct(j,1)} nominal anual, con términos amortizativos mensuales constantes.",
+        f"Calcula: 1) la mensualidad; 2) la descomposición de la mensualidad {k}; 3) el capital pendiente al principio del año {ys}; 4) el capital amortizado tras {tm} meses.", round(a,2),"€ (mensualidad)",
+        "i₁₂ = j/12; a = C / a_n|i₁₂; Cₖ₋₁ = a · a_(n−k+1)|i₁₂; Iₖ = Cₖ₋₁·i₁₂; mₜ = A₁ · s_t|i₁₂",
+        [f"n = {n}; i₁₂ = {pct(i,4)}", f"a = {f(a)} €", f"C_{k-1} = {f(Ckm1)} €; I_{k} = {f(Ik)} €; A_{k} = {f(Ak)} €",
+         f"C_{12*(ys-1)} = a · a_{n-12*(ys-1)}|i₁₂ = {f(Cys)} €", f"A₁ = {f(A1)} €; m_{tm} = {f(mt)} €"],
+        "El pendiente es el valor actual de los términos que faltan; lo amortizado crece como una renta de las cuotas de amortización (A₁ · s_t).",
+        "Contar mal los términos pendientes (n − k frente a n − k + 1) o usar el efectivo anual en lugar de j/12.",
+        {"deudor":cap(a_),"acreedor":"la entidad financiera"},
+        extra={"respuestas":{"mensualidad":round(a,2),"I_k":round(Ik,2),"A_k":round(Ak,2),"pendiente_inicio_año":round(Cys,2),"amortizado":round(mt,2)}})
+
+def carencia_prest():
+    C = R.randrange(20000,150000,5000); n = R.choice([5,6,8,10]); k = R.choice([1,2]); i = R.choice([.04,.05,.06]); tipo = R.choice(["parcial","total"])
+    base = C if tipo=="parcial" else C*(1+i)**k; a = base/a_n(i,n-k)
+    cu = ([C*i]*k if tipo=="parcial" else [0]*k) + [a]*(n-k)
+    s=C
+    for t in range(n): s = s*(1+i) - cu[t]
+    assert abs(s) < 1e-6
+    a_ = act()
+    add(T12,f"Amortización con carencia {tipo}",2,
+        f"{cap(a_)} obtiene {f(C)} € al {pct(i)} anual a {n} años, con {k} año{'s' if k>1 else ''} de carencia {tipo} y después método francés anual.",
+        "Calcula los pagos durante la carencia y el término amortizativo posterior.", round(a,2),"€",
+        ("Carencia parcial: se pagan C·i; a = C / a_(n−k)|i" if tipo=="parcial" else "Carencia total: C·(1+i)^k; a = C(1+i)^k / a_(n−k)|i"),
+        [f"Durante la carencia: {f(C*i) if tipo=='parcial' else '0'} € al año", f"Capital a amortizar: {f(base)} €", f"a = {f(a)} €"],
+        "La carencia aplaza pagos, no los elimina; en la total los intereses se capitalizan.",
+        "Amortizar en n términos en lugar de n − k.", {"deudor":cap(a_),"acreedor":"el banco"})
+
+def interes_variable():
+    C = R.randrange(30000,200000,5000); n = R.choice([8,10,15]); k = R.choice([2,3,4]); i1 = R.choice([.03,.035,.04]); i2 = i1 + R.choice([-.01,-.005,.005,.01,.015])
+    a1 = C/a_n(i1,n); Ck = a1*a_n(i1,n-k); a2 = Ck/a_n(i2,n-k)
+    rows = schedule(C,[i1]*k+[i2]*(n-k),[a1]*k+[a2]*(n-k)); assert abs(rows[-1][4])<1e-6
+    a_ = act()
+    add(T12,"Préstamo a interés variable: revisión del término",3,
+        f"{cap(a_)} firma un préstamo de {f(C)} € a {n} años, francés anual, al {pct(i1,2)} los {k} primeros años. En la revisión, el tipo pasa al {pct(i2,2)}.",
+        "¿Cuál es el nuevo término amortizativo?", round(a2,2),"€", "a₁ = C / a_n|i₁; C_k = a₁ · a_(n−k)|i₁; a₂ = C_k / a_(n−k)|i₂",
+        [f"a₁ = {f(a1)} €", f"C_{k} = {f(Ck)} €", f"a₂ = {f(a2)} €"],
+        "En la revisión se recalcula el término sobre el capital pendiente y el plazo que queda.",
+        "Recalcular sobre el capital inicial o el plazo total.", {"deudor":cap(a_),"acreedor":"el banco"},
+        criterio="El riesgo de tipo lo asume el deudor en el variable.")
+
+def anticipada():
+    C = R.randrange(40000,200000,5000); n = R.choice([10,12,15]); i = R.choice([.03,.04,.05]); k = R.choice([3,4,5]); X = round(C*R.uniform(.1,.25),-3); fc = R.choice([0,.005,.01])
+    a = C/a_n(i,n); Ck = a*a_n(i,n-k); N = Ck - X; modo = R.choice(["cuota","plazo"])
+    if modo=="cuota":
+        sol = N/a_n(i,n-k); rows = schedule(N,[i]*(n-k),[sol]*(n-k)); assert abs(rows[-1][4])<1e-6
+        txt = f"Nuevo término: a' = {f(N)} / a_{n-k}|i = {f(sol)} €"; unidad="€"
+    else:
+        sol = -math.log(1-N*i/a)/math.log(1+i); assert close(a*a_n(i,sol), N); txt = f"n' = −ln(1 − {f(N)}·{f(i,4)}/{f(a)}) / ln({f(1+i,4)}) = {f(sol,4)} años"; unidad="años"
+    a_ = act()
+    add(T12,"Amortización anticipada parcial y compensación",3,
+        f"{cap(a_)} tiene un préstamo de {f(C)} € a {n} años, francés anual al {pct(i)}. Tras pagar el término del año {k} amortiza anticipadamente {f(X)} €" + (f", con una compensación del {pct(fc,1)} sobre lo amortizado" if fc else ", sin compensación") + f", y decide {'reducir el término manteniendo el plazo' if modo=='cuota' else 'mantener el término y reducir el plazo'}.",
+        f"Calcula el capital pendiente, la compensación y {'el nuevo término' if modo=='cuota' else 'el nuevo plazo'}.", round(sol, 2 if modo=='cuota' else 4), unidad,
+        "C_k = a · a_(n−k)|i; nuevo pendiente = C_k − X; compensación = f · X",
+        [f"a = {f(a)} €", f"C_{k} = {f(Ck)} €", f"Compensación: {f(fc*X)} €", f"Nuevo pendiente: {f(N)} €", txt],
+        "Reducir término alivia la caja; reducir plazo ahorra más intereses. La compensación es el precio de cancelar antes.",
+        "Restar X del capital inicial en lugar del pendiente.", {"deudor":cap(a_),"acreedor":"el banco"},
+        criterio="Elegir entre cuota y plazo depende del objetivo: liquidez o coste.")
+
+def tantos_efectivos_prest():
+    C = R.randrange(20000,150000,5000); n = R.choice([5,8,10]); i = R.choice([.03,.04,.05]); com = R.choice([.005,.01,.015]); G = R.choice([300,500,800,1200])
+    a = C/a_n(i,n)
+    def irr(net):
+        lo,hi=1e-7,1
+        for _ in range(200):
+            m=(lo+hi)/2
+            if a*a_n(m,n) > net: lo=m
+            else: hi=m
+        return (lo+hi)/2
+    rp = irr(C - C*com - G); rl = irr(C - C*com); assert rp > rl > i - 1e-9
+    a_ = act()
+    add(T12,"Tantos efectivos: prestatario y prestamista",3,
+        f"{cap(a_)} recibe un préstamo de {f(C)} € a {n} años, francés anual al {pct(i)}. Paga al banco una comisión de apertura del {pct(com,1)} y {f(G)} € de notaría y registro (que cobran terceros).",
+        "Calcula el coste efectivo para el prestatario y la rentabilidad efectiva para el prestamista. ¿Por qué difieren?", round(rp*100,4),"% (coste prestatario)",
+        "Prestatario: C − comisión − gastos = a · a_n|r; prestamista: C − comisión = a · a_n|r'",
+        [f"a = {f(a)} €", f"Coste prestatario: {pct(rp,4)}", f"Rentabilidad prestamista: {pct(rl,4)}", "Los gastos pagados a terceros solo afectan al prestatario."],
+        "Coste del deudor y rentabilidad del acreedor solo coinciden si todos los gastos pasan de una parte a la otra.",
+        "Usar la misma tasa para las dos partes.", {"deudor":cap(a_),"acreedor":"el banco","terceros":"notaría y registro"},
+        criterio="Cambiar de perspectiva: mismos flujos entre partes, distintos gastos propios.", tipo="criterio",
+        extra={"rentabilidad_prestamista_pct":round(rl*100,4)})
+
+CRIT_EXTRA = [
+ ("¿Ley de capitalización o de descuento?", "Te piden 'el capital que hay que entregar hoy para disponer de X dentro de un año'.", "Es una operación de descuento (valor actual), aunque se resuelva con la ley de capitalización inversa si el enunciado lo indica.", "Identificar el sentido de la operación antes de la fórmula."),
+ ("¿Comparación de capitales?", "Dos capitales (5.000 €, año 1) y (5.200 €, año 2) y una ley de capitalización compuesta al 3 %.", "Al 3 % el segundo vale más en cualquier fecha común: 5.200/1,03 = 5.048,54 > 5.000.", "Preferencia financiera = comparar en la misma fecha con una ley."),
+ ("¿Qué parte del examen?", "La guía exige al menos un 40 % en teoría y práctica y en cada uno de los cuatro bloques.", "Un bloque débil puede suspender la asignatura aunque la media sea alta: hay que entrenar todos los bloques.", "Repartir el entrenamiento por bloques, no por gusto."),
+]
 
 # ---------------- Criterio sin cálculo ----------------
 CRIT = [
@@ -411,14 +663,14 @@ CRIT = [
  ("¿Concluir o condicionar?", "Una oferta tiene menor TAE y otra menor cuota; no se dice el objetivo de la empresa.", "No hay alternativa universalmente mejor: por coste, la de menor TAE; por liquidez, la de menor cuota.", "No forzar una decisión única."),
 ]
 def criterio_items():
-    for q, sit, sol, pat in CRIT:
-        add("Criterio transversal", "Leer el enunciado sin calcular", 1, sit, q, None, "", "Sin cálculo", [sol], pat,
+    for q, sit, sol, pat in CRIT + CRIT_EXTRA:
+        add(T1, "Criterio: leer el enunciado sin calcular", 1, sit, q, None, "", "Sin cálculo", [sol], pat,
             "Responder calculando sin haber situado la pregunta.", {}, criterio=pat, tipo="criterio")
 
 FAMS = [(cs_montante,26),(cs_despeje,26),(descuento_com,26),(cc_montante,26),(cc_actual,22),(tantos_eq,26),(simple_vs_compuesta,20),
         (capital_comun,26),(venc_comun,22),(venc_medio,22),(elegir_planes,22),(efecto,30),(remesa,22),(cuenta_corriente,26),(cuenta_credito,20),
         (renta_basica,30),(renta_diferida,22),(renta_perpetua,20),(renta_termino,24),(renta_fraccionada,24),(renta_n,22),(renta_vs_unico,22),
-        (renta_geom,24),(renta_arit,22),(prestamo_frances,20)]
+        (renta_geom,22),(renta_arit,22),(prestamo_frances,18),(simple_tantos_eq,18),(prorroga,20),(persiana,20),(resaca,20),(remunerada,20),(renta_general,18),(renta_anticipada,18),(renta_tanto_var,18),(arit_perpetua,16),(arit_fracc,18),(geom_perpetua,16),(geom_fracc,18),(amort_constante,22),(frances_mensual,26),(carencia_prest,22),(interes_variable,20),(anticipada,22),(tantos_efectivos_prest,20)]
 for fn, k in FAMS:
     start, tries = len(OUT), 0
     while len(OUT) - start < k and tries < k*4:
@@ -432,8 +684,8 @@ for o in OUT:
     if h in seen: continue
     seen.add(h); final.append(o)
 for n,o in enumerate(final,1): o["id"] = f"MOF-{n:03d}"
-meta = {"titulo":"Biblioteca de ejercicios MOF — temario inferido Universidad de Murcia, 1.º ADE",
-        "estado":"PROVISIONAL: ejercicios originales generados y verificados; temario inferido de fuentes públicas, no confirmado con la guía docente vigente.",
+meta = {"titulo":"Biblioteca de ejercicios MOF — temario de la guía docente UM 2022/23 (asignatura 2346, 1.º ADE)",
+        "estado":"Ejercicios originales verificados, organizados por los 12 temas de la guía 2022/23. Convenciones pendientes de confirmar con la guía vigente y los materiales del Aula Virtual.",
         "convenciones":"Cada enunciado declara su base (360 o 365) y su ley. Redondeo a 2 decimales al presentar; cálculo interno sin redondear.",
         "total":len(final)}
 json.dump({"meta":meta,"ejercicios":final}, open("ejercicios.json","w"), ensure_ascii=False, indent=1)
