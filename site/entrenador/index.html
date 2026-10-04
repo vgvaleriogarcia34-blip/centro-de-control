@@ -376,6 +376,37 @@ textarea.big{width:100%; box-sizing:border-box; min-height:150px; background:rgb
 .glos-list{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:8px; margin-top:10px; font-size:13px}
 .glos-list div{padding:8px 10px; border:1px solid var(--line); border-radius:10px}
 .glos-list b{color:var(--brass)}
+.strip{grid-column:1/-1; display:flex; gap:12px; align-items:center; flex-wrap:wrap; padding:12px 14px; border-radius:14px; border:1.5px dashed rgba(233,180,92,.55); background:linear-gradient(90deg, rgba(233,180,92,.12), rgba(79,209,181,.06))}
+.strip-ico{font-size:24px; color:var(--brass)} .strip-txt{flex:1 1 320px; font-size:14px} .strip-btns{display:flex; gap:8px; flex-wrap:wrap}
+nav.modes .mode-mine{color:var(--brass)}
+body.dropping::after{content:'Suelta aquí tus archivos de ejercicios'; position:fixed; inset:12px; z-index:70; display:grid; place-items:center; border:3px dashed var(--brass); border-radius:22px; background:rgba(6,10,20,.82); color:var(--brass); font:600 24px/1.2 var(--f-mono); pointer-events:none}
+.drop{display:grid; gap:6px; justify-items:center; text-align:center; padding:26px 16px; margin-top:14px; border:2px dashed rgba(233,180,92,.6); border-radius:16px; background:rgba(233,180,92,.06); cursor:pointer; transition:background .2s, border-color .2s}
+.drop:hover,.drop:focus-visible{background:rgba(233,180,92,.13); border-color:var(--brass); outline:none}
+.drop b{font-size:16px} .drop span{color:var(--muted); font-size:13px}
+.drop-icons{display:flex; gap:6px; flex-wrap:wrap; justify-content:center}
+.drop-icons span{font:600 11px/1 var(--f-mono); padding:6px 8px; border-radius:8px; border:1px solid var(--line-2); color:var(--fg)}
+.steps3{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:8px; margin-top:14px; font-size:13px; color:var(--muted)}
+.steps3 div{padding:10px 12px; border:1px solid var(--line); border-radius:12px} .steps3 b{display:block; color:var(--brass); margin-bottom:2px}
+.mine-busy{color:var(--brass); font:500 13px/1.4 var(--f-mono)} .mine-err{color:var(--pago); font-size:13.5px; margin:6px 0 0}
+.mine-paste{margin-top:12px} .mine-paste summary{cursor:pointer; color:var(--brass)}
+.mine-temas{display:flex; gap:6px; flex-wrap:wrap; margin:6px 0 10px}
+.mine-focus{display:flex; gap:10px; align-items:flex-start; font-size:14px; margin:6px 0}
+.mine-focus input{margin-top:4px; accent-color:var(--brass)}
+.mine-docs{display:flex; gap:6px; flex-wrap:wrap; margin:10px 0}
+.mine-doc{display:inline-flex; gap:6px; align-items:center; font-size:12.5px; padding:4px 4px 4px 10px; border:1px solid var(--line-2); border-radius:99px}
+.mine-doc b{color:var(--brass); font:600 11px/1 var(--f-mono)} .mine-doc .btn{padding:2px 8px}
+.mine-list{display:grid; gap:12px; margin-top:12px}
+.mine-ex{padding:14px; border:1px solid var(--line-2); border-radius:14px; background:rgba(5,10,22,.5)}
+.mine-head{display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:8px}
+.mine-src{margin-left:auto; color:var(--muted); font:12px/1.3 var(--f-mono); overflow-wrap:anywhere}
+.mine-text{white-space:pre-wrap; font-size:14px; line-height:1.5; max-height:7.5em; overflow:hidden; -webkit-mask-image:linear-gradient(#000 70%, transparent)}
+.mine-text.open{max-height:none; -webkit-mask-image:none}
+.mine-datos{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px}
+.mine-datos span{font:500 12px/1 var(--f-mono); padding:5px 8px; border-radius:8px; background:rgba(79,209,181,.1); color:var(--cobro)}
+.mine-ex .btn-row{margin-top:10px}
+.mine-cmp .rb{grid-template-columns:minmax(0,1fr); gap:2px; padding:8px 0; border-bottom:1px solid var(--line)}
+.mine-cmp .rb span:first-child{font:500 10.5px/1.3 var(--f-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--muted)}
+.cfg-up{float:right; padding:3px 9px; font-size:12px; margin-top:-3px}
 .model{margin-top:12px; padding:12px 14px; border-radius:12px; border-left:3px solid var(--cobro); background:rgba(5,10,22,.55); font-size:14px}
 .nofin{display:flex; gap:8px; align-items:flex-start; margin-top:10px; font-size:12.5px; color:var(--muted)}
 .nofin input{margin-top:3px; accent-color:var(--brass)}
@@ -408,6 +439,7 @@ footer{margin-top:34px; color:var(--faint); font-size:12.5px; max-width:90ch}
       <span class="pill" id="pillAI"><span class="dot"></span><span id="aiTxt">Tutor: comprobando…</span></span>
     </div>
     <nav class="modes" aria-label="Modo de trabajo">
+      <button data-mode="mine" aria-pressed="false" class="mode-mine">Mis ejercicios</button>
       <button data-mode="prac" aria-pressed="false">Práctica de criterio</button>
       <button data-mode="train" aria-pressed="true">Entrenamiento guiado</button>
       <button data-mode="teo" aria-pressed="false">Teoría activa</button>
@@ -417,6 +449,13 @@ footer{margin-top:34px; color:var(--faint); font-size:12.5px; max-width:90ch}
       <button data-mode="corr" aria-pressed="false">Corrección de mi solución</button>
       <button data-mode="sim" aria-pressed="false">Simulacro</button>
     </nav>
+    <div class="strip" id="dropStrip">
+      <span class="strip-ico" aria-hidden="true">⇪</span>
+      <span class="strip-txt"><b>Trae tus ejercicios.</b> Suelta aquí (o en cualquier parte de la página) los PDF, Word, Excel o CSV con los ejercicios que estás trabajando y el entrenador se adapta a ellos.</span>
+      <span class="strip-btns"><button class="btn primary" id="stripUp">Subir archivos</button><button class="btn ghost" id="stripGo">Ver mis ejercicios</button></span>
+    </div>
+    <input type="file" id="mineFile" multiple hidden accept=".pdf,.docx,.doc,.xlsx,.xlsm,.xls,.ods,.csv,.tsv,.txt,.md,.json,image/*">
+    <input type="file" id="cfgFile" multiple hidden accept=".pdf,.docx,.doc,.xlsx,.xlsm,.xls,.ods,.csv,.tsv,.txt,.md">
   </header>
 
   <section class="float map" id="mapa" style="--d:.5;--bd:-3s" aria-labelledby="hMapa">
@@ -519,11 +558,11 @@ footer{margin-top:34px; color:var(--faint); font-size:12.5px; max-width:90ch}
     <section class="float" style="--d:.9;--bd:-5s" aria-labelledby="hCfg">
       <div class="eyebrow">Configuración académica</div>
       <h2 id="hCfg" style="font-size:22px;margin-top:4px">Adapta el entrenador a tu asignatura</h2>
-      <p style="color:var(--muted);margin:6px 0 0;font-size:14px">Pega aquí el programa, un ejercicio resuelto y las convenciones de tu profesor. Mientras no lo hagas, los ejercicios son de MOF habitual, marcados como provisionales y sin atribuirlos a ninguna universidad. Lo que pegues se guarda solo en este navegador y se envía al tutor como contexto.</p>
+      <p style="color:var(--muted);margin:6px 0 0;font-size:14px">Pega aquí, o carga desde un archivo (PDF, Word, Excel, CSV o texto; también puedes soltarlo encima de cada caja), el programa, un ejercicio resuelto y las convenciones de tu profesor. Para tus hojas de ejercicios usa <b>Mis ejercicios</b>, arriba. Mientras no lo hagas, los ejercicios son de MOF habitual, marcados como provisionales y sin atribuirlos a ninguna universidad. Lo que pegues se guarda solo en este navegador y se envía al tutor como contexto.</p>
       <div class="cfg">
-        <div class="field"><label for="cfgProg">1 · Programa o temas</label><textarea id="cfgProg" class="big" placeholder="Tema 1. Leyes financieras…"></textarea></div>
-        <div class="field"><label for="cfgEj">2 · Ejercicio representativo</label><textarea id="cfgEj" class="big" placeholder="Enunciado y, si la tienes, la solución o corrección"></textarea></div>
-        <div class="field"><label for="cfgConv">3 · Convenciones y examen</label><textarea id="cfgConv" class="big" placeholder="Base 360 o 365, redondeo a 2 decimales, cuotas pospagables salvo indicación…"></textarea></div>
+        <div class="field"><label for="cfgProg">1 · Programa o temas</label><button type="button" class="btn ghost cfg-up" data-cfgfile="cfgProg">Cargar desde archivo</button><textarea id="cfgProg" class="big" placeholder="Tema 1. Leyes financieras…"></textarea></div>
+        <div class="field"><label for="cfgEj">2 · Ejercicio representativo</label><button type="button" class="btn ghost cfg-up" data-cfgfile="cfgEj">Cargar desde archivo</button><textarea id="cfgEj" class="big" placeholder="Enunciado y, si la tienes, la solución o corrección"></textarea></div>
+        <div class="field"><label for="cfgConv">3 · Convenciones y examen</label><button type="button" class="btn ghost cfg-up" data-cfgfile="cfgConv">Cargar desde archivo</button><textarea id="cfgConv" class="big" placeholder="Base 360 o 365, redondeo a 2 decimales, cuotas pospagables salvo indicación…"></textarea></div>
       </div>
       <div class="btn-row"><button class="btn primary" id="cfgSave">Guardar materiales</button><button class="btn ghost" id="cfgClear">Borrar</button><span id="cfgMsg" style="align-self:center;color:var(--muted);font-size:13px"></span></div>
     </section>
@@ -1244,13 +1283,14 @@ function fbHtml(){
   const f = run.fb; return `<div class="fb ${f.kind}" role="status">${f.tag ? `<span class="tag">${esc(f.tag)}</span>` : ''}${f.html}</div>`;
 }
 function renderCenter(){
-  const libMode = ['prac','teo','exam'].includes(mode);
+  const libMode = ['prac','teo','exam','mine'].includes(mode);
   ['1','2'].forEach(n => { const el = document.querySelector(`[data-panel="${n}"]`); if (el) el.hidden = libMode; });
   renderMap(); setPanels();
   const c = $('#center');
   if (mode === 'diag') return renderDiag(c);
   if (mode === 'abc') return renderABC(c);
   if (mode === 'corr') return renderCorr(c);
+  if (mode === 'mine') return renderMine(c);
   if (mode === 'prac') return renderPrac(c);
   if (mode === 'teo') return renderTeo(c);
   if (mode === 'exam') return renderExam(c);
@@ -1547,7 +1587,7 @@ function calcLocked(){ if (!noFin) return false;
   if (mode === 'exam' && xm) return !xm.done;
   return false; }
 S.prac = S.prac || {fam:{}}; S.teo = S.teo || {};
-save = function(){ store.set({book:S.book, pats:S.pats, cfg:S.cfg, errs:S.errs.slice(-200), prac:S.prac, teo:S.teo, pruebas:S.pruebas||[]}); };
+save = function(){ store.set({book:S.book, pats:S.pats, cfg:S.cfg, errs:S.errs.slice(-200), prac:S.prac, teo:S.teo, pruebas:S.pruebas||[], mine:S.mine}); };
 function rng(seed){ let x = seed % 2147483647; if (x <= 0) x += 2147483646; return () => (x = x * 16807 % 2147483647) / 2147483647; }
 function pickN(arr, n, r){ const a = arr.slice(); for (let i=a.length-1;i>0;i--){ const j = Math.floor(r()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a.slice(0,n); }
 function roleQ(ex){ const P = ex.partes || {};
@@ -1585,7 +1625,8 @@ let prQuick = true, prSession = null;
 function nextPrac(){
   const k = prFilter === 'all' ? 'pi1' : prFilter; const blocks = PRUEBAS[prFilter].b; const fams = libFams(blocks); const r = Math.random;
   const rs = routeState(prFilter === 'all' ? 'pi1' : prFilter); let fam = null, diag = false;
-  if (prFilter !== 'all' && !rs.diagDone){
+  if (!fam && S.mine && S.mine.next){ const t = S.mine.next; S.mine.next = null; const fs = libFams([1,2,3,4]).filter(f => famTema(f) === t); if (fs.length) fam = fs[Math.floor(r()*fs.length)]; }
+  if (!fam && prFilter !== 'all' && !rs.diagDone){
     const order = fams.slice().sort((a,b) => (CORE.has(b) - CORE.has(a)));
     fam = order.find(f => !(S.prac.fam[f] && S.prac.fam[f].diagSeen)); diag = true;
     if (!fam){ S.prac.diag = S.prac.diag || {}; S.prac.diag[prFilter] = true; save(); diag = false; }
@@ -1596,6 +1637,7 @@ function nextPrac(){
       if (stage <= 2) return famCritMastered(f) ? 0.15 : (core ? 6 : 2) * (1 + 3*(famErrRate(f) || 0.5));
       if (stage === 3) return core && famCritMastered(f) && !famMastered(f) ? 6 : famCritMastered(f) ? 0.3 : 2;
       return famMastered(f) ? 0.5 : 2; });
+    const ft = S.mine && S.mine.focus ? mineTemas() : new Set(); if (ft.size) w.forEach((x,i) => { if (ft.has(famTema(fams[i]))) w[i] = x*4; });
     let tot = w.reduce((a,b) => a+b, 0), x = r()*tot; fam = fams[0]; for (let i=0;i<fams.length;i++){ x -= w[i]; if (x <= 0){ fam = fams[i]; break; } }
   }
   const pool = LIB.filter(e => e.familia === fam && e.mag); const seen = new Set((S.prac.seen || []).slice(-300));
@@ -1974,6 +2016,219 @@ function provPill(){ const has = S.cfg.prog.trim() || S.cfg.ej.trim() || S.cfg.c
 $('#cfgSave').addEventListener('click', () => { S.cfg = {prog:$('#cfgProg').value, ej:$('#cfgEj').value, conv:$('#cfgConv').value}; save(); provPill(); $('#cfgMsg').textContent = 'Guardado en este navegador. El tutor los usará como referencia.'; });
 $('#cfgClear').addEventListener('click', () => { S.cfg = {prog:'',ej:'',conv:''}; save(); loadCfg(); $('#cfgMsg').textContent = 'Materiales borrados.'; });
 
+/* ============ Mis ejercicios: sube tus archivos y el entrenador se adapta ============ */
+S.mine = Object.assign({docs:[], ex:[], focus:true, next:null}, S.mine || {});
+const CDN = 'https://cdnjs.cloudflare.com/ajax/libs/';
+const LIBS = {pdf:CDN+'pdf.js/3.11.174/pdf.min.js', pdfw:CDN+'pdf.js/3.11.174/pdf.worker.min.js', xlsx:CDN+'xlsx/0.18.5/xlsx.full.min.js', docx:CDN+'mammoth/1.6.0/mammoth.browser.min.js'};
+const libLoading = {};
+function loadScript(k){ return libLoading[k] = libLoading[k] || new Promise((ok, ko) => { const s = document.createElement('script'); s.src = LIBS[k]; s.onload = ok;
+  s.onerror = () => { delete libLoading[k]; ko(new Error('No se ha podido cargar el lector de este formato. Comprueba la conexión.')); }; document.head.appendChild(s); }); }
+const SCANNED = 'scanned';
+async function readFile(f){
+  const n = f.name.toLowerCase();
+  if (/\.(csv|tsv)$/.test(n)){ const txt = await f.text(); try { await loadScript('xlsx'); const wb = XLSX.read(txt, {type:'string', FS: n.endsWith('.tsv') ? '\t' : (txt.split('\n')[0].split(';').length > txt.split('\n')[0].split(',').length ? ';' : ',')}); return {kind:'CSV', sheets: wb.SheetNames.map(sn => ({name:sn, rows: XLSX.utils.sheet_to_json(wb.Sheets[sn], {header:1, blankrows:false, defval:''})}))}; } catch(e){ return {kind:'CSV', text:txt}; } }
+  if (/\.(txt|md|json)$/.test(n) || (f.type || '').startsWith('text/')) return {kind:'Texto', text: await f.text()};
+  if (n.endsWith('.pdf')){ await loadScript('pdf'); pdfjsLib.GlobalWorkerOptions.workerSrc = LIBS.pdfw;
+    const doc = await pdfjsLib.getDocument({data: await f.arrayBuffer()}).promise; let out = '';
+    for (let p = 1; p <= doc.numPages; p++){ const tc = await (await doc.getPage(p)).getTextContent(); let line = '', lastY = null;
+      for (const it of tc.items){ const y = it.transform[5]; if (lastY !== null && Math.abs(y - lastY) > 2){ out += line.trimEnd() + '\n'; line = ''; } line += it.str; if (it.hasEOL){ out += line.trimEnd() + '\n'; line = ''; lastY = null; } else lastY = y; }
+      out += line + '\n\n'; }
+    return {kind:'PDF', text:out, pages:doc.numPages, pdf:doc, scanned: out.replace(/\s/g,'').length < 40*doc.numPages}; }
+  if (n.endsWith('.docx')){ await loadScript('docx'); return {kind:'Word', text:(await mammoth.extractRawText({arrayBuffer: await f.arrayBuffer()})).value}; }
+  if (/\.(xlsx|xlsm|xls|ods)$/.test(n)){ await loadScript('xlsx'); const wb = XLSX.read(await f.arrayBuffer(), {type:'array'});
+    return {kind:'Excel', sheets: wb.SheetNames.map(sn => ({name:sn, rows: XLSX.utils.sheet_to_json(wb.Sheets[sn], {header:1, blankrows:false, defval:''})}))}; }
+  if (n.endsWith('.doc')) throw new Error('Los archivos .doc antiguos no se pueden leer aquí. Guárdalo como .docx o PDF y vuelve a subirlo.');
+  if ((f.type || '').startsWith('image/')) return {kind:'Imagen', image:f};
+  throw new Error('Formato no reconocido. Sirven PDF, Word (.docx), Excel (.xlsx), CSV, texto o fotos.');
+}
+const sheetText = sh => sh.rows.map(r => r.map(c => String(c).trim()).filter(Boolean).join(' · ')).filter(Boolean).join('\n');
+function sheetExercises(sh){ // si hay columna de enunciados, una fila = un ejercicio; si no, la hoja entera es una tabla
+  const rows = sh.rows; if (!rows.length) return [];
+  const head = rows[0].map(c => String(c).toLowerCase()); const col = head.findIndex(h => /enunciado|ejercicio|problema|pregunta|supuesto/.test(h));
+  if (col >= 0) return rows.slice(1).map(r => r.map((c,i) => i === col ? String(c) : (String(c).trim() ? (rows[0][i] || '') + ': ' + c : '')).filter(Boolean).join('\n')).filter(t => t.trim().length > 20);
+  const long = rows.filter(r => r.some(c => String(c).length > 60));
+  if (long.length) return long.map(r => r.map(c => String(c).trim()).filter(Boolean).join('\n'));
+  return [`Tabla «${sh.name}»:\n` + rows.slice(0, 60).map(r => r.join(' | ')).join('\n')];
+}
+function splitExercises(text){
+  const t = text.replace(/\r/g,'').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim(); if (!t) return [];
+  const re = /^[ \t]*(?:(?:ejercicio|problema|pregunta|cuesti[oó]n|caso|supuesto|actividad)[ \t]*(?:n[º°.o]*[ \t]*)?\d+|\d{1,2}[ \t]*[.)][ \t]+(?=[A-ZÁÉÍÓÚÑ¿]))/gim;
+  const idx = []; let m; while ((m = re.exec(t))) idx.push(m.index);
+  let parts = idx.length >= 2 ? idx.map((s,i) => t.slice(s, idx[i+1] ?? t.length)) : t.split(/\n\s*\n/);
+  if (idx.length >= 2 && idx[0] > 0) parts.unshift(t.slice(0, idx[0]));
+  const out = []; parts.map(p => p.trim()).filter(Boolean).forEach(p => { if (idx.length < 2 && out.length && p.length < 120 && !/\d/.test(p)) out[out.length-1] += '\n' + p; else out.push(p); });
+  return out.filter(p => p.length >= 40 && /\d/.test(p));
+}
+const TEMA_KW = [
+ ['T12 Amortización: carencia, variable, anticipada, tantos efectivos', /carencia|amortizaci[oó]n anticipada|cancelaci[oó]n (anticipada|parcial)|tipo variable|eur[ií]bor|revisi[oó]n del tipo|comisi[oó]n de apertura|tanto efectivo (del|para el) (pr[eé]stamo|prestatario|prestamista)/i],
+ ['T10-11 Amortización: cuotas constantes y francés', /pr[eé]stamo|hipoteca|amortiza|cuadro de amortizaci[oó]n|m[eé]todo franc[eé]s|capital (pendiente|vivo)/i],
+ ['T09 Rentas en progresión geométrica', /progresi[oó]n geom[eé]trica|acumulativ|(crece|aumenta|incrementa)n?\w* (un|en un|a raz[oó]n de un|el) \d+([.,]\d+)? ?%/i],
+ ['T08 Rentas en progresión aritmética', /progresi[oó]n aritm[eé]tica|(crece|aumenta|incrementa)n?\w* (en )?\d[\d.,]* ?(€|euros)/i],
+ ['T07 Rentas discretas constantes', /renta|anualidad|mensualidades|trimestralidades|pagos (peri[oó]dicos|mensuales|anuales|trimestrales|semestrales)|perpetu|prepagable|pospagable|plan de (ahorro|pensiones)|alquiler|cuotas? (constantes|iguales)/i],
+ ['T03 Unificación de capitales', /vencimiento (com[uú]n|medio)|sustitu|unifica|capital (com[uú]n|[uú]nico|equivalente)|equivalencia de capitales/i],
+ ['T05 Operaciones pasivas a corto plazo', /cuenta corriente|cuenta de cr[eé]dito|hamburgu|fecha valor|dep[oó]sito|imposici[oó]n a plazo|liquidaci[oó]n de (la )?cuenta/i],
+ ['T04 Operaciones activas a corto plazo', /descuento|descontar|letra|efecto|pagar[eé]|remesa|resaca|negociaci[oó]n|factoring/i],
+ ['T02 Leyes financieras', /capitalizaci[oó]n|montante|tantos? equivalentes?|nominal|\btae\b|inter[eé]s (simple|compuesto)|valor actual|valor final/i],
+ ['T01 Conceptos básicos', /capital financiero|preferencia|ley financiera|prestaci[oó]n|operaci[oó]n financiera/i],
+];
+const MAG_KW = [
+ [11, /conviene|m[aá]s (favorable|ventajos|interesante|rentable|barat)|qu[eé] (opci[oó]n|alternativa|oferta)|elegir[ií]a|elegir|preferible|decid/i],
+ [5, /\btae\b|coste efectivo|rentabilidad|tanto efectivo|tipo efectivo|\btir\b|coste real/i],
+ [4, /(efectivo|l[ií]quido) (que|a) (recib|obten|abon)|importe efectivo|efectivo l[ií]quido|cu[aá]nto (recibir[aá]|le abonar|le ingresar)/i],
+ [8, /saldo|liquida/i],
+ [7, /vencimiento|en qu[eé] (fecha|momento|d[ií]a)/i],
+ [6, /capital (com[uú]n|[uú]nico|que sustituy)|pago [uú]nico|sustitu/i],
+ [10, /n[uú]mero de (t[eé]rminos|cuotas|pagos|a[nñ]os)|cu[aá]nt[oa]s (cuotas|pagos|mensualidades|anualidades|t[eé]rminos)/i],
+ [9, /cuota|t[eé]rmino|anualidad|mensualidad|pago (mensual|anual|trimestral)|cu[aá]nto (debe|deber[aá]|tendr[aá] que) (pagar|ingresar|aportar|depositar)/i],
+ [12, /cuota de inter[eé]s|intereses (pagados|del a[nñ]o|del periodo|de la cuota)|comisi[oó]n/i],
+ [3, /cu[aá]nto tiempo|qu[eé] plazo|cu[aá]ntos (d[ií]as|meses|a[nñ]os)/i],
+ [2, /tipo de inter[eé]s|tanto (equivalente|nominal|de inter[eé]s)|a qu[eé] tipo|qu[eé] tanto|tipo equivalente/i],
+ [0, /montante|valor final|cu[aá]nto (tendr[aá]|habr[aá])|capital final|acumulad/i],
+ [1, /valor actual|valor (hoy|en el origen)|cu[aá]nto (vale|valdr[ií]a) hoy|al contado|capital (prestado|inicial)|importe del pr[eé]stamo/i],
+];
+function questionPart(t){ const s = t.split(/(?<=[.?!:])\s+|\n/).filter(x => /calcul|determin|obt[eé]n|halla|¿|indica|cu[aá]l|qu[eé]|justifica|compar/i.test(x)); return s.length ? s.join(' ') : t; }
+function classify(t){
+  const tema = (TEMA_KW.find(([,re]) => re.test(t)) || [null])[0];
+  const q = questionPart(t); const mk = MAG_KW.find(([,re]) => re.test(q)) || MAG_KW.find(([,re]) => re.test(t)); const mi = mk ? mk[0] : null;
+  const L = LIBMETA ? LIBMETA.leyes : []; let li = null;
+  if (mi === 11) li = 7; else if (mi === 5) li = 6;
+  else if (tema){ const n = tema.slice(0,3); li = n === 'T02' ? (/simple/i.test(t) && !/compuest/i.test(t) ? 0 : 1) : n === 'T03' ? 7 : n === 'T04' ? 2 : n === 'T05' ? 5 : ['T06','T07','T08','T09'].includes(n) ? 3 : n.startsWith('T1') ? 4 : null; }
+  const datos = [...new Set((t.match(/\d{1,3}(?:\.\d{3})+(?:,\d+)?\s?(?:€|euros)|\d+(?:,\d+)?\s?(?:€|euros|%|años|meses|días|trimestres|semestres)/gi) || []).map(x => x.replace(/\s+/g,' ')))].slice(0, 8);
+  return {tema, mag: mi == null || !LIBMETA ? null : LIBMETA.magnitudes[mi], ley: li == null ? null : L[li], datos};
+}
+let mineBusy = '', mineErr = [];
+async function sampleImages(blobs, what){ const r = await SAMPLE([{role:'user', content:`Estas imágenes son ${what} de Matemáticas de las Operaciones Financieras. Transcribe literalmente cada enunciado de ejercicio, con todos sus datos, sin resolverlo. Separa un ejercicio de otro con una línea que contenga solo ---. Si no hay ejercicios, responde solo: SIN EJERCICIOS.`}], {images:blobs, cache:false}); return r.text.includes('SIN EJERCICIOS') ? [] : r.text.split(/\n\s*---+\s*\n/).map(x => x.trim()).filter(x => x.length > 20); }
+async function pdfPagesAsImages(doc, max){ const out = []; for (let p = 1; p <= Math.min(doc.numPages, max); p++){ const pg = await doc.getPage(p); const vp = pg.getViewport({scale:1.6}); const cv = document.createElement('canvas'); cv.width = vp.width; cv.height = vp.height; await pg.render({canvasContext:cv.getContext('2d'), viewport:vp}).promise; out.push(await new Promise(r => cv.toBlob(r, 'image/jpeg', .85))); } return out; }
+async function addFiles(files){
+  files = [...files]; if (!files.length) return; mineErr = []; if (!LIB) await loadLib();
+  for (const f of files){
+    mineBusy = `Leyendo «${f.name}»…`; renderCenter();
+    try { const r = await readFile(f); let texts = [];
+      if (r.sheets) r.sheets.forEach(sh => texts.push(...sheetExercises(sh)));
+      else if (r.image || r.scanned){
+        let lim = null; try { lim = SAMPLE && SAMPLE.limits ? await SAMPLE.limits() : null; } catch(e){}
+        if (!SAMPLE || !lim || !lim.images) throw new Error(r.image ? 'Las fotos solo se pueden leer con el tutor (abriendo el entrenador en claude.ai). También puedes pegar el enunciado a mano abajo.' : 'Este PDF es escaneado (es una imagen, no tiene texto). Solo se puede leer con el tutor en claude.ai; si no, pega el enunciado a mano abajo.');
+        mineBusy = `El tutor está leyendo «${f.name}»…`; renderCenter();
+        const blobs = r.image ? [r.image] : await pdfPagesAsImages(r.pdf, Math.min(lim.images.maxCount || 4, 6));
+        texts = await sampleImages(blobs, r.image ? 'una foto' : 'páginas de un PDF escaneado');
+      } else texts = splitExercises(r.text);
+      const id = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+      S.mine.docs.push({id, name:f.name, kind:r.kind, size:f.size, at:Date.now(), n:texts.length, pages:r.pages || null});
+      texts.forEach(t => { const c = classify(t); S.mine.ex.push({id:'x' + Math.random().toString(36).slice(2,9), doc:id, text:t.slice(0, 4000), ...c, at:Date.now(), tries:[]}); });
+      if (!texts.length) mineErr.push(`«${f.name}»: no he encontrado ejercicios (busco bloques con datos numéricos). Si es el programa o los apuntes, súbelo en «Adapta el entrenador a tu asignatura».`);
+    } catch(e){ mineErr.push(`«${f.name}»: ${e.message || e}`); }
+  }
+  S.mine.ex = S.mine.ex.slice(-300); mineBusy = ''; save(); renderCenter();
+}
+const temaShort = t => t ? t.replace(/^T(\d+(?:-\d+)?) /, 'Tema $1 · ') : 'Tema sin detectar';
+let famTemaMap = null;
+function famTema(f){ if (!famTemaMap){ famTemaMap = {}; LIB.forEach(e => { if (!famTemaMap[e.familia]) famTemaMap[e.familia] = e.tema; }); } return famTemaMap[f]; }
+function mineTemas(){ return new Set(S.mine.ex.map(e => e.tema).filter(Boolean)); }
+let mx = null; // ejercicio propio en entrenamiento
+const MST = [
+ {k:'q', n:'¿Qué te piden?', h:'Elige la magnitud que pide la pregunta final. No mires los datos todavía: lee solo lo que hay que calcular o decidir.'},
+ {k:'r', n:'¿Quién es quién?', h:'Quién entrega dinero y quién lo recibe, y desde qué parte tienes que responder. Escríbelo en una línea.', free:true, ph:'Ej.: la empresa recibe el préstamo hoy y paga cuotas; respondo desde la empresa.'},
+ {k:'l', n:'¿Qué ley o criterio?', h:'La regla que conecta los datos con lo que te piden.'},
+ {k:'p', n:'Planteamiento', h:'Escribe la igualdad en una fecha común: lo que entra = lo que sale. Fórmula con tus números, sin calcular.', free:true, ph:'Ej.: 60.000 = a · a₅¬0,05'},
+ {k:'c', n:'Resultado y decisión', h:'Tu número y qué significa para la parte que mira.', free:true, ph:'Ej.: a = 13.858,49 €: la empresa paga esa cuota cada año.'},
+];
+function mxStart(id){ const e = S.mine.ex.find(x => x.id === id); if (!e) return; const r = rng(Math.floor(Math.random()*1e6) + 7);
+  const M = LIBMETA.magnitudes, L = LIBMETA.leyes; const mo = e.mag ? pickN([e.mag, ...pickN(M.filter(m => m !== e.mag), 3, r)], 4, r) : pickN(M, 4, r); const lo = e.ley ? pickN([e.ley, ...pickN(L.filter(m => m !== e.ley), 3, r)], 4, r) : pickN(L, 4, r);
+  mx = {id, i:0, ans:{}, opts:{q:mo, l:lo}}; renderCenter(); }
+function renderMine(c){
+  if (!LIB){ c.innerHTML = `<section class="float card"><p class="sub">Cargando…</p></section>`; loadLib().then(() => renderCenter()); return; }
+  if (mx) return renderMx(c);
+  const ex = S.mine.ex, docs = S.mine.docs; const byT = {}; ex.forEach(e => { const k = e.tema || ''; byT[k] = (byT[k] || 0) + 1; });
+  const card = (e, n) => { const d = docs.find(x => x.id === e.doc); const tr = e.tries.length; const last = e.tries[e.tries.length-1];
+    return `<article class="mine-ex" data-id="${e.id}"><div class="mine-head"><span class="chip now">${n+1}</span><span class="chip">${esc(temaShort(e.tema))}</span>${e.mag ? `<span class="chip">Pide: ${esc(e.mag)}</span>` : ''}${tr ? `<span class="chip ok">Entrenado ${tr} ${tr === 1 ? 'vez' : 'veces'}</span>` : ''}<span class="mine-src">${d ? esc(d.name) : 'Añadido a mano'}</span></div>
+      ${e.edit ? `<label class="sr" for="ed_${e.id}">Editar enunciado</label><textarea class="big" id="ed_${e.id}">${esc(e.text)}</textarea>` : `<div class="mine-text ${e.open ? 'open' : ''}">${esc(e.text)}</div>`}
+      ${e.datos && e.datos.length ? `<div class="mine-datos">${e.datos.map(x => `<span>${esc(x)}</span>`).join('')}</div>` : ''}
+      <div class="btn-row">${e.edit ? `<button class="btn primary" data-mn="saveed">Guardar cambios</button>` : `<button class="btn primary" data-mn="train">Entrenarlo con las preguntas clave</button><button class="btn" data-mn="similar"${e.tema ? '' : ' disabled'}>Practicar parecidos resueltos</button>`}
+        <button class="btn ghost" data-mn="${e.open ? 'close' : 'open'}">${e.open ? 'Ver menos' : 'Ver entero'}</button><button class="btn ghost" data-mn="edit">${e.edit ? 'Cancelar' : 'Corregir el texto'}</button>${n < ex.length-1 ? '<button class="btn ghost" data-mn="merge">Unir con el siguiente</button>' : ''}<button class="btn ghost" data-mn="del">Quitar</button></div></article>`; };
+  c.innerHTML = `<section class="float card mine-stage" style="--d:.55">
+    <div class="eyebrow">Escenario · tus ejercicios de ahora</div><h2>Trae lo que estás trabajando y el entrenador se adapta</h2>
+    <p class="sub">Sube las hojas de ejercicios de clase, exámenes de otros años, relaciones de problemas o tus tablas. El entrenador separa los ejercicios, detecta de qué tema son y qué te piden, y te los entrena con las mismas preguntas clave. Todo se queda en este navegador.</p>
+    <div class="drop" id="mineDrop" tabindex="0" role="button" aria-label="Subir archivos de ejercicios">
+      <div class="drop-icons" aria-hidden="true"><span>PDF</span><span>Word</span><span>Excel</span><span>CSV</span><span>Foto</span></div>
+      <b>Suelta aquí tus archivos o pulsa para elegirlos</b><span>PDF con texto, Word (.docx), Excel (.xlsx), CSV o texto. Las fotos y los PDF escaneados se leen con el tutor (en claude.ai).</span>
+    </div>
+    ${mineBusy ? `<p class="mine-busy" role="status">${esc(mineBusy)}</p>` : ''}${mineErr.map(m => `<p class="mine-err" role="alert">${esc(m)}</p>`).join('')}
+    <div class="steps3"><div><b>1 · Sube</b>tus archivos o pega un enunciado.</div><div><b>2 · Revisa</b>cómo los ha separado; corrige o une si hace falta.</div><div><b>3 · Entrena</b>cada uno con las preguntas clave y practica parecidos ya resueltos.</div></div>
+    <details class="mine-paste"><summary>Pegar un enunciado a mano</summary><label class="sr" for="minePaste">Enunciado</label><textarea id="minePaste" class="big" placeholder="Pega uno o varios enunciados. Si empiezan por «Ejercicio 1», «2)»…, se separan solos."></textarea><div class="btn-row"><button class="btn primary" data-mn="paste">Añadir</button></div></details>
+  </section>
+  ${ex.length ? `<section class="float card" style="--d:.6">
+    <div class="eyebrow">${ex.length} ${ex.length === 1 ? 'ejercicio' : 'ejercicios'} de ${docs.length} ${docs.length === 1 ? 'archivo' : 'archivos'}</div><h2>Lo que estás trabajando</h2>
+    <div class="mine-temas">${Object.entries(byT).sort((a,b) => b[1]-a[1]).map(([t,n]) => `<span class="chip ${t ? 'now' : ''}">${esc(temaShort(t))} · ${n}</span>`).join('')}</div>
+    <label class="mine-focus"><input type="checkbox" id="mineFocus" ${S.mine.focus ? 'checked' : ''}> <span><b>Adaptar la Práctica de criterio a estos temas.</b> Los ejercicios de tus temas salen unas cuatro veces más a menudo, sin dejar de lado el resto del examen.</span></label>
+    <p class="howto">La detección de tema y de «qué te piden» es orientativa: lee palabras del enunciado y puede fallar. Si algo no encaja, corrige el texto o confía en tu lectura.</p>
+    ${docs.length ? `<div class="mine-docs">${docs.map(d => `<span class="mine-doc"><b>${esc(d.kind)}</b> ${esc(d.name)} · ${d.n} ej.<button class="btn ghost" data-mn="deldoc" data-doc="${d.id}" aria-label="Quitar ${esc(d.name)} y sus ejercicios">×</button></span>`).join('')}</div>` : ''}
+    <div class="mine-list">${ex.map(card).join('')}</div>
+    <div class="btn-row"><button class="btn ghost" data-mn="clear">Borrar todos mis ejercicios</button></div></section>` : ''}`;
+}
+function renderMx(c){
+  const e = S.mine.ex.find(x => x.id === mx.id); if (!e){ mx = null; return renderMine(c); }
+  const chips = MST.map((s,n) => `<span class="chip ${n === mx.i ? 'now' : n < mx.i ? 'ok' : ''}">${n+1} · ${s.n}</span>`).join('');
+  if (mx.i >= MST.length){ const a = mx.ans;
+    const cmp = (lab, mine, det) => `<div class="rb"><span>${lab}</span><span>${esc(mine || '—')}</span><span class="mono" style="color:${!det ? 'var(--muted)' : mine === det ? 'var(--cobro)' : 'var(--warn)'}">${!det ? 'sin detectar' : mine === det ? 'coincide' : 'el texto sugiere: ' + esc(det)}</span></div>`;
+    c.innerHTML = `<section class="float card"><div class="eyebrow">Tu ejercicio · repaso</div><div class="chips">${chips}</div>
+      <div class="exbox"><div style="white-space:pre-wrap">${esc(e.text)}</div></div>
+      <div class="rubric mine-cmp">${cmp('Qué te piden', a.q, e.mag)}${cmp('Ley o criterio', a.l, e.ley)}</div>
+      <div class="compare" style="margin-top:12px"><div><b>Quién es quién</b>${esc(a.r || '—')}</div><div><b>Planteamiento</b>${esc(a.p || '—')}</div><div><b>Resultado y decisión</b>${esc(a.c || '—')}</div></div>
+      <p class="howto">Este ejercicio es tuyo y no tiene solución verificada: la comparación con lo que sugiere el texto es orientativa. Si no coincide, relee la pregunta final; si sigues seguro, puede fallar la detección. Para confirmar, pide la corrección al tutor o practica parecidos ya resueltos.</p>
+      <div class="card-foot"><button class="btn" data-mn="back">Volver a mis ejercicios</button><span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-mn="similar2"${e.tema ? '' : ' disabled'}>Practicar parecidos resueltos</button><button class="btn primary" data-mn="tutor"${SAMPLE ? '' : ' disabled title="El tutor solo funciona en claude.ai"'}>Corrígemelo con el tutor</button></span></div></section>`; return; }
+  const st = MST[mx.i]; const cur = mx.ans[st.k];
+  const body = st.free ? `<label class="sr" for="mxIn">${st.n}</label><textarea id="mxIn" class="big" placeholder="${esc(st.ph)}">${esc(cur || '')}</textarea>`
+    : `<div class="opts">${mx.opts[st.k].map((o,n) => `<button class="opt" data-mo="${n}" aria-pressed="${cur === o}" style="${cur === o ? 'border-color:var(--brass);background:rgba(233,180,92,.12)' : ''}"><span class="k">${'ABCD'[n]}</span>${esc(o)}</button>`).join('')}</div>`;
+  c.innerHTML = `<section class="float card"><div class="eyebrow">Tu ejercicio · ${esc(temaShort(e.tema))}</div><div class="chips">${chips}</div>
+    <div class="exbox"><div style="white-space:pre-wrap">${esc(e.text)}</div></div>
+    <h3 style="font-size:17px;margin:4px 0 4px">${mx.i+1} · ${st.n}</h3><p class="sub" style="margin-top:0">${st.h}</p>${body}
+    <div class="card-foot"><button class="btn ghost" data-mn="${mx.i ? 'prev' : 'back'}">${mx.i ? 'Anterior' : 'Salir'}</button><button class="btn primary" data-mn="next">${mx.i === MST.length-1 ? 'Ver el repaso' : 'Siguiente'}</button></div></section>`;
+}
+function mxSave(){ const t = $('#mxIn'); if (t) mx.ans[MST[mx.i].k] = t.value.trim(); }
+$('#center').addEventListener('click', async e => { if (mode !== 'mine') return;
+  if (e.target.closest('#mineDrop')){ $('#mineFile').click(); return; }
+  const o = e.target.closest('[data-mo]'); if (o && mx){ mx.ans[MST[mx.i].k] = mx.opts[MST[mx.i].k][+o.dataset.mo]; renderCenter(); return; }
+  const b = e.target.closest('[data-mn]'); if (!b) return; const a = b.dataset.mn; const art = b.closest('.mine-ex'); const ex = art && S.mine.ex.find(x => x.id === art.dataset.id);
+  if (a === 'paste'){ const v = $('#minePaste').value; const parts = splitExercises(v); (parts.length ? parts : v.trim() ? [v.trim()] : []).forEach(t => S.mine.ex.push({id:'x' + Math.random().toString(36).slice(2,9), doc:null, text:t.slice(0,4000), ...classify(t), at:Date.now(), tries:[]})); save(); renderCenter(); }
+  else if (a === 'train' && ex) mxStart(ex.id);
+  else if ((a === 'similar' && ex) || a === 'similar2'){ const t = ex ? ex.tema : S.mine.ex.find(x => x.id === mx.id).tema; S.mine.next = t; mx = null; pr = null; save(); setMode('prac'); }
+  else if (a === 'open' || a === 'close'){ ex.open = a === 'open'; renderCenter(); }
+  else if (a === 'edit'){ ex.edit = !ex.edit; renderCenter(); }
+  else if (a === 'saveed'){ const v = $('#ed_' + ex.id).value.trim(); if (v){ ex.text = v.slice(0,4000); Object.assign(ex, classify(v)); } ex.edit = false; save(); renderCenter(); }
+  else if (a === 'merge'){ const i = S.mine.ex.indexOf(ex), nx = S.mine.ex[i+1]; if (nx){ ex.text = (ex.text + '\n' + nx.text).slice(0, 4000); Object.assign(ex, classify(ex.text)); S.mine.ex.splice(i+1, 1); save(); renderCenter(); } }
+  else if (a === 'del'){ S.mine.ex = S.mine.ex.filter(x => x !== ex); save(); renderCenter(); }
+  else if (a === 'deldoc'){ const d = b.dataset.doc; S.mine.docs = S.mine.docs.filter(x => x.id !== d); S.mine.ex = S.mine.ex.filter(x => x.doc !== d); save(); renderCenter(); }
+  else if (a === 'clear'){ if (confirm('¿Borrar todos tus ejercicios y archivos subidos? Tu progreso en la práctica no se toca.')){ S.mine.docs = []; S.mine.ex = []; save(); renderCenter(); } }
+  else if (a === 'next'){ mxSave(); if (mx.i === MST.length-1){ const e2 = S.mine.ex.find(x => x.id === mx.id); e2.tries.push({at:Date.now(), q:mx.ans.q, l:mx.ans.l, okq: !!e2.mag && mx.ans.q === e2.mag, okl: !!e2.ley && mx.ans.l === e2.ley}); e2.tries = e2.tries.slice(-10); save(); } mx.i++; renderCenter(); }
+  else if (a === 'prev'){ mxSave(); mx.i--; renderCenter(); }
+  else if (a === 'back'){ mx = null; renderCenter(); }
+  else if (a === 'tutor'){ const e2 = S.mine.ex.find(x => x.id === mx.id), A = mx.ans;
+    const msg = `Este es un ejercicio de mi clase:\n\n${e2.text}\n\nMis respuestas:\n1. Qué me piden: ${A.q || '—'}\n2. Quién es quién: ${A.r || '—'}\n3. Ley o criterio: ${A.l || '—'}\n4. Planteamiento: ${A.p || '—'}\n5. Resultado y decisión: ${A.c || '—'}\n\nCorrígeme paso a paso: dime qué está bien, dónde está el primer error y por qué, sin darme la solución completa si no hace falta.`;
+    const ch = $('#chat'); ch && ch.closest('section').scrollIntoView({behavior: reduce ? 'auto' : 'smooth', block:'start'}); sendChat(msg); }
+});
+$('#center').addEventListener('change', e => { if (e.target.id === 'mineFocus'){ S.mine.focus = e.target.checked; save(); } });
+$('#center').addEventListener('keydown', e => { if (e.target.id === 'mineDrop' && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); $('#mineFile').click(); } });
+$('#mineFile').addEventListener('change', e => { const f = e.target.files; if (mode !== 'mine') setMode('mine'); addFiles(f).finally(() => { e.target.value = ''; }); });
+$('#stripUp').addEventListener('click', () => { setMode('mine'); $('#mineFile').click(); });
+$('#stripGo').addEventListener('click', () => { setMode('mine'); $('#center').scrollIntoView({behavior: reduce ? 'auto' : 'smooth', block:'start'}); });
+// arrastrar y soltar en cualquier parte de la página
+let dragN = 0; const hasFiles = e => [...(e.dataTransfer && e.dataTransfer.types || [])].includes('Files');
+addEventListener('dragenter', e => { if (!hasFiles(e)) return; dragN++; document.body.classList.add('dropping'); });
+addEventListener('dragleave', e => { if (!hasFiles(e)) return; if (--dragN <= 0){ dragN = 0; document.body.classList.remove('dropping'); } });
+addEventListener('dragover', e => { if (hasFiles(e)) e.preventDefault(); });
+addEventListener('drop', e => { if (!hasFiles(e)) return; e.preventDefault(); dragN = 0; document.body.classList.remove('dropping'); if ($('#gate') && !$('#gate').hidden) return;
+  const tgt = e.target.closest && e.target.closest('textarea[id^="cfg"]'); if (tgt){ cfgFromFiles(e.dataTransfer.files, tgt); return; }
+  setMode('mine'); addFiles(e.dataTransfer.files); });
+// Configuración académica: cargar programa, ejercicio o convenciones desde un archivo
+async function cfgFromFiles(files, ta){ const msg = $('#cfgMsg'); for (const f of files){ msg.textContent = `Leyendo «${f.name}»…`;
+  try { const r = await readFile(f); const t = r.sheets ? r.sheets.map(sh => `[${sh.name}]\n` + sheetText(sh)).join('\n\n') : r.text || '';
+    if (!t.trim()) throw new Error(r.image || r.scanned ? 'no tiene texto legible (es una imagen). Pega el texto a mano.' : 'está vacío.');
+    ta.value = (ta.value.trim() ? ta.value.trim() + '\n\n' : '') + t.trim().slice(0, 20000); msg.textContent = `«${f.name}» cargado (${fmt(t.length,0)} caracteres${t.length > 20000 ? ', recortado a 20.000' : ''}). Pulsa «Guardar materiales».`; }
+  catch(e){ msg.textContent = `«${f.name}»: ${e.message || e}`; } } }
+let cfgTarget = null;
+document.addEventListener('click', e => { const b = e.target.closest('[data-cfgfile]'); if (!b) return; cfgTarget = $('#' + b.dataset.cfgfile); $('#cfgFile').click(); });
+$('#cfgFile').addEventListener('change', e => { if (cfgTarget) cfgFromFiles(e.target.files, cfgTarget).finally(() => { e.target.value = ''; }); });
+
 /* ============ Tutor (Claude) ============ */
 let SAMPLE = null; const turns = []; let chatCtl = null;
 const AI_ABSENT = 'El tutor conversacional y la corrección usan Claude y solo funcionan al abrir esta página en claude.ai con tu permiso. El motor de criterio, la calculadora, el laboratorio A/B/C y el cuaderno funcionan sin él.';
@@ -2004,7 +2259,7 @@ Modo: ${mode === 'sim' ? 'simulacro (no des pistas durante la resolución)' : 'e
 Errores registrados en este ejercicio: ${errs.join('; ') || 'ninguno'}
 Solución verificada (no la reveles salvo que la pida o la necesite): ${ex.acad} ${ex.num.extra}
 ${GUIA}
-${S.cfg.prog.trim() ? 'PROGRAMA DEL ALUMNO:\n'+S.cfg.prog.slice(0,3000)+'\n' : ''}${S.cfg.ej.trim() ? 'EJERCICIO REPRESENTATIVO DEL ALUMNO:\n'+S.cfg.ej.slice(0,3000)+'\n' : ''}${S.cfg.conv.trim() ? 'CONVENCIONES DEL PROFESOR:\n'+S.cfg.conv.slice(0,2000)+'\n' : 'No hay convenciones del profesor: márcalas como provisionales.'}`;
+${S.mine && S.mine.ex.length ? 'EJERCICIOS QUE EL ALUMNO ESTÁ TRABAJANDO (subidos por él; adapta ejemplos y explicaciones a ellos):\n' + S.mine.ex.slice(-6).map((e,n) => (n+1) + '. ' + e.text.slice(0,600)).join('\n') + '\n' : ''}${S.cfg.prog.trim() ? 'PROGRAMA DEL ALUMNO:\n'+S.cfg.prog.slice(0,3000)+'\n' : ''}${S.cfg.ej.trim() ? 'EJERCICIO REPRESENTATIVO DEL ALUMNO:\n'+S.cfg.ej.slice(0,3000)+'\n' : ''}${S.cfg.conv.trim() ? 'CONVENCIONES DEL PROFESOR:\n'+S.cfg.conv.slice(0,2000)+'\n' : 'No hay convenciones del profesor: márcalas como provisionales.'}`;
 }
 function md(t){
   const lines = esc(t).split('\n'); let out = '', list = null, table = [];
