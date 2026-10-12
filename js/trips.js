@@ -2,7 +2,8 @@
 
 import { db, uid, kv } from './store.js';
 import { readExif } from './exif.js';
-import { identifyPhoto, placeLine, mainSubject } from './identify.js';
+import { identifyPhoto, gatherContext, placeLine, mainSubject } from './identify.js';
+import { track } from './analytics.js';
 import { distance } from './geo.js';
 import { parseLocal, fmt, daysBetween } from './util.js';
 import { KIND_LABEL, isFood } from './places.js';
@@ -57,18 +58,23 @@ async function makeThumb(file, max = 520) {
   }
 }
 
-export async function importFiles(files, onProgress) {
+// Importación en dos tiempos:
+//  1. Lectura local (segundos): metadatos, miniaturas, viajes creados. El usuario ya ve su viaje.
+//  2. Reconocimiento en segundo plano (processPending): una consulta por parada, no por foto.
+// Con { tripId } las fotos se añaden a un viaje que ya existe.
+export async function importFiles(files, onProgress, { tripId } = {}) {
   const images = [...files].filter((f) => /^image\//.test(f.type) || /\.(jpe?g|heic|heif|png|webp)$/i.test(f.name));
   const photos = [];
-  let undrawable = 0;
+  let undrawable = 0, heic = 0;
+  navigator.storage?.persist?.().catch(() => {}); // pide al navegador que no borre las fotos por falta de espacio
 
-  // Fase 1: leer metadatos y miniaturas (rápido, local).
   for (let i = 0; i < images.length; i++) {
     const f = images[i];
     onProgress?.({ phase: 'read', step: STEPS.read, done: i, total: images.length, name: f.name });
     const exif = await readExif(f);
     const thumb = await makeThumb(f);
     if (!thumb) undrawable++;
+    if (/\.hei[cf]$/i.test(f.name) || /hei[cf]/i.test(f.type)) heic++;
     const id = uid();
     const blobKey = `b:${id}`, thumbKey = thumb ? `t:${id}` : null;
     await db.put('blobs', f, blobKey);
@@ -78,44 +84,150 @@ export async function importFiles(files, onProgress) {
       takenAt: exif.takenAt || isoLocal(new Date(f.lastModified)),
       dateFromFile: !exif.takenAt,
       lat: exif.lat ?? null, lon: exif.lon ?? null, heading: exif.heading ?? null,
+      hadGps: exif.lat != null,
       focal35: exif.focal35, camera: [exif.make, exif.model].filter(Boolean).join(' ') || null,
-      w: thumb?.w, h: thumb?.h, fav: false, status: 'new',
+      w: thumb?.w, h: thumb?.h, fav: false, status: 'pending',
     });
     onProgress?.({ phase: 'read', step: STEPS.read, done: i + 1, total: images.length, thumb: thumb ? URL.createObjectURL(thumb.blob) : null });
   }
   photos.sort((a, b) => a.takenAt.localeCompare(b.takenAt));
-  inferMissingLocations(photos);
 
-  // Fase 2: identificar cada foto.
-  const withGps = photos.filter((p) => p.lat != null).length;
-  for (let i = 0; i < photos.length; i++) {
-    const p = photos[i];
-    const imageBlob = p.thumbKey ? await db.get('blobs', p.blobKey) : null;
-    await identifyPhoto(p, {
-      imageBlob: p.approx ? null : imageBlob,
-      onStep: (s) => onProgress?.({ phase: 'identify', step: STEPS[s], done: i, total: photos.length, sub: mainSubject(p) || (p.place ? placeLine(p) : '') }),
-    });
-    onProgress?.({ phase: 'identify', step: STEPS.pois, done: i + 1, total: photos.length, sub: mainSubject(p) || (p.place ? placeLine(p) : '') });
-  }
-
-  // Fase 3: agrupar en viajes y guardar.
-  onProgress?.({ phase: 'story', step: STEPS.story, done: photos.length, total: photos.length });
-  const trips = splitIntoTrips(photos);
-  const companions = await kv.get('defaultCompanions', []);
   const created = [];
-  for (const group of trips) {
-    const trip = describeTrip(group, { companions });
+  if (tripId) {
+    const trip = await getTrip(tripId);
+    const existing = await tripPhotos(tripId);
+    // Sin fecha propia, una foto añadida se coloca al final del viaje, no en el día de hoy.
+    for (const p of photos) if (p.dateFromFile && existing.length) p.takenAt = existing[existing.length - 1].takenAt;
+    inferMissingLocations([...existing, ...photos].sort((a, b) => a.takenAt.localeCompare(b.takenAt)));
+    for (const p of photos) { p.tripId = tripId; await savePhoto(p); }
+    const all = [...existing, ...photos].sort((a, b) => a.takenAt.localeCompare(b.takenAt));
+    trip.start = all[0].takenAt; trip.end = all[all.length - 1].takenAt;
     await saveTrip(trip);
-    for (const p of group) { p.tripId = trip.id; await savePhoto(p); }
     created.push(trip);
+  } else {
+    inferMissingLocations(photos);
+    const companions = await kv.get('defaultCompanions', []);
+    // Fotos sin fecha ni GPS (WhatsApp, capturas): su fecha es la del archivo y no dice nada del viaje.
+    // No deben partir el viaje: van con el grupo más grande de esta importación.
+    const loose = photos.filter((p) => p.dateFromFile && p.lat == null);
+    const groups = splitIntoTrips(photos.filter((p) => !loose.includes(p)));
+    if (!groups.length) groups.push([]);
+    groups.sort((a, b) => b.length - a.length)[0].push(...loose);
+    for (const group of groups) {
+      const dated = group.filter((p) => !p.dateFromFile);
+      if (dated.length) for (const p of group) if (p.dateFromFile) p.takenAt = dated[dated.length - 1].takenAt;
+      group.sort((a, b) => a.takenAt.localeCompare(b.takenAt));
+      const trip = describeTrip(group, { companions, fields: { titleAuto: true } });
+      await saveTrip(trip);
+      for (const p of group) { p.tripId = trip.id; await savePhoto(p); }
+      created.push(trip);
+    }
   }
-  return { trips: created, total: photos.length, withGps, undrawable };
+  const withGps = photos.filter((p) => p.hadGps).length;
+  track('import_done', { photos: photos.length, gps: withGps, heic, undrawable, add: !!tripId });
+  for (const t of created) processPending(t.id);
+  return { trips: created, total: photos.length, withGps, undrawable, heic };
 }
+
+// ---------- Reconocimiento en segundo plano ----------
+// Una sola cola para toda la app. Avisa con eventos para que las pantallas se repinten solas:
+//  'recuerdo:photo'    → { photo }               una foto acaba de identificarse
+//  'recuerdo:progress' → { tripId, done, total }  avance del viaje
+const queue = [];
+let running = false;
+const progress = new Map();
+export const tripProgress = (tripId) => progress.get(tripId) || null;
+const emit = (name, detail) => window.dispatchEvent(new CustomEvent(name, { detail }));
+
+export function processPending(tripId) {
+  if (!queue.includes(tripId)) queue.push(tripId);
+  if (!running) runQueue();
+}
+
+async function runQueue() {
+  running = true;
+  while (queue.length) {
+    const tripId = queue[0];
+    try { await processTrip(tripId); } catch (e) { console.warn('Reconocimiento interrumpido', e); }
+    queue.shift();
+  }
+  running = false;
+}
+
+async function processTrip(tripId) {
+  const photos = await tripPhotos(tripId);
+  const pending = photos.filter((p) => p.status === 'pending');
+  if (!pending.length) return;
+  const total = pending.length;
+  let done = 0;
+  progress.set(tripId, { done, total });
+  emit('recuerdo:progress', { tripId, done, total });
+  let ctx = null;
+  for (const p of pending) {
+    if (p.lat != null && p.approx !== 'manual') {
+      if (!ctx || distance(ctx, p) > 60) ctx = await gatherContext(p.lat, p.lon).catch(() => null);
+    }
+    const imageBlob = p.thumbKey && !p.approx ? await db.get('blobs', p.blobKey) : null;
+    try {
+      await identifyPhoto(p, { imageBlob, context: ctx });
+    } catch {
+      p.status = 'pending'; // sin conexión: se reintentará al volver a abrir la app
+      break;
+    }
+    await savePhoto(p);
+    done++;
+    progress.set(tripId, { done, total });
+    emit('recuerdo:photo', { photo: p });
+    emit('recuerdo:progress', { tripId, done, total });
+  }
+  // Con los lugares ya reconocidos, el viaje recibe su nombre y su portada.
+  const trip = await getTrip(tripId);
+  if (trip) {
+    const all = await tripPhotos(tripId);
+    const fresh = describeTrip(all);
+    if (trip.titleAuto) trip.title = fresh.title;
+    trip.cities = fresh.cities; trip.country = fresh.country;
+    if (!trip.coverPinned) trip.coverId = fresh.coverId;
+    await saveTrip(trip);
+  }
+  progress.delete(tripId);
+  emit('recuerdo:progress', { tripId, done, total, finished: true });
+}
+
+// Al abrir la app, retoma lo que quedó a medias (p. ej. si se cerró durante la importación).
+export async function resumePending() {
+  for (const t of await listTrips()) {
+    const ps = await tripPhotos(t.id);
+    if (ps.some((p) => p.status === 'pending')) processPending(t.id);
+  }
+}
+
+// «¿Dónde fue esto?»: el usuario indica el sitio de las fotos que llegaron sin GPS.
+export async function assignLocation(photos, result) {
+  for (const p of photos) {
+    p.lat = result.lat; p.lon = result.lon; p.heading = null;
+    p.approx = 'manual'; p.place = result.place; p.status = 'geo'; p.hotspots = [];
+    p.candidates = [];
+    await savePhoto(p);
+    emit('recuerdo:photo', { photo: p });
+  }
+  const tripId = photos[0]?.tripId;
+  if (tripId) {
+    const trip = await getTrip(tripId);
+    const fresh = describeTrip(await tripPhotos(tripId));
+    if (trip.titleAuto) trip.title = fresh.title;
+    trip.cities = fresh.cities; trip.country = fresh.country;
+    await saveTrip(trip);
+  }
+  track('location_assigned', { photos: photos.length });
+}
+
+export const photosWithoutLocation = (photos) => photos.filter((p) => p.lat == null);
 
 // Fotos sin GPS (recibidas por WhatsApp, cámara réflex...): si hay otra con GPS a menos de
 // 90 minutos, asumimos que estaba cerca. Se marca como aproximada y no se ponen puntos.
 function inferMissingLocations(photos) {
-  const geo = photos.filter((p) => p.lat != null);
+  const geo = photos.filter((p) => p.lat != null && !p.approx);
   if (!geo.length) return;
   for (const p of photos) {
     if (p.lat != null) continue;
@@ -126,7 +238,7 @@ function inferMissingLocations(photos) {
       if (dt < bestDt) { bestDt = dt; best = g; }
     }
     if (best && bestDt < 90 * 60e3) {
-      p.lat = best.lat; p.lon = best.lon; p.approx = true; p.heading = null;
+      p.lat = best.lat; p.lon = best.lon; p.approx = 'time'; p.heading = null;
     }
   }
 }
@@ -155,7 +267,7 @@ export function describeTrip(photos, extra = {}) {
   const cities = topCounts(photos.map((p) => p.place?.city));
   const states = topCounts(photos.map((p) => p.place?.state));
   const countries = topCounts(photos.map((p) => p.place?.country));
-  let title = cities[0] || states[0] || countries[0] || 'Mi viaje';
+  let title = cities[0] || states[0] || countries[0] || 'Tu nuevo viaje';
   if (cities.length === 2) title = `${cities[0]} y ${cities[1]}`;
   else if (cities.length > 2) title = states.length === 1 ? states[0] : countries[0] || title;
   const cover = photos.find((p) => p.hotspots?.length && p.thumbKey) || photos.find((p) => p.thumbKey || p.src) || photos[0];
@@ -249,7 +361,8 @@ export function buildStory(trip, photos) {
             : `A las ${fmt.time(p.takenAt)} ${vos.estar} frente a ${articled(hs)}${p.place?.neighbourhood ? `, en ${p.place.neighbourhood}` : ''}.`;
           if (!withWho && food) text = text.replace('os sentasteis', 'te sentaste');
           const fact = cand?.extract ? shortFact(cand.extract) : null;
-          if (fact && pi === 0) text += ` ${fact}`;
+          // Una diapositiva se lee en 6-8 s: si hay nota del viajero, manda la nota y no el dato.
+          if (fact && pi === 0 && !p.note?.text) text += ` ${fact}`;
         } else {
           text = `${fmt.time(p.takenAt)} · ${placeLine(p)}.`;
         }
@@ -286,7 +399,7 @@ export function articled(hs) {
 function shortFact(extract) {
   const s = (extract.replace(/\s*\([^)]*\)/g, '').match(/[^.!?]+[.!?]/) || [])[0];
   if (!s) return null;
-  return s.length > 200 ? s.slice(0, 197).replace(/\s+\S*$/, '') + '…' : s.trim();
+  return s.length > 150 ? s.slice(0, 147).replace(/\s+\S*$/, '') + '…' : s.trim();
 }
 
 function speechFor(s) {

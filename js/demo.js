@@ -3,6 +3,11 @@
 // resuelven al vuelo; los textos y posiciones vienen ya preparados, como si la app los hubiera identificado.
 
 import { db, kv, cached } from './store.js';
+import { demoArtSpots } from './demo-art.js';
+
+// Sube este número cuando cambie el viaje de ejemplo: se vuelve a sembrar en los móviles que ya lo tenían.
+const DEMO_VERSION = 2;
+const ART = ["giralda", "catedral", "alcazar", "bar", "plaza", "torre", "setas", "basilica", "puente"];
 
 const P = (o) => o;
 const STOPS = [
@@ -49,18 +54,22 @@ const STOPS = [
 ];
 
 export async function seedDemo(force = false) {
-  if (!force && await kv.get('demoSeeded')) return null;
+  const seeded = await kv.get('demoSeeded');
+  const version = await kv.get('demoVersion', 1);
+  if (!force && seeded && (version >= DEMO_VERSION || !(await db.get('trips', 'demo-sevilla')))) return null;
   const tripId = 'demo-sevilla';
   const photos = STOPS.map((s, i) => {
     const id = `demo-${i}`;
     const candId = `demo-c${i}`;
+    const art = ART[i];
+    const spot = demoArtSpots(art)[0] || { x: s.spot.x, y: s.spot.y };
     return {
-      id, tripId, demo: true, name: `${s.wiki}.jpg`, wiki: s.wiki,
+      id, tripId, demo: true, name: `${s.wiki}.jpg`, art, wikiTitle: s.wiki,
       takenAt: s.t, lat: s.lat, lon: s.lon, heading: s.heading, focal35: 26, w: 3, h: 4,
       place: { city: s.city, neighbourhood: s.hood, street: s.street, state: 'Andalucía', country: 'España', countryCode: 'ES' },
       candidates: [{ id: candId, source: 'wikipedia', name: s.spot.name, kind: s.spot.kind, extract: s.spot.extract,
         wikiTitle: s.wiki, url: `https://es.wikipedia.org/wiki/${encodeURIComponent(s.wiki.replace(/ /g, '_'))}`, distance: 40 + i * 7, lat: s.lat, lon: s.lon }],
-      hotspots: [{ id: `h${i}`, candidateId: candId, name: s.spot.name, kind: s.spot.kind, x: s.spot.x, y: s.spot.y, confidence: 0.9, source: 'geo' }],
+      hotspots: [{ id: `h${i}`, candidateId: candId, name: s.spot.name, kind: s.spot.kind, x: spot.x, y: spot.y, confidence: 0.9, source: 'geo' }],
       status: 'geo', fav: !!s.fav,
       note: s.note ? { text: s.note } : null,
     };
@@ -72,6 +81,7 @@ export async function seedDemo(force = false) {
   });
   for (const p of photos) await db.put('photos', p);
   await kv.set('demoSeeded', true);
+  await kv.set('demoVersion', DEMO_VERSION);
   return tripId;
 }
 

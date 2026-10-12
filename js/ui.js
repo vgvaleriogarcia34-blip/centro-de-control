@@ -2,11 +2,13 @@
 
 import { blobURL } from './store.js';
 import { wikiImage } from './demo.js';
+import { demoArtURL } from './demo-art.js';
 import { h, esc, haptic } from './util.js';
 
 // ---------- Imágenes ----------
 export async function photoSrc(photo, size = 'thumb') {
   if (!photo) return null;
+  if (photo.art) return demoArtURL(photo.art);
   if (photo.wiki) return wikiImage(photo.wiki, size);
   if (size === 'full') return blobURL(photo.blobKey);
   return (await blobURL(photo.thumbKey)) || blobURL(photo.blobKey);

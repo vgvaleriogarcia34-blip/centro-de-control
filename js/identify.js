@@ -8,23 +8,35 @@
 //    entre los candidatos reales y ajusta la posición de los puntos.
 
 import { reverseGeocode, nearbyWiki, nearbyOSM, mergeCandidates, isFood, kindFromName } from './places.js';
-import { horizontalFOV, projectX, angleDiff, bearing } from './geo.js';
+import { horizontalFOV, projectX, angleDiff, bearing, distance } from './geo.js';
 import { ai } from './ai.js';
 
-export async function identifyPhoto(photo, { imageBlob, onStep } = {}) {
+// Lo que sabemos de un punto del mapa. Se pide una vez por parada y se reutiliza para todas
+// sus fotos: es lo que hace la importación 5-10 veces más rápida.
+export async function gatherContext(lat, lon) {
+  const [place, wiki, osm] = await Promise.all([
+    reverseGeocode(lat, lon),
+    nearbyWiki(lat, lon, 700),
+    nearbyOSM(lat, lon),
+  ]);
+  return { lat, lon, place, wiki, osm };
+}
+
+export async function identifyPhoto(photo, { imageBlob, onStep, context } = {}) {
   if (photo.lat == null) {
     photo.status = 'nogps';
     return photo;
   }
   const cam = { lat: photo.lat, lon: photo.lon };
+  // Ubicación puesta a mano («fue en Toledo»): sabemos el sitio, no el encuadre.
+  if (photo.approx === 'manual') { photo.status = 'geo'; photo.hotspots = []; return photo; }
   onStep?.('place');
-  const [place, wiki, osm] = await Promise.all([
-    reverseGeocode(cam.lat, cam.lon),
-    nearbyWiki(cam.lat, cam.lon, 700),
-    nearbyOSM(cam.lat, cam.lon),
-  ]);
+  const ctx = context && distance(context, cam) < 80 ? context : await gatherContext(cam.lat, cam.lon);
+  const { place } = ctx;
   photo.place = place;
   onStep?.('pois');
+  // Copias: los mismos candidatos se puntúan distinto en cada foto.
+  const wiki = ctx.wiki.map((o) => ({ ...o })), osm = ctx.osm.map((o) => ({ ...o }));
   const all = mergeCandidates(wiki, osm, cam).filter((c) => c.distance < (isFood(c.kind) ? 90 : 700));
   // Respaldo: el geocodificador suele nombrar el sitio exacto donde estabas («Torre del Oro»).
   // Si las otras fuentes no lo tienen (o no responden), lo añadimos como candidato "aquí mismo".
@@ -53,7 +65,8 @@ export async function identifyPhoto(photo, { imageBlob, onStep } = {}) {
   all.sort((a, b) => b.score - a.score);
   photo.candidates = all.slice(0, 10).map(slim);
 
-  photo.hotspots = placeHotspots(all, { hasHeading });
+  // Ubicación estimada por la hora (foto sin GPS): mostramos lo cercano, pero sin marcar nada en la imagen.
+  photo.hotspots = photo.approx ? [] : placeHotspots(all, { hasHeading });
   photo.status = 'geo';
 
   if (imageBlob && (await ai.available())) {
@@ -117,14 +130,14 @@ const spot = (c, x, y, confidence) => ({
 const clamp = (v) => Math.min(0.95, Math.max(0.05, Number(v) || 0.5));
 
 function slim(c) {
-  const { id, source, name, lat, lon, kind, description, extract, image, wikiTitle, url, cuisine, website, startDate, distance, inView, score } = c;
-  return { id, source, name, lat, lon, kind, description, extract, image, wikiTitle, url, cuisine, website, startDate, distance, inView, score };
+  const { id, source, name, lat, lon, kind, description, extract, image, wikiTitle, wikidata, url, cuisine, website, startDate, distance, inView, score } = c;
+  return { id, source, name, lat, lon, kind, description, extract, image, wikiTitle, wikidata, url, cuisine, website, startDate, distance, inView, score };
 }
 
 // Nombre corto y humano del sitio de la foto: "Barrio de Santa Cruz, Sevilla".
 export function placeLine(photo) {
   const p = photo.place;
-  if (!p) return photo.lat != null ? 'Ubicación guardada' : 'Sin ubicación';
+  if (!p) return photo.status === 'pending' ? 'Reconociendo el lugar…' : photo.lat != null ? 'Ubicación guardada' : 'Sin ubicación';
   const parts = [p.neighbourhood || p.street, p.city || p.county].filter(Boolean);
   return [...new Set(parts)].join(', ') || p.country || 'Ubicación guardada';
 }

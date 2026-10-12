@@ -130,7 +130,7 @@ export function nearbyOSM(lat, lon) {
     const j = await getJSON('https://overpass-api.de/api/interpreter', {
       method: 'POST', body: 'data=' + encodeURIComponent(q),
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    }, 15000);
+    }, 9000);
     return (j.elements || []).map((e) => {
       const t = e.tags || {};
       const la = e.lat ?? e.center?.lat, lo = e.lon ?? e.center?.lon;
@@ -180,10 +180,10 @@ export function wikiDetails(title, l = lang) {
   if (!title) return Promise.resolve(null);
   return cached(`wikidet:${l}:${title}`, 60, async () => {
     const base = `https://${l}.wikipedia.org/w/api.php?origin=*&format=json`;
-    const j = await getJSON(`${base}&action=query&prop=extracts|pageimages|description&exintro=1&explaintext=1&piprop=thumbnail&pithumbsize=1000&redirects=1&titles=${encodeURIComponent(title)}`);
+    const j = await getJSON(`${base}&action=query&prop=extracts|pageimages|description|pageprops&ppprop=wikibase_item&exintro=1&explaintext=1&piprop=thumbnail&pithumbsize=1000&redirects=1&titles=${encodeURIComponent(title)}`);
     const p = Object.values(j?.query?.pages || {})[0];
     if (!p || p.missing !== undefined) return null;
-    return { title: p.title, extract: p.extract || '', description: p.description || '', image: p.thumbnail?.source || null };
+    return { title: p.title, extract: p.extract || '', description: p.description || '', image: p.thumbnail?.source || null, wikidata: p.pageprops?.wikibase_item || null };
   }).catch(() => null);
 }
 
@@ -196,4 +196,61 @@ export function pickFact(extract = '') {
 
 export function splitParagraphs(extract = '', max = 3) {
   return extract.split(/\n+/).map((s) => s.trim()).filter(Boolean).slice(0, max);
+}
+
+// ---------- Datos rápidos (Wikidata): año, estilo, arquitecto, protección, altura ----------
+const FACT_PROPS = { P571: 'inception', P84: 'architect', P149: 'style', P1435: 'heritage', P2048: 'height' };
+export function wikidataFacts(qid) {
+  if (!qid) return Promise.resolve(null);
+  return cached(`wd:${lang}:${qid}`, 90, async () => {
+    const base = 'https://www.wikidata.org/w/api.php?origin=*&format=json&action=wbgetentities';
+    const j = await getJSON(`${base}&ids=${qid}&props=claims`);
+    const claims = j?.entities?.[qid]?.claims || {};
+    const val = (p) => (claims[p] || []).filter((c) => c.rank !== 'deprecated').map((c) => c.mainsnak?.datavalue?.value).filter(Boolean);
+    const out = {};
+    const inc = val('P571')[0];
+    if (inc?.time) {
+      const year = parseInt(inc.time.slice(0, 5), 10);
+      out.inception = inc.precision <= 7 ? `Siglo ${roman(Math.ceil(Math.abs(year) / 100))}` : String(year);
+    }
+    const h = val('P2048')[0];
+    if (h?.amount && /Q11573$/.test(h.unit || '')) out.height = `${Math.round(Math.abs(parseFloat(h.amount)))} m de altura`;
+    const ids = { architect: val('P84').slice(0, 2), style: val('P149').slice(0, 1), heritage: val('P1435').slice(0, 2) };
+    const all = [...new Set(Object.values(ids).flat().map((v) => v.id).filter(Boolean))];
+    if (all.length) {
+      const l = await getJSON(`${base}&ids=${all.join('|')}&props=labels&languages=${lang}|en`);
+      const label = (id) => l?.entities?.[id]?.labels?.[lang]?.value || l?.entities?.[id]?.labels?.en?.value;
+      for (const [k, arr] of Object.entries(ids)) {
+        const names = arr.map((v) => label(v.id)).filter(Boolean);
+        if (names.length) out[k] = names;
+      }
+    }
+    return out;
+  }).catch(() => null);
+}
+function roman(n) {
+  const m = [[10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']];
+  let r = '';
+  for (const [v, s] of [[20, 'XX'], ...m]) while (n >= v) { r += s; n -= v; }
+  return r;
+}
+
+// ---------- Buscar un sitio por nombre (fotos sin GPS: «¿Dónde fue esto?») ----------
+export function searchPlace(q) {
+  return nominatimQueue(async () => {
+    const j = await getJSON(`https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&accept-language=${lang}&q=${encodeURIComponent(q)}`);
+    const seen = new Set();
+    return (j || []).filter((r) => !seen.has(r.display_name) && seen.add(r.display_name)).map((r) => {
+      const a = r.address || {};
+      return {
+        lat: +r.lat, lon: +r.lon, label: r.display_name,
+        name: r.name || a.city || a.town || a.village || q,
+        place: {
+          name: r.name || null, street: a.road || null, neighbourhood: a.neighbourhood || a.suburb || null,
+          city: a.city || a.town || a.village || a.municipality || null, state: a.state || null,
+          country: a.country || null, countryCode: (a.country_code || '').toUpperCase(),
+        },
+      };
+    });
+  });
 }
