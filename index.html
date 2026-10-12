@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Recuerdo</title>
+<meta name="description" content="Tus fotos de viaje, con nombre e historia. Toca una foto y descubre dónde estabas.">
+<meta name="theme-color" content="#0f0d0c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div id="app" class="app">
+  <main id="view" class="view" tabindex="-1"></main>
+
+  <!-- Barra inferior tipo Instagram/TikTok: 4 destinos + botón central de crear -->
+  <nav class="tabbar" aria-label="Navegación principal">
+    <a href="#/" class="tab" data-tab="home" aria-label="Viajes">
+      <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>
+      <span>Viajes</span>
+    </a>
+    <a href="#/mapa" class="tab" data-tab="map" aria-label="Mapa">
+      <svg viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zm0 0v14m6-12v14"/></svg>
+      <span>Mapa</span>
+    </a>
+    <a href="#/importar" class="tab tab-create" data-tab="import" aria-label="Añadir fotos">
+      <span class="tab-create-btn"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>
+    </a>
+    <a href="#/recuerdos" class="tab" data-tab="memories" aria-label="Recuerdos">
+      <svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.3-9.2C1.4 8.4 3.6 5 7 5c2 0 3.4 1 5 2.8C13.6 6 15 5 17 5c3.4 0 5.6 3.4 4.3 6.8C19.5 16.4 12 21 12 21z"/></svg>
+      <span>Recuerdos</span>
+    </a>
+    <a href="#/ajustes" class="tab" data-tab="settings" aria-label="Ajustes">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+      <span>Tú</span>
+    </a>
+  </nav>
+</div>
+
+<!-- Capas globales: hoja inferior (Google Maps), visor de historias (Instagram), avisos -->
+<div id="sheet-root"></div>
+<div id="overlay-root"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
