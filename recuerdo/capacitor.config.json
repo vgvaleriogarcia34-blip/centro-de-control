@@ -1,0 +1,12 @@
+{
+  "appId": "com.recuerdo.app",
+  "appName": "Recuerdo",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#0f0d0c"
+  },
+  "android": {
+    "backgroundColor": "#0f0d0c"
+  }
+}
