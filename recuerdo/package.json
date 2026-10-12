@@ -1,0 +1,15 @@
+{
+  "name": "recuerdo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Recuerdo: tus fotos de viaje, con nombre e historia.",
+  "type": "module",
+  "scripts": {
+    "start": "node server/server.mjs",
+    "check": "node --check server/server.mjs && for f in js/*.js; do node --check \"$f\" || exit 1; done"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0"
+  }
+}

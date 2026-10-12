@@ -1,0 +1,21 @@
+{
+  "name": "Recuerdo — tus viajes, con nombre e historia",
+  "short_name": "Recuerdo",
+  "description": "Toca una foto de tu viaje y descubre dónde estabas, qué monumento es y su historia.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f0d0c",
+  "theme_color": "#0f0d0c",
+  "lang": "es",
+  "categories": ["travel", "photo", "lifestyle"],
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icons/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "share_target": {
+    "action": "./#/importar",
+    "method": "GET"
+  }
+}
