@@ -5,7 +5,9 @@
 
 import { ICONS, KIND_ICON, esc, h, fmt, toast, haptic } from './util.js';
 import { photoSrc, openSheet, closeSheet, sheetOpen } from './ui.js';
-import { KIND_LABEL, isFood, wikiDetails, pickFact, splitParagraphs } from './places.js';
+import { KIND_LABEL, isFood, wikiDetails, wikidataFacts, pickFact, splitParagraphs } from './places.js';
+import { openLocateSheet } from './locate.js';
+import { track } from './analytics.js';
 import { placeLine, mainSubject, identifyPhoto } from './identify.js';
 import { formatDistance } from './geo.js';
 import { savePhoto } from './trips.js';
@@ -26,7 +28,8 @@ export async function openViewer(photos, index, { trip, onChange } = {}) {
       </div>
       <div class="stage"><div class="frame"><img alt=""></div></div>
       <div class="viewer-bottom">
-        <div class="hint-pill" hidden>${ICONS.sparkle}<span>Toca los puntos para descubrir qué es</span></div>
+        <div class="hint-pill" hidden>${ICONS.sparkle}<span></span></div>
+        <div class="place-chips" aria-label="Lugares de esta foto"></div>
         <div class="viewer-actions">
           <button data-act="listen">${ICONS.speaker}<span>Escuchar</span></button>
           <button data-act="note">${ICONS.mic}<span>Nota de voz</span></button>
@@ -44,12 +47,29 @@ export async function openViewer(photos, index, { trip, onChange } = {}) {
   bindGestures(el);
   el.addEventListener('click', onClick);
   document.addEventListener('keydown', onKey);
+  window.addEventListener('recuerdo:photo', onPhotoUpdated);
 
+  // Pista de la primera vez, adaptada a lo que tiene la foto.
   if (!(await kv.get('hintSeen'))) {
     const hint = el.querySelector('.hint-pill');
+    hint.querySelector('span').textContent = cur().hotspots?.length ? 'Toca los puntos para descubrir qué es' : 'Toca la foto para saber dónde estabas';
     hint.hidden = false;
     setTimeout(() => { hint.hidden = true; kv.set('hintSeen', true); }, 6000);
   }
+}
+
+// La importación sigue en segundo plano: si la foto que miras se acaba de reconocer, se repinta.
+function onPhotoUpdated(e) {
+  if (!active) return;
+  const fresh = e.detail.photo;
+  const i = active.photos.findIndex((x) => x.id === fresh.id);
+  if (i < 0) return;
+  active.photos[i] = fresh;
+  if (i === active.index) { drawHotspots(fresh); drawChips(fresh); updateTitle(fresh); }
+}
+
+function updateTitle(p) {
+  active.el.querySelector('.viewer-title b').textContent = mainSubject(p) || placeLine(p);
 }
 
 export function closeViewer() {
@@ -58,6 +78,7 @@ export function closeViewer() {
   active.recording?.stop().catch(() => {});
   closeSheet(true);
   document.removeEventListener('keydown', onKey);
+  window.removeEventListener('recuerdo:photo', onPhotoUpdated);
   active.el.remove();
   document.getElementById('app').classList.remove('immersive');
   document.body.style.overflow = '';
@@ -77,7 +98,8 @@ async function render(dir) {
   void frame.offsetWidth;
   if (dir) frame.classList.add(dir > 0 ? 'slide-l' : 'slide-r');
 
-  el.querySelector('.viewer-title b').textContent = mainSubject(p) || placeLine(p);
+  updateTitle(p);
+  track('photo_open', { spots: (p.hotspots || []).length, demo: !!p.demo });
   el.querySelector('.viewer-title small').textContent = `${fmt.dayTitle(p.takenAt)} · ${fmt.time(p.takenAt)}`;
   el.querySelector('[data-act="fav"]').classList.toggle('on', !!p.fav);
 
@@ -103,8 +125,23 @@ async function render(dir) {
     pre.src = full;
   }
   drawHotspots(p);
+  drawChips(p);
 
   if (p.status === 'new' && !p.demo) reidentify(p);
+}
+
+// Fila de lugares bajo la foto: siempre hay algo que tocar, aunque la foto no tenga puntos.
+function drawChips(p) {
+  const box = active.el.querySelector('.place-chips');
+  const chips = [];
+  if (p.status === 'pending') chips.push(`<button class="primary" disabled>${ICONS.sparkle}Reconociendo el lugar…</button>`);
+  else if (p.lat == null) chips.push(`<button class="primary" data-chip="locate">${ICONS.pin}¿Dónde fue esto?</button>`);
+  else chips.push(`<button class="primary" data-chip="place">${ICONS.pin}${esc(placeLine(p))}</button>`);
+  const inPhoto = new Set((p.hotspots || []).map((s) => s.candidateId));
+  for (const c of (p.candidates || []).filter((k) => !inPhoto.has(k.id)).slice(0, 5)) {
+    chips.push(`<button data-chip="cand" data-id="${esc(c.id)}">${KIND_ICON(c.kind)}${esc(c.name)}</button>`);
+  }
+  box.innerHTML = chips.join('');
 }
 
 function drawHotspots(p) {
@@ -135,6 +172,15 @@ async function reidentify(p) {
 let tapTimer = null, lastTap = 0;
 
 function onClick(e) {
+  const chip = e.target.closest('[data-chip]');
+  if (chip) {
+    const p = cur();
+    if (chip.dataset.chip === 'place') return openPlaceSheet(p);
+    if (chip.dataset.chip === 'locate') return openLocateSheet([p], { onDone: () => render(0) });
+    const c = p.candidates.find((k) => k.id === chip.dataset.id);
+    if (c) return openSpotSheet(p, { id: `tmp-${c.id}`, candidateId: c.id, name: c.name, kind: c.kind, confidence: 0.4, source: 'geo' });
+    return;
+  }
   const act = e.target.closest('[data-act]')?.dataset.act;
   if (act) return handleAction(act);
   const hsBtn = e.target.closest('.hotspot');
@@ -206,7 +252,7 @@ async function toggleFav(fromDoubleTap = false) {
   p.fav = !p.fav;
   await savePhoto(p);
   active.el.querySelector('[data-act="fav"]').classList.toggle('on', p.fav);
-  if (p.fav) burst();
+  if (p.fav) { burst(); track('fav', { double: fromDoubleTap }); }
   haptic(p.fav ? 14 : 6);
   active.onChange?.(p);
 }
@@ -255,6 +301,7 @@ async function recordNote(p) {
     await savePhoto(p);
     active.onChange?.(p);
     toast(text ? 'Nota guardada y transcrita' : 'Nota de voz guardada');
+    track('note_saved', { voice: true, transcribed: !!text });
     if (!text) openNoteEditor(p);
     return;
   }
@@ -293,6 +340,7 @@ async function sharePhoto(p) {
   try {
     const blob = p.blobKey ? await db.get('blobs', p.blobKey) : null;
     const files = blob ? [new File([blob], p.name || 'foto.jpg', { type: blob.type || 'image/jpeg' })] : [];
+    track('share', { what: 'photo' });
     if (navigator.canShare?.({ files }) && files.length) await navigator.share({ files, title, text });
     else if (navigator.share) await navigator.share({ title, text });
     else { await navigator.clipboard.writeText(text); toast('Texto copiado'); }
@@ -310,6 +358,7 @@ export async function openSpotSheet(p, hs, { trip } = {}) {
     <div class="place-kind">${KIND_ICON(hs.kind)}${esc(KIND_LABEL[hs.kind] || 'Lugar')}</div>
     <h2 class="place-name">${esc(hs.name)}</h2>
     <p class="place-sub">${esc(subParts.join(' · '))}</p>
+    <div class="facts" data-facts hidden></div>
     ${cand.cuisine ? `<div class="chips" style="margin-top:10px">${cand.cuisine.map((c) => `<span class="chip">${esc(c)}</span>`).join('')}</div>` : ''}
     <div class="when-card">${ICONS.clock}<div><b>Estuviste aquí el ${esc(fmt.longDate(p.takenAt).toLowerCase())}</b><span>A las ${esc(fmt.time(p.takenAt))} · ${esc(placeLine(p))}</span></div></div>
     <div data-text>${hs.fact ? `<div class="fact"><b>En tu foto</b>${esc(hs.fact)}</div>` : ''}${cand.extract ? `<p class="place-text">${esc(cand.extract)}</p>` : '<p class="place-text skeleton" style="height:70px;border-radius:10px"></p>'}</div>
@@ -322,9 +371,16 @@ export async function openSpotSheet(p, hs, { trip } = {}) {
     ${food && cand.website ? `<a class="btn btn-ghost btn-block" href="${esc(cand.website)}" target="_blank" rel="noopener" style="margin-top:6px">${ICONS.external}Web del local</a>` : ''}
     <div class="confidence" style="--c:${Math.round((hs.confidence || 0.5) * 100)}%"><i></i>${hs.source === 'ai' ? 'Confirmado con IA' : 'Identificado por ubicación y orientación'} · <button class="link" data-a="fix">¿No es esto?</button></div>`;
   const { body, close } = openSheet(html);
+  track('spot_open', { source: hs.source || 'geo', kind: hs.kind || 'lugar' });
   let stop = null;
   body.addEventListener('click', async (e) => {
     const a = e.target.closest('[data-a]')?.dataset.a;
+    if (a === 'more') {
+      body.querySelectorAll('[data-text] .clamp').forEach((n) => n.classList.remove('clamp'));
+      body.querySelectorAll('[data-text] [hidden]').forEach((n) => { n.hidden = false; });
+      e.target.closest('[data-a]').remove();
+      return;
+    }
     if (a === 'listen') {
       const btn = e.target.closest('[data-a]');
       if (btn.classList.contains('on')) { stop?.(); btn.classList.remove('on'); return; }
@@ -340,17 +396,42 @@ export async function openSpotSheet(p, hs, { trip } = {}) {
     if (a === 'fix') { close(); setTimeout(() => openFixSheet(p, hs), 280); }
   });
 
+  // Lo esencial a la vista (primer párrafo, cuatro líneas) y el resto tras «Leer más».
+  const renderText = (paras, fact) => {
+    const box = body.querySelector('[data-text]');
+    const own = hs.fact ? `<div class="fact"><b>En tu foto</b>${esc(hs.fact)}</div>` : '';
+    const rest = paras.slice(1).map((t) => `<p class="place-text" hidden>${esc(t)}</p>`).join('');
+    const factHtml = fact && !paras.join(' ').slice(0, 400).includes(fact.slice(0, 40)) ? `<div class="fact"><b>¿Sabías que…?</b>${esc(fact)}</div>` : '';
+    const long = paras.length > 1 || (paras[0] || '').length > 260;
+    box.innerHTML = `${own}${paras[0] ? `<p class="place-text${long ? ' clamp' : ''}">${esc(paras[0])}</p>` : ''}${rest}${long ? '<button class="more-btn" data-a="more">Leer más</button>' : ''}${factHtml}`;
+  };
+  if (cand.extract) renderText([cand.extract], null);
+
+  // Datos rápidos de Wikidata: año, estilo, arquitecto, protección, altura.
+  const showFacts = async (qid) => {
+    const f = await wikidataFacts(qid);
+    if (!f || !body.isConnected) return;
+    const chips = [
+      f.inception && `<span>${esc(f.inception)}</span>`,
+      ...(f.style || []).map((x) => `<span>${esc(x.charAt(0).toUpperCase() + x.slice(1))}</span>`),
+      ...(f.architect || []).map((x) => `<span>Arq. ${esc(x)}</span>`),
+      f.height && `<span>${esc(f.height)}</span>`,
+      ...(f.heritage || []).map((x) => `<span class="heritage">${esc(x.charAt(0).toUpperCase() + x.slice(1))}</span>`),
+    ].filter(Boolean);
+    const box = body.querySelector('[data-facts]');
+    if (chips.length) { box.innerHTML = chips.join(''); box.hidden = false; }
+  };
+  if (cand.wikidata) showFacts(cand.wikidata);
+
   // Ampliamos con el artículo completo de Wikipedia (introducción) si existe.
   if (cand.wikiTitle) {
     const det = await wikiDetails(cand.wikiTitle);
     if (det && body.isConnected) {
       const paras = splitParagraphs(det.extract, 3);
-      const fact = pickFact(det.extract);
-      const box = body.querySelector('[data-text]');
-      box.innerHTML = `${hs.fact ? `<div class="fact"><b>En tu foto</b>${esc(hs.fact)}</div>` : ''}${paras.map((t) => `<p class="place-text">${esc(t)}</p>`).join('')}${fact && !paras.join(' ').slice(0, 400).includes(fact.slice(0, 40)) ? `<div class="fact"><b>¿Sabías que…?</b>${esc(fact)}</div>` : ''}`;
-      if (!paras.length && cand.extract) box.innerHTML += `<p class="place-text">${esc(cand.extract)}</p>`;
+      renderText(paras.length ? paras : [cand.extract].filter(Boolean), pickFact(det.extract));
       const media = body.querySelector('.place-media');
       if (det.image) { media.hidden = false; media.querySelector('img').src = det.image; }
+      if (!cand.wikidata && det.wikidata) showFacts(det.wikidata);
     } else if (body.isConnected && !cand.extract) {
       body.querySelector('[data-text]').innerHTML = '';
     }
@@ -402,7 +483,7 @@ export async function openPlaceSheet(p) {
     <p class="place-sub">${esc(sub)}</p>
     <div class="when-card">${ICONS.clock}<div><b>${esc(fmt.longDate(p.takenAt))}</b><span>${esc(fmt.time(p.takenAt))} · ${esc(fmt.momentOfDay(p.takenAt))}${p.camera ? ` · ${esc(p.camera)}` : ''}${p.dateFromFile ? ' · fecha aproximada' : ''}</span></div></div>
     ${pl.street ? `<div class="when-card">${ICONS.pin}<div><b>${esc(pl.street)}${pl.number ? ` ${esc(pl.number)}` : ''}</b><span>${esc([pl.neighbourhood, pl.city].filter(Boolean).join(', '))}${p.approx ? ' · ubicación estimada' : ''}</span></div></div>` : ''}
-    ${p.lat == null ? `<div class="callout"><b>Esta foto no guarda la ubicación</b>Suele pasar con fotos recibidas por WhatsApp o capturas. Si tienes el original de la cámara, impórtalo y la reconoceremos.</div>` : ''}
+    ${p.lat == null ? `<div class="callout"><b>Esta foto no guarda la ubicación</b>Suele pasar con fotos recibidas por WhatsApp o capturas. Si tienes el original de la cámara, impórtalo y la reconoceremos.<button class="btn btn-primary btn-block" data-a="locate" style="margin-top:10px">${ICONS.pin}Indicar dónde fue</button></div>` : ''}
     ${p.note?.text || audio ? `<div class="note-card">${ICONS.mic}<div style="flex:1">${p.note?.text ? `<p>«${esc(p.note.text)}»</p>` : ''}${audio ? `<audio controls src="${audio}" style="width:100%;margin-top:8px"></audio>` : ''}</div></div>` : ''}
     ${p.aiScene ? `<p class="place-text" style="margin:12px 0">${esc(p.aiScene)}</p>` : ''}
     ${p.lat != null ? '<div class="map-box" id="mini-map" style="height:180px;margin:14px 0"></div>' : ''}
@@ -415,6 +496,7 @@ export async function openPlaceSheet(p) {
     </div>
     ${!p.demo && p.lat != null ? `<button class="btn btn-ghost btn-block" data-a="reid" style="margin-top:6px">${ICONS.sparkle}Volver a identificar</button>` : ''}`;
   const { body, close } = openSheet(html);
+  track('place_open', { gps: p.lat != null });
 
   if (p.lat != null && window.L) {
     setTimeout(() => {
@@ -437,6 +519,7 @@ export async function openPlaceSheet(p) {
       close(); setTimeout(() => openSpotSheet(p, { id: 'tmp', candidateId: c.id, name: c.name, kind: c.kind, confidence: 0.4, source: 'geo' }), 280);
     }
     if (a === 'listen') speak(narratePhoto(p, active?.trip));
+    if (a === 'locate') { close(); setTimeout(() => openLocateSheet([p], { onDone: () => active && render(0) }), 280); }
     if (a === 'note') { close(); setTimeout(() => openNoteEditor(p), 280); }
     if (a === 'reid') { close(); p.status = 'new'; if (active) reidentify(p); }
   });

@@ -6,6 +6,7 @@ import { ICONS, esc, h, haptic } from './util.js';
 import { photoSrc } from './ui.js';
 import { speak, stopSpeaking, canSpeak, pauseSpeaking, resumeSpeaking } from './voice.js';
 import { kv } from './store.js';
+import { track } from './analytics.js';
 
 let st = null;
 
@@ -51,6 +52,7 @@ export async function playStory(trip, slides, { startAt = 0, onClose } = {}) {
   frame.addEventListener('touchstart', (e) => { sy = e.touches[0].clientY; }, { passive: true });
   frame.addEventListener('touchend', (e) => { if (e.changedTouches[0].clientY - sy > 120) closeStory(); });
   document.addEventListener('keydown', onKey);
+  track('story_start', { slides: slides.length, sound: !!sound });
   show(st.i);
 }
 
@@ -86,7 +88,11 @@ function onClick(e) {
   }
 }
 
-const next = () => { haptic(4); if (st.i < st.slides.length - 1) show(st.i + 1); else closeStory(); };
+const next = () => {
+  haptic(4);
+  if (st.i < st.slides.length - 1) show(st.i + 1);
+  else { track('story_complete', { slides: st.slides.length }); closeStory(); }
+};
 const prev = () => { haptic(4); show(Math.max(0, st.i - 1)); };
 
 function pause(on) {

@@ -3,13 +3,14 @@
 // Sin clave (o sin instalar dependencias) sirve la app igual: la identificación funciona por ubicación.
 
 import http from 'node:http';
-import { readFile, stat } from 'node:fs/promises';
+import { readFile, stat, appendFile, mkdir } from 'node:fs/promises';
 import { extname, join, normalize, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = Number(process.env.PORT) || 8080;
 const MODEL = process.env.RECUERDO_MODEL || 'claude-opus-5-5';
+const EVENTS_DIR = join(ROOT, 'data');
 
 let client = null;
 if (process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN) {
@@ -154,7 +155,15 @@ function send(res, status, data, type = 'application/json') {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   try {
-    if (url.pathname.endsWith('/api/health')) return send(res, 200, { ai: !!client, model: client ? MODEL : null });
+    if (url.pathname.endsWith('/api/health')) return send(res, 200, { ai: !!client, model: client ? MODEL : null, events: true });
+    if (url.pathname.endsWith('/api/events') && req.method === 'POST') {
+      // Eventos de uso anónimos (nombre + números). Un JSON por línea en data/events.jsonl.
+      const ev = await readBody(req, 4096);
+      if (typeof ev.e !== 'string' || ev.e.length > 40) return send(res, 400, { error: 'evento no válido' });
+      await mkdir(EVENTS_DIR, { recursive: true });
+      await appendFile(join(EVENTS_DIR, 'events.jsonl'), JSON.stringify({ e: ev.e, p: ev.p || {}, t: Date.now() }) + '\n');
+      return send(res, 204, '', 'text/plain');
+    }
     if (url.pathname.endsWith('/api/identify') && req.method === 'POST') {
       if (!client) return send(res, 503, { error: 'IA no configurada' });
       return send(res, 200, await identify(await readBody(req)));
@@ -165,7 +174,7 @@ const server = http.createServer(async (req, res) => {
     }
     // Ficheros estáticos
     let path = normalize(decodeURIComponent(url.pathname)).replace(/^([/\\])+/, '');
-    if (path.startsWith('..') || path.startsWith('server')) return send(res, 404, 'No encontrado', 'text/plain');
+    if (path.startsWith('..') || path.startsWith('server') || path.startsWith('data')) return send(res, 404, 'No encontrado', 'text/plain');
     let file = join(ROOT, path || 'index.html');
     const s = await stat(file).catch(() => null);
     if (s?.isDirectory()) file = join(file, 'index.html');

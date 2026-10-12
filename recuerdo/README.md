@@ -1,4 +1,4 @@
-# Recuerdo · beta 0.1
+# Recuerdo · beta 0.2
 
 **Tus fotos de viaje, con nombre e historia.** Toca una foto y descubre dónde estabas; toca la iglesia y te dice cuál es, cuándo se construyó y una curiosidad; y después revive el viaje como una historia narrada.
 
@@ -78,6 +78,22 @@ recuerdo/
 │   └── demo.js          viaje de ejemplo
 └── server/server.mjs    servidor estático + /api/identify y /api/story (Claude)
 ```
+
+## Novedades 0.2 (mejoras tras la auditoría de experiencia)
+
+- **Bienvenida** de tres pantallas la primera vez: qué hace, cómo se usa, por dónde empezar.
+- **Viaje de ejemplo ilustrado** dentro de la app (`js/demo-art.js`): carga al instante, sin conexión, y los puntos caen exactamente sobre cada monumento.
+- **Importación en dos tiempos:** el viaje aparece en segundos y los lugares se reconocen en segundo plano, con una consulta por parada en vez de una por foto. Si se cierra la app, continúa al volver.
+- **Rescate de fotos sin ubicación** (`js/locate.js`): «¿Dónde fue esto?» con buscador de sitios, y los pasos exactos para que el iPhone conserve el GPS. Las fotos sin fecha ni GPS (WhatsApp) se quedan en el viaje.
+- **Nunca una foto vacía:** bajo cada foto, «dónde estabas» y los lugares cercanos para tocar.
+- **Fichas con datos rápidos** de Wikidata (año, estilo, arquitecto, altura, Patrimonio de la Humanidad) y «Leer más».
+- **Añadir fotos a un viaje** ya creado (`#/importar/<id>`).
+- **Copia de seguridad** en un archivo `.recuerdo` (todo o por viaje) y restauración (`js/backup.js`).
+- **Medición anónima** (`js/analytics.js`): solo nombres de acción y números, sin identificador ni ubicaciones. Con el servidor se guardan en `data/events.jsonl`.
+
+### Embudo que se mide
+
+`app_open` → `onboarding_done` → `import_start` → `import_done` (fotos, con GPS, HEIC) → `location_assigned` → `photo_open` (puntos) → `spot_open` / `place_open` → `story_start` → `story_complete` → `share` · además `fav`, `note_saved`, `backup_export`.
 
 ## Límites conocidos de la beta
 

@@ -2,7 +2,10 @@
 
 import { ICONS, KIND_ICON, esc, h, fmt, toast, avatar, haptic, parseLocal } from './util.js';
 import { hydrateImages, openSheet, photoSrc } from './ui.js';
-import { listTrips, getTrip, tripPhotos, tripStats, groupDays, buildStory, importFiles, deleteTrip, saveTrip } from './trips.js';
+import { listTrips, getTrip, tripPhotos, tripStats, groupDays, buildStory, importFiles, deleteTrip, saveTrip, tripProgress, photosWithoutLocation } from './trips.js';
+import { openLocateSheet } from './locate.js';
+import { exportBackup, saveBackupFile, importBackup } from './backup.js';
+import { track, localMetrics } from './analytics.js';
 import { openViewer } from './viewer.js';
 import { playStory } from './story.js';
 import { placeLine, mainSubject } from './identify.js';
@@ -117,11 +120,11 @@ let tripMode = 'fotos';
 export async function tripView(id) {
   const trip = await getTrip(id);
   if (!trip) { location.hash = '#/'; return; }
-  const photos = await tripPhotos(id);
-  const map = byId(photos);
+  let photos = await tripPhotos(id);
+  let map = byId(photos);
   const stats = tripStats(trip, photos);
   const cover = map.get(trip.coverId) || photos[0];
-  const days = groupDays(photos);
+  let days = groupDays(photos);
   const v = freshView();
   v.innerHTML = `
     <div class="trip-hero">
@@ -133,14 +136,15 @@ export async function tripView(id) {
       </div>
       <div class="hero-meta">
         <p class="eyebrow">${esc(fmt.range(trip.start, trip.end))}</p>
-        <h1>${esc(trip.title)}</h1>
-        <div class="chips"><span class="chip glass">${stats.photos} fotos</span><span class="chip glass">${stats.places} lugares</span><span class="chip glass">${stats.days} ${stats.days === 1 ? 'día' : 'días'}</span></div>
+        <h1 data-title>${esc(trip.title)}</h1>
+        <div class="chips" data-stats>${statChips(stats)}</div>
       </div>
     </div>
     <div class="companions">
       ${trip.companions?.length ? trip.companions.map(avatar).join('') + `<span class="place-sub" style="margin-left:4px">Con ${esc(fmt.list(trip.companions))}</span>` : ''}
       <button class="chip" data-act="who">${ICONS.people}${trip.companions?.length ? 'Editar' : '¿Con quién viajaste?'}</button>
     </div>
+    <div data-status></div>
     <div class="trip-actions">
       <button class="btn btn-primary" data-act="story">${ICONS.play}Ver historia</button>
       <button class="btn btn-ghost" data-act="share">${ICONS.share}Compartir</button>
@@ -166,8 +170,60 @@ export async function tripView(id) {
     if (tripMode === 'mapa') { body.innerHTML = '<div class="map-box" id="trip-map" style="height:60vh"></div>'; setTimeout(() => drawTripMap(body.querySelector('#trip-map'), photos, map, trip), 50); }
     hydrateImages(body, map);
   };
+  // Estado del viaje: reconocimiento en curso o fotos que necesitan ubicación.
+  const statusBox = v.querySelector('[data-status]');
+  const renderStatus = () => {
+    const prog = tripProgress(id);
+    const missing = photosWithoutLocation(photos);
+    if (prog) {
+      statusBox.innerHTML = `<div class="proc-banner" role="status"><div class="row">${ICONS.sparkle}<span>Reconociendo lugares…</span><span>${prog.done} de ${prog.total}</span></div><div class="bar"><i style="width:${Math.round((prog.done / prog.total) * 100)}%"></i></div></div>`;
+    } else if (missing.length) {
+      statusBox.innerHTML = `<div class="alert-card">${ICONS.pin}<div class="grow"><b>${missing.length === 1 ? '1 foto sin ubicación' : `${missing.length} fotos sin ubicación`}</b><small>Dinos dónde fue y la colocamos en tu viaje</small></div><button class="btn btn-primary" data-act="locate">Indicar</button></div>`;
+    } else statusBox.innerHTML = '';
+  };
+  renderStatus();
   renderBody();
   hydrateImages(v.querySelector('.trip-hero'), map);
+
+  // Mientras se reconocen las fotos en segundo plano, la pantalla se actualiza sola.
+  let timer = null;
+  const refresh = async () => {
+    if (!v.isConnected) return;
+    const fresh = await getTrip(id);
+    photos = await tripPhotos(id); map = byId(photos); days = groupDays(photos);
+    v.querySelector('[data-title]').textContent = fresh.title;
+    v.querySelector('[data-stats]').innerHTML = statChips(tripStats(fresh, photos));
+    Object.assign(trip, fresh);
+    renderStatus();
+    renderBody();
+  };
+  const onPhoto = (e) => { if (e.detail.photo.tripId === id) { clearTimeout(timer); timer = setTimeout(refresh, 700); } };
+  const onProgress = (e) => {
+    if (e.detail.tripId !== id) return;
+    if (!v.isConnected) return cleanup();
+    if (e.detail.finished) {
+      clearTimeout(timer);
+      refresh().then(() => {
+        const places = tripStats(trip, photos).places;
+        toast(places ? `¡Listo! ${places} ${places === 1 ? 'lugar reconocido' : 'lugares reconocidos'}` : 'Fotos ordenadas');
+        maybeAskLocation();
+      });
+    } else renderStatus();
+  };
+  const cleanup = () => { window.removeEventListener('recuerdo:photo', onPhoto); window.removeEventListener('recuerdo:progress', onProgress); };
+  activeTripCleanup?.(); activeTripCleanup = cleanup;
+  window.addEventListener('recuerdo:photo', onPhoto);
+  window.addEventListener('recuerdo:progress', onProgress);
+
+  // Si todas las fotos llegaron sin ubicación (típico del iPhone), lo resolvemos en el momento.
+  const maybeAskLocation = () => {
+    if (askLocationFor !== id) return;
+    const missing = photosWithoutLocation(photos);
+    if (!missing.length) { askLocationFor = null; return; }
+    askLocationFor = null;
+    openLocateSheet(missing, { allMissing: missing.length === photos.length, onDone: refresh });
+  };
+  if (!tripProgress(id)) maybeAskLocation();
 
   const reopen = (p) => { const i = photos.indexOf(p); openViewer(photos, i, { trip, onChange: () => { renderBody(); } }); };
   v.addEventListener('click', async (e) => {
@@ -177,13 +233,22 @@ export async function tripView(id) {
     if (mode) { tripMode = mode; v.querySelectorAll('[data-mode]').forEach((b) => b.classList.toggle('on', b.dataset.mode === mode)); haptic(4); return renderBody(); }
     const act = e.target.closest('[data-act]')?.dataset.act;
     if (act === 'story') startTripStory(id);
+    if (act === 'locate') openLocateSheet(photosWithoutLocation(photos), { onDone: refresh });
     if (act === 'share') shareTrip(trip, photos);
     if (act === 'who') editCompanions(trip, () => tripView(id));
     if (act === 'more') tripOptions(trip, photos);
   });
 }
 
+let activeTripCleanup = null;
+let askLocationFor = null;
+
+function statChips(s) {
+  return `<span class="chip glass">${s.photos} fotos</span><span class="chip glass">${s.places} lugares</span><span class="chip glass">${s.days} ${s.days === 1 ? 'día' : 'días'}</span>`;
+}
+
 async function shareTrip(trip, photos) {
+  track('share', { what: 'trip' });
   const places = [...new Set(photos.flatMap((p) => (p.hotspots || []).map((h) => h.name)))];
   const text = `${trip.title} · ${fmt.range(trip.start, trip.end)}\n${places.slice(0, 8).join(' · ')}\n\nRecordado con Recuerdo`;
   try {
@@ -193,7 +258,7 @@ async function shareTrip(trip, photos) {
 }
 
 function tile(p) {
-  return `<button class="tile" data-open="${p.id}" aria-label="${esc(mainSubject(p) || 'Foto')}">
+  return `<button class="tile ${p.status === 'pending' ? 'pending' : ''}" data-open="${p.id}" aria-label="${esc(mainSubject(p) || 'Foto')}">
     <img data-photo="${p.id}" alt="" loading="lazy">
     ${p.fav ? `<span class="tile-fav">${ICONS.heart}</span>` : ''}
     ${p.hotspots?.length ? `<span class="tile-badge">${ICONS.sparkle}</span>` : ''}
@@ -261,12 +326,21 @@ function tripOptions(trip, photos) {
     <label class="field"><span>Título</span><input class="input" data-title value="${esc(trip.title)}"></label>
     <button class="btn btn-primary btn-block" data-save>${ICONS.check}Guardar título</button>
     <div class="list" style="margin-top:14px">
+      <a class="list-item" href="#/importar/${trip.id}"><span class="thumb">${ICONS.images}</span><span class="grow"><b>Añadir fotos a este viaje</b><small>Las tuyas o las de tus acompañantes</small></span></a>
+      <button class="list-item" data-backup><span class="thumb">${ICONS.share}</span><span class="grow"><b>Guardar una copia del viaje</b><small>Un archivo con fotos, notas y lugares, para guardarlo o pasarlo a otro móvil</small></span></button>
       <button class="list-item" data-ai><span class="thumb">${ICONS.sparkle}</span><span class="grow"><b>Escribir la historia con IA</b><small>Narración más rica, por capítulos</small></span></button>
       <button class="list-item" data-del><span class="thumb">${ICONS.trash}</span><span class="grow"><b>Eliminar viaje</b><small>Se borran las fotos de este dispositivo</small></span></button>
     </div>`);
   body.querySelector('[data-save]').addEventListener('click', async () => {
     trip.title = body.querySelector('[data-title]').value.trim() || trip.title;
+    trip.titleAuto = false;
     await saveTrip(trip); close(); tripView(trip.id);
+  });
+  body.querySelector('[data-backup]').addEventListener('click', async () => {
+    close(); toast('Preparando la copia…');
+    const res = await exportBackup([trip.id]);
+    const how = await saveBackupFile(res);
+    if (how !== 'cancelled') { toast('Copia lista'); track('backup_export', { trips: 1, photos: res.photos }); }
   });
   body.querySelector('[data-del]').addEventListener('click', async () => {
     if (!confirm(`¿Eliminar «${trip.title}»? Esta acción no se puede deshacer.`)) return;
@@ -317,14 +391,15 @@ export async function mapView() {
 }
 
 // ======================= IMPORTAR =======================
-export function importView() {
+export async function importView(tripId = null) {
+  const target = tripId ? await getTrip(tripId) : null;
   const v = view();
   v.innerHTML = `
-    <header class="topbar"><a class="icon-btn" href="#/" aria-label="Volver">${ICONS.back}</a><h1>Nuevo viaje</h1></header>
+    <header class="topbar"><a class="icon-btn" href="${target ? `#/viaje/${target.id}` : '#/'}" aria-label="Volver">${ICONS.back}</a><h1>${target ? 'Añadir fotos' : 'Nuevo viaje'}</h1></header>
     <div data-stage>
       <label class="drop" data-drop>
         <div class="drop-icon">${ICONS.images}</div>
-        <h2>Elige las fotos del viaje</h2>
+        <h2>${target ? `Más fotos de ${esc(target.title)}` : 'Elige las fotos del viaje'}</h2>
         <p>Pueden ser cientos. Las ordenamos por días y lugares, y reconocemos cada sitio.</p>
         <span class="btn btn-primary">${ICONS.images}Seleccionar fotos</span>
         <input type="file" accept="image/*,.heic,.heif" multiple hidden>
@@ -335,17 +410,23 @@ export function importView() {
         <div class="how-item"><span class="n">3</span><div><b>Te contamos tu viaje</b><p>Fotos interactivas, mapa del recorrido e historia narrada para revivirlo y compartirlo.</p></div></div>
       </div>
       <div class="callout"><b>Privado por defecto</b>Tus fotos se quedan en este dispositivo. Solo consultamos mapas y enciclopedias abiertas con la ubicación.</div>
-      <div class="callout"><b>¿Desde el iPhone?</b>Al elegir fotos, toca «Opciones» y activa «Ubicación» para que la información de dónde se hizo viaje con la foto.</div>
     </div>`;
+  // Lo más importante para iPhone va arriba, antes de elegir, con los pasos exactos.
+  if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+    v.querySelector('[data-drop]').insertAdjacentHTML('afterend', `<div class="callout"><b>Importante en iPhone: activa la ubicación</b>Al elegir las fotos, toca <b>Opciones</b> arriba y activa <b>Ubicación</b>. Sin eso, las fotos llegan sin saber dónde se hicieron.</div>`);
+  } else {
+    v.querySelector('.how').insertAdjacentHTML('afterend', `<div class="callout"><b>¿Desde el iPhone?</b>Al elegir fotos, toca «Opciones» y activa «Ubicación» para que cada foto conserve dónde se hizo.</div>`);
+  }
   const drop = v.querySelector('[data-drop]');
   const input = drop.querySelector('input');
-  input.addEventListener('change', () => input.files.length && runImport(input.files));
+  input.addEventListener('change', () => input.files.length && runImport(input.files, tripId));
   ['dragenter', 'dragover'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); }));
   ['dragleave', 'drop'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
-  drop.addEventListener('drop', (e) => e.dataTransfer.files.length && runImport(e.dataTransfer.files));
+  drop.addEventListener('drop', (e) => e.dataTransfer.files.length && runImport(e.dataTransfer.files, tripId));
 }
 
-async function runImport(files) {
+async function runImport(files, tripId = null) {
+  track('import_start', { photos: files.length, add: !!tripId });
   const stage = view().querySelector('[data-stage]');
   const C = 2 * Math.PI * 52;
   stage.innerHTML = `<div class="progress-wrap">
@@ -355,24 +436,24 @@ async function runImport(files) {
   const ring = stage.querySelector('.fg'), pct = stage.querySelector('.progress-ring b');
   const step = stage.querySelector('.progress-step'), sub = stage.querySelector('.progress-sub'), thumbs = stage.querySelector('.progress-thumbs');
   try {
+    // Aquí solo se leen las fotos (segundos). El reconocimiento sigue en segundo plano dentro del viaje.
     const res = await importFiles(files, (e) => {
-      // Lectura = 0-30 %, identificación = 30-95 %, historia = 100 %.
-      const frac = e.phase === 'read' ? 0.3 * (e.done / e.total) : e.phase === 'identify' ? 0.3 + 0.65 * (e.done / e.total) : 1;
+      const frac = e.done / e.total;
       ring.style.strokeDashoffset = C * (1 - frac);
       pct.textContent = `${Math.round(frac * 100)}%`;
-      step.textContent = e.step;
-      sub.textContent = e.sub ? e.sub : e.phase === 'read' ? `${e.done} de ${e.total} fotos` : '';
+      step.textContent = 'Leyendo tus fotos';
+      sub.textContent = `${e.done} de ${e.total}`;
       if (e.thumb && thumbs.children.length < 18) thumbs.append(Object.assign(new Image(), { src: e.thumb, alt: '' }));
-    });
+    }, { tripId });
     haptic(30);
-    if (!res.total) { toast('No encontramos fotos en la selección'); importView(); return; }
-    if (!res.withGps) toast('Estas fotos no traen ubicación: revisa las opciones al elegirlas', 5000);
-    else if (res.undrawable) toast(`${res.undrawable} fotos en un formato que este navegador no muestra (HEIC)`, 4500);
+    if (!res.total) { toast('No encontramos fotos en la selección'); importView(tripId); return; }
+    if (res.withGps < res.total) askLocationFor = res.trips[0].id;
+    if (res.undrawable) toast(`${res.undrawable} fotos en formato HEIC: este navegador no puede mostrarlas, pero sí reconocemos dónde se hicieron`, 5000);
     location.hash = `#/viaje/${res.trips[0].id}`;
   } catch (err) {
     console.error(err);
-    toast('Algo falló al importar. Inténtalo de nuevo.');
-    importView();
+    toast('Algo falló al leer las fotos. Inténtalo de nuevo.');
+    importView(tripId);
   }
 }
 
@@ -433,12 +514,39 @@ export async function settingsView() {
         ${status.ai ? `<select data-ai><option value="on">Activa</option><option value="off">Desactivada</option></select>` : ''}</div>
       <div class="settings-row"><span class="status-dot on"></span><span class="grow"><b>Ubicación y orientación</b><small>OpenStreetMap + Wikipedia, gratis y abiertas</small></span></div>
     </div>
+    <p class="eyebrow" style="padding:0 18px 8px">Tus viajes a salvo</p>
+    <div class="settings-group">
+      <button class="settings-row" data-export><span class="grow"><b>Guardar copia de seguridad</b><small>Todos tus viajes en un archivo, para guardarlo en iCloud, Drive o pasarlo a otro móvil</small></span>${ICONS.share}</button>
+      <label class="settings-row" style="cursor:pointer"><span class="grow"><b>Restaurar una copia</b><small>Abre un archivo .recuerdo</small></span>${ICONS.images}<input id="restore-file" type="file" accept=".recuerdo,application/octet-stream" hidden></label>
+    </div>
     <p class="eyebrow" style="padding:0 18px 8px">Privacidad</p>
     <div class="settings-group">
       <div class="settings-row"><span class="grow"><b>Tus fotos no salen del dispositivo</b><small>Se guardan en este navegador. Con la IA activa, se envía una copia reducida solo para analizarla.</small></span></div>
+      <div class="settings-row"><span class="grow"><b>Estadísticas de uso anónimas</b><small data-metrics>Solo contamos acciones (abrir una foto, ver una historia), nunca lugares, fotos ni datos personales.</small></span></div>
     </div>
-    <p style="text-align:center;color:var(--faint);font-size:12px;padding:10px 0 20px">Recuerdo · beta 0.1<br>Datos de lugares © colaboradores de OpenStreetMap y Wikipedia</p>`;
+    <p style="text-align:center;color:var(--faint);font-size:12px;padding:10px 0 20px">Recuerdo · beta 0.2<br>Datos de lugares © colaboradores de OpenStreetMap y Wikipedia</p>`;
   v.querySelector('[data-theme]').value = theme;
+  v.querySelector('[data-export]').addEventListener('click', async () => {
+    toast('Preparando la copia…');
+    const res = await exportBackup();
+    if (!res.trips) { toast('Aún no hay viajes que guardar'); return; }
+    const how = await saveBackupFile(res);
+    if (how !== 'cancelled') { toast(`Copia lista: ${res.trips} ${res.trips === 1 ? 'viaje' : 'viajes'}, ${res.photos} fotos`); track('backup_export', { trips: res.trips, photos: res.photos }); }
+  });
+  v.querySelector('#restore-file').addEventListener('change', async (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    try {
+      const r = await importBackup(f);
+      toast(`Restaurados ${r.trips} ${r.trips === 1 ? 'viaje' : 'viajes'} y ${r.photos} fotos`);
+      track('backup_restore', { trips: r.trips });
+      location.hash = '#/';
+    } catch (err) { toast(err.message || 'No se pudo leer la copia'); }
+  });
+  localMetrics().then((m) => {
+    const n = Object.values(m).reduce((a, b) => a + b, 0);
+    if (n) v.querySelector('[data-metrics]').textContent += ` En este móvil: ${n} acciones registradas.`;
+  });
   v.querySelector('[data-theme]').addEventListener('change', (e) => { applyTheme(e.target.value); try { localStorage.setItem('recuerdo.theme', e.target.value); } catch { /* */ } });
   v.querySelector('[data-ai]')?.addEventListener('change', (e) => { try { localStorage.setItem('recuerdo.ai', e.target.value); } catch { /* */ } settingsView(); });
   if (v.querySelector('[data-ai]')) v.querySelector('[data-ai]').value = aiOff ? 'off' : 'on';

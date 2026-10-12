@@ -5,12 +5,16 @@ import { seedDemo } from './demo.js';
 import { closeViewer } from './viewer.js';
 import { closeStory } from './story.js';
 import { closeSheet } from './ui.js';
+import { resumePending } from './trips.js';
+import { maybeOnboard } from './onboarding.js';
+import { track } from './analytics.js';
 
 const routes = [
   [/^#?\/?$/, 'home', () => homeView()],
   [/^#\/viaje\/([\w-]+)$/, 'home', (m) => tripView(m[1])],
   [/^#\/mapa$/, 'map', () => mapView()],
   [/^#\/importar$/, 'import', () => importView()],
+  [/^#\/importar\/([\w-]+)$/, 'import', (m) => importView(m[1])],
   [/^#\/recuerdos$/, 'memories', () => memoriesView()],
   [/^#\/ajustes$/, 'settings', () => settingsView()],
 ];
@@ -46,6 +50,9 @@ async function boot() {
   try { await seedDemo(); } catch (e) { console.warn('No se pudo preparar el viaje de ejemplo', e); }
   window.addEventListener('hashchange', route);
   await route();
+  track('app_open', { standalone: matchMedia('(display-mode: standalone)').matches });
+  maybeOnboard();
+  resumePending().catch(() => {});
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
