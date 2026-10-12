@@ -6,6 +6,7 @@ import { listTrips, getTrip, tripPhotos, tripStats, groupDays, buildStory, impor
 import { openLocateSheet } from './locate.js';
 import { exportBackup, saveBackupFile, importBackup } from './backup.js';
 import { track, localMetrics } from './analytics.js';
+import { hasNativePicker, pickNativePhotos, clearNativeImport } from './native.js';
 import { openViewer } from './viewer.js';
 import { playStory } from './story.js';
 import { placeLine, mainSubject } from './identify.js';
@@ -412,7 +413,10 @@ export async function importView(tripId = null) {
       <div class="callout"><b>Privado por defecto</b>Tus fotos se quedan en este dispositivo. Solo consultamos mapas y enciclopedias abiertas con la ubicación.</div>
     </div>`;
   // Lo más importante para iPhone va arriba, antes de elegir, con los pasos exactos.
-  if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+  // En la app nativa no hace falta: leemos la ubicación directamente de la fototeca.
+  if (hasNativePicker()) {
+    v.querySelector('[data-drop]').insertAdjacentHTML('afterend', `<div class="callout"><b>Te pediremos acceso a tus fotos</b>Así leemos dónde y cuándo se hizo cada una. Tus fotos no salen del móvil.</div>`);
+  } else if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
     v.querySelector('[data-drop]').insertAdjacentHTML('afterend', `<div class="callout"><b>Importante en iPhone: activa la ubicación</b>Al elegir las fotos, toca <b>Opciones</b> arriba y activa <b>Ubicación</b>. Sin eso, las fotos llegan sin saber dónde se hicieron.</div>`);
   } else {
     v.querySelector('.how').insertAdjacentHTML('afterend', `<div class="callout"><b>¿Desde el iPhone?</b>Al elegir fotos, toca «Opciones» y activa «Ubicación» para que cada foto conserve dónde se hizo.</div>`);
@@ -420,6 +424,24 @@ export async function importView(tripId = null) {
   const drop = v.querySelector('[data-drop]');
   const input = drop.querySelector('input');
   input.addEventListener('change', () => input.files.length && runImport(input.files, tripId));
+  if (hasNativePicker()) {
+    drop.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const stage = view().querySelector('[data-stage]');
+      try {
+        const { files, access } = await pickNativePhotos(({ done, total }) => {
+          stage.innerHTML = `<div class="progress-wrap"><p class="progress-step">Preparando tus fotos</p><p class="progress-sub">${done} de ${total}</p></div>`;
+        });
+        track('native_pick', { photos: files.length, access });
+        if (files.length) await runImport(files, tripId);
+        else importView(tripId);
+      } catch (err) {
+        console.error(err);
+        toast('No se pudieron abrir tus fotos. Revisa el permiso en Ajustes › Recuerdo › Fotos.');
+        importView(tripId);
+      } finally { clearNativeImport(); }
+    });
+  }
   ['dragenter', 'dragover'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); }));
   ['dragleave', 'drop'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
   drop.addEventListener('drop', (e) => e.dataTransfer.files.length && runImport(e.dataTransfer.files, tripId));

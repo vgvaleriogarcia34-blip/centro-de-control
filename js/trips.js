@@ -72,6 +72,12 @@ export async function importFiles(files, onProgress, { tripId } = {}) {
     const f = images[i];
     onProgress?.({ phase: 'read', step: STEPS.read, done: i, total: images.length, name: f.name });
     const exif = await readExif(f);
+    // App nativa: la fototeca nos da ubicación y fecha aunque el EXIF venga sin ellas.
+    const nm = f.nativeMeta;
+    if (nm) {
+      if (exif.lat == null && nm.lat != null) { exif.lat = nm.lat; exif.lon = nm.lon; }
+      if (!exif.takenAt && nm.takenAt) exif.takenAt = isoLocal(new Date(nm.takenAt));
+    }
     const thumb = await makeThumb(f);
     if (!thumb) undrawable++;
     if (/\.hei[cf]$/i.test(f.name) || /hei[cf]/i.test(f.type)) heic++;
