@@ -1,6 +1,6 @@
 {
   "name": "recuerdo",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Recuerdo: tus fotos de viaje, con nombre e historia.",
   "type": "module",
