@@ -1,4 +1,4 @@
-# Recuerdo · beta 0.2
+# Recuerdo · beta 0.3
 
 **Tus fotos de viaje, con nombre e historia.** Toca una foto y descubre dónde estabas; toca la iglesia y te dice cuál es, cuándo se construyó y una curiosidad; y después revive el viaje como una historia narrada.
 
@@ -94,6 +94,15 @@ recuerdo/
 ### Embudo que se mide
 
 `app_open` → `onboarding_done` → `import_start` → `import_done` (fotos, con GPS, HEIC) → `location_assigned` → `photo_open` (puntos) → `spot_open` / `place_open` → `story_start` → `story_complete` → `share` · además `fav`, `note_saved`, `backup_export`.
+
+## Novedades 0.3 (punto 2: lanzamiento)
+
+- **Vídeo-recuerdo** (`js/video.js`, `js/music.js`): la historia del viaje como vídeo vertical 1080×1920 de ~45 s, con música generada en el propio móvil (sin derechos de autor), etiquetas de los monumentos y transiciones. Se graba en el dispositivo; MP4 (H.264) donde el navegador lo permite. Gratis con la marca «Hecho con Recuerdo», que hace de anuncio cada vez que se comparte.
+- **Álbum para imprimir** (`js/album.js`): PDF de 21 × 21 cm a ~290 ppp con portada, un capítulo por día, una página por foto destacada (lugar, hora, nota) y página final con los lugares. Generador de PDF propio, sin dependencias.
+- **Gratis y Premium** (`js/plans.js`): Premium = vídeo sin marca, álbum e historia con IA. Precios propuestos: 4,99 €/mes, 29,99 €/año, 6,99 € por viaje. **Durante la beta no se cobra**: el usuario elige el plan que pagaría (`plan_intent`) y Premium se activa gratis, lo que mide la disposición a pagar sin pasarela.
+- Botón **«Vídeo y álbum»** en cada viaje (`js/create.js`).
+
+Eventos nuevos: `video_start`, `video_done`, `album_start`, `album_done`, `album_export`, `print_intent`, `paywall_view`, `paywall_dismiss`, `plan_intent`.
 
 ## Límites conocidos de la beta
 

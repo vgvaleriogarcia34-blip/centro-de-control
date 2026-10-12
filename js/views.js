@@ -7,6 +7,8 @@ import { openLocateSheet } from './locate.js';
 import { exportBackup, saveBackupFile, importBackup } from './backup.js';
 import { track, localMetrics } from './analytics.js';
 import { hasNativePicker, pickNativePhotos, clearNativeImport } from './native.js';
+import { openCreateSheet } from './create.js';
+import { isPremium, requirePremium } from './plans.js';
 import { openViewer } from './viewer.js';
 import { playStory } from './story.js';
 import { placeLine, mainSubject } from './identify.js';
@@ -148,7 +150,7 @@ export async function tripView(id) {
     <div data-status></div>
     <div class="trip-actions">
       <button class="btn btn-primary" data-act="story">${ICONS.play}Ver historia</button>
-      <button class="btn btn-ghost" data-act="share">${ICONS.share}Compartir</button>
+      <button class="btn btn-ghost" data-act="create">${ICONS.sparkle}Vídeo y álbum</button>
     </div>
     <div class="segmented" role="tablist">
       <button class="${tripMode === 'fotos' ? 'on' : ''}" data-mode="fotos">Días</button>
@@ -236,6 +238,7 @@ export async function tripView(id) {
     if (act === 'story') startTripStory(id);
     if (act === 'locate') openLocateSheet(photosWithoutLocation(photos), { onDone: refresh });
     if (act === 'share') shareTrip(trip, photos);
+    if (act === 'create') openCreateSheet(trip);
     if (act === 'who') editCompanions(trip, () => tripView(id));
     if (act === 'more') tripOptions(trip, photos);
   });
@@ -349,6 +352,7 @@ function tripOptions(trip, photos) {
   });
   body.querySelector('[data-ai]').addEventListener('click', async () => {
     if (!(await ai.available())) { toast('La IA avanzada no está activa en este servidor'); return; }
+    if (!(await requirePremium('ai_story'))) return;
     close();
     toast('Escribiendo tu historia…', 6000);
     try {
@@ -520,6 +524,7 @@ export async function settingsView() {
   let aiOff = false, theme = 'auto';
   try { aiOff = localStorage.getItem('recuerdo.ai') === 'off'; theme = localStorage.getItem('recuerdo.theme') || 'auto'; } catch { /* sin almacenamiento */ }
   const companions = await kv.get('defaultCompanions', []);
+  const premium = await isPremium();
   const v = view();
   v.innerHTML = `
     <header class="topbar"><h1>Tú</h1></header>
@@ -529,6 +534,10 @@ export async function settingsView() {
         <select data-theme><option value="auto">Automático</option><option value="dark">Oscuro</option><option value="light">Claro</option></select></div>
       <button class="settings-row" data-who><span class="grow"><b>Con quién viajo normalmente</b><small>${esc(companions.length ? fmt.list(companions) : 'Nadie configurado')}</small></span>${ICONS.edit}</button>
       <button class="settings-row" data-demo><span class="grow"><b>Volver a cargar el viaje de ejemplo</b><small>Sevilla, dos días</small></span>${ICONS.images}</button>
+    </div>
+    <p class="eyebrow" style="padding:0 18px 8px">Tu plan</p>
+    <div class="settings-group">
+      <button class="settings-row" data-premium><span class="status-dot ${premium ? 'on' : ''}"></span><span class="grow"><b>${premium ? 'Recuerdo Premium' : 'Plan gratuito'}</b><small>${premium ? 'Activo gratis durante la beta' : 'Vídeo con marca de agua · Pásate a Premium para el álbum y el vídeo sin marca'}</small></span>${ICONS.sparkle}</button>
     </div>
     <p class="eyebrow" style="padding:0 18px 8px">Inteligencia</p>
     <div class="settings-group">
@@ -546,8 +555,12 @@ export async function settingsView() {
       <div class="settings-row"><span class="grow"><b>Tus fotos no salen del dispositivo</b><small>Se guardan en este navegador. Con la IA activa, se envía una copia reducida solo para analizarla.</small></span></div>
       <div class="settings-row"><span class="grow"><b>Estadísticas de uso anónimas</b><small data-metrics>Solo contamos acciones (abrir una foto, ver una historia), nunca lugares, fotos ni datos personales.</small></span></div>
     </div>
-    <p style="text-align:center;color:var(--faint);font-size:12px;padding:10px 0 20px">Recuerdo · beta 0.2<br>Datos de lugares © colaboradores de OpenStreetMap y Wikipedia</p>`;
+    <p style="text-align:center;color:var(--faint);font-size:12px;padding:10px 0 20px">Recuerdo · beta 0.3<br>Datos de lugares © colaboradores de OpenStreetMap y Wikipedia</p>`;
   v.querySelector('[data-theme]').value = theme;
+  v.querySelector('[data-premium]').addEventListener('click', async () => {
+    if (premium) { toast('Premium está activo en este móvil'); return; }
+    if (await requirePremium('settings')) settingsView();
+  });
   v.querySelector('[data-export]').addEventListener('click', async () => {
     toast('Preparando la copia…');
     const res = await exportBackup();
