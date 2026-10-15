@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Recuerdo</string>
+    <string name="title_activity_main">Recuerdo</string>
+    <string name="package_name">com.recuerdo.app</string>
+    <string name="custom_url_scheme">com.recuerdo.app</string>
+</resources>

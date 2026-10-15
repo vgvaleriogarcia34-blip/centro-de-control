@@ -1,0 +1,27 @@
+{
+  "name": "recuerdo",
+  "version": "0.3.0",
+  "private": true,
+  "description": "Recuerdo: tus fotos de viaje, con nombre e historia.",
+  "type": "module",
+  "scripts": {
+    "start": "node server/server.mjs",
+    "check": "node --check server/server.mjs && for f in js/*.js; do node --check \"$f\" || exit 1; done",
+    "build:web": "node scripts/build-web.mjs",
+    "ios": "npm run build:web && npx cap sync ios && npx cap open ios",
+    "android": "npm run build:web && npx cap sync android && npx cap open android",
+    "sync": "npm run build:web && npx cap sync"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
+    "@capacitor/core": "8.5.2",
+    "@capacitor/ios": "8.5.2",
+    "@capacitor/android": "8.5.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.2"
+  }
+}
