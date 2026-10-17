@@ -1,0 +1,80 @@
+{
+  "fuente": "taller-original.mp4",
+  "salida": "taller-viral.mp4",
+  "resolucion": [
+    1080,
+    1920
+  ],
+  "fps": 30,
+  "zoom": 1.07,
+  "ajustar_a_beats": true,
+  "barra_progreso": true,
+  "audio": {
+    "modo": "continuo",
+    "desde": 4.0,
+    "lufs": -14,
+    "fundido_final": 0.6
+  },
+  "estilo_texto": {
+    "tamano": 112,
+    "max_caracteres": 14,
+    "posicion": "arriba"
+  },
+  "portada": {
+    "segundo": 0.5
+  },
+  "clips": [
+    {
+      "ini": 17.6,
+      "fin": 19.8,
+      "texto": "Esto NO es\nuna fiesta.",
+      "zoom": 1.1
+    },
+    {
+      "ini": 1.0,
+      "fin": 3.4,
+      "texto": "Es un taller para\nEMPRESARIOS.",
+      "estilo": {
+        "tamano": 100,
+        "max_caracteres": 18
+      }
+    },
+    {
+      "ini": 6.0,
+      "fin": 7.7,
+      "texto": "Primero, la\npregunta incómoda",
+      "estilo": {
+        "posicion": "abajo"
+      }
+    },
+    {
+      "ini": 12.0,
+      "fin": 14.6,
+      "texto": "Luego, pensar\nEN EQUIPO."
+    },
+    {
+      "ini": 23.1,
+      "fin": 24.7,
+      "texto": "Se levantan."
+    },
+    {
+      "ini": 24.9,
+      "fin": 26.6,
+      "texto": "Se mueven."
+    },
+    {
+      "ini": 16.0,
+      "fin": 17.4,
+      "texto": "Y DECIDEN."
+    },
+    {
+      "ini": 26.8,
+      "fin": 29.3,
+      "texto": "¿Lo hacemos\nen tu empresa?\nComenta TALLER",
+      "estilo": {
+        "tamano": 96,
+        "posicion": "abajo"
+      }
+    }
+  ]
+}
