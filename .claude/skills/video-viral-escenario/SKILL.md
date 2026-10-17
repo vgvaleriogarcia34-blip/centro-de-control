@@ -21,6 +21,34 @@ Orquesta tres skills: `video-viral-referentes` (inventario y fichas), `video-vir
 - **Excluir siempre**: DNI, pasaportes, contratos, capturas con datos personales, aunque salgan
   en la búsqueda de imágenes.
 
+### Material ya publicado (YouTube, Instagram)
+
+Canal: `https://www.youtube.com/@ValerioGarciaMentor`.
+
+```bash
+python3 -I .claude/skills/video-viral-escenario/scripts/descargar_propios.py \
+  https://www.youtube.com/@ValerioGarciaMentor --top 6 --out propios [--cookies cookies.txt]
+```
+
+- El **ranking por vistas** (`--solo-ranking`) funciona desde cualquier sitio; la **descarga**
+  solo desde el ordenador de Valerio o con un `cookies.txt` de su navegador (desde la nube,
+  YouTube da 403 / "no soy un robot" e Instagram redirige al login).
+- Alternativa sin herramientas: YouTube Studio → Contenido → ⋮ → Descargar; Instagram → vídeo
+  → ⋯ → Descargar (o Configuración → Descargar tu información). Luego subirlos al chat.
+- Las miniaturas (`https://i.ytimg.com/vi/ID/oardefault.jpg`) sí se pueden bajar siempre:
+  valen como portada o como foto de 1,5 s, nunca como sustituto del vídeo.
+
+**Combinar piezas publicadas en una nueva** (recopilación por tema): agrupar el ranking por
+tema, quedarse con el tema que concentra más vistas y montar con `momentos.py` sobre cada vídeo:
+gancho = la frase más fuerte del vídeo más visto (3–6 s) → 2–3 frases de los siguientes
+vídeos del mismo tema (5–8 s cada una, con subtítulos) → remate con la frase-mantra de otro vídeo
+→ CTA. Rotular cada bloque como lista numerada («ERROR 1/2/3») para que se entienda como
+pieza nueva y no como refrito. Ejemplo con el ranking de oct. 2026: 5 de los 8 Shorts más vistos
+son de digitalización, CRM y datos → «3 errores que te hacen tirar el dinero al digitalizar»
+(gancho de «El mayor reto de los hosteleros»; errores de «La trampa de la perfección en los
+datos», «Resistencia al cambio» y «La digitalización no es solo software»; remate «La IA no
+mata, tu ignorancia sí»).
+
 ## 1. Inventario visual
 
 ```bash
