@@ -5,7 +5,9 @@ description: Reedita un vídeo corto (Reels, TikTok, Shorts) para que tenga opci
 
 # Edición viral con un plan JSON
 
-Todo el montaje sale de un `plan.json`; el script lo renderiza con ffmpeg. Cambiar textos
+Todo el montaje sale de un `plan.json`; el script lo renderiza con ffmpeg. Para juntar
+varios vídeos y fotos de escenario con voz y subtítulos, el flujo completo está en
+`video-viral-escenario`; para letras premium, en `video-letras-editorial`. Cambiar textos
 u orden es editar el JSON y volver a renderizar (~1,5 min para 15 s).
 
 ## 1. Diagnóstico (antes de tocar nada)
@@ -46,6 +48,12 @@ Ver `plan-ejemplo.json`. Campos:
 | `audio` | `modo: continuo` usa la música del original sin trocear, empezando en `desde`; `lufs` objetivo; `fundido_final` |
 | `ajustar_a_beats` | Estima el tempo y acorta cada plano para cortar en el pulso (nunca alarga: no pisa cortes del original) |
 | `barra_progreso`, `zoom`, `color`, `portada` | Barra amarilla abajo, empuje de zoom por defecto, viveza de color, JPG de portada |
+| `clips[].fuente` | Vídeo **o foto** propio de ese clip (si falta, usa `fuente` del plan). Fotos: `dur` en s y zoom lento (`zoom_fotos`, 1.15) |
+| `audio.modo: clips` | Conserva el sonido de cada clip (voz, aplausos); `audio.musica` {archivo, volumen, desde} la pone debajo y se agacha cuando hay voz |
+| `audio.archivo` | En `modo: continuo`, música de un archivo aparte en vez de la del vídeo `fuente` |
+| `subtitulos` (plan o clip) | Subtítulos automáticos de 2–3 palabras (faster-whisper); `estilo_subtitulos` {tamano, posicion, color} |
+| `look` | `vivo` (por defecto) o `editorial` (oscuro y cálido, con viñeta) |
+| `clips[].rotulo`, `cabecera`, `clips[].cierre` | Rótulos editoriales dorados, cabecera fija y tarjeta final: ver la skill `video-letras-editorial` |
 
 Para elegir `ini`/`fin`, no cruzar los `cortes_s` del original (salvo que se quiera) y
 dejar fuera fundidos a negro y planos movidos.

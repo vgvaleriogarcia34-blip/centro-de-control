@@ -1,0 +1,21 @@
+{
+  "fuente": "taller-original.mp4",
+  "salida": "taller-editorial.mp4",
+  "look": "editorial",
+  "zoom": 1.05,
+  "barra_progreso": false,
+  "ajustar_a_beats": true,
+  "cabecera": "Familias Empresarias   ·   Taller",
+  "audio": {"modo": "continuo", "desde": 2.0, "lufs": -14, "fundido_final": 1.0},
+  "portada": {"segundo": 1.2},
+  "clips": [
+    {"ini": 1.0, "fin": 4.0, "rotulo": {"antetitulo": "Ponente", "antetitulo_fuente": "sans", "lineas": ["Valerio", "*García*"], "subtitulo": "Mentor de empresas"}},
+    {"ini": 4.1, "fin": 5.9, "rotulo": {"antetitulo": "El taller", "lineas": ["Pensar antes", "de *preguntar*"]}},
+    {"ini": 6.0, "fin": 7.8, "rotulo": {"antetitulo": "El taller", "lineas": ["Pensar antes", "de *preguntar*"]}},
+    {"ini": 9.6, "fin": 11.4, "rotulo": {"lineas": ["La empresa", "*trabaja*"]}},
+    {"ini": 12.0, "fin": 14.6, "rotulo": {"lineas": ["para la", "*familia*"]}},
+    {"ini": 16.0, "fin": 19.7, "rotulo": {"lineas": ["y no", "*al revés*"]}},
+    {"ini": 24.9, "fin": 26.6, "rotulo": {"antetitulo": "Próximo taller", "lineas": ["¿Lo hacemos", "en tu *empresa*?"]}},
+    {"cierre": {"monograma": "FE", "marca": "Familias", "lugar": "Empresarias", "lema": "Comenta TALLER"}, "dur": 3.0}
+  ]
+}
