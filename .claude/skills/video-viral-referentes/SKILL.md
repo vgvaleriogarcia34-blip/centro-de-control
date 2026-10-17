@@ -65,7 +65,23 @@ PATRÓN (n=7 referentes de montaje de evento)
 Si no hay referentes disponibles, usar como base los valores de arriba (son los habituales
 en cortos que funcionan en 2025–2026) y decirlo: es una hipótesis, no una medición.
 
-## 4. Diagnóstico del vídeo propio
+## 4. Buscar metraje propio en una carpeta (Descargas, Fotos…)
+
+Solo funciona en una sesión que corra en el ordenador de Valerio (Claude Desktop o
+`claude remote-control`); una sesión en la nube no ve sus carpetas.
+
+```bash
+python3 -I .claude/skills/video-viral-referentes/scripts/inventario_videos.py ~/Downloads --out inventario
+# Fotos en macOS: ~/Pictures (la fototeca de Fotos hay que exportarla antes a una carpeta)
+```
+
+Saca una hoja de 8 fotogramas por vídeo (`hoja_NNN.jpg`) e `indice.md`. Mirar las
+hojas con Read y marcar en el índice las que muestran a Valerio **en un escenario o
+hablando en público** (micrófono de diadema o de mano, público de espaldas, pantalla o
+atril detrás). Esas son la materia prima de `video-viral-edicion`. No mueve ni copia
+nada.
+
+## 5. Diagnóstico del vídeo propio
 
 Pasar el mismo script al vídeo de Valerio y comparar fila a fila con el patrón. Cada
 diferencia es un cambio del plan de edición.
